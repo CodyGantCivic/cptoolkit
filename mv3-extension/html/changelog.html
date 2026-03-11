@@ -1,0 +1,120 @@
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>CivicPlus Internal Toolkit - Changelog</title>
+  <link rel="stylesheet" type="text/css" href="../css/external/bootstrap.min.css" />
+  <link rel="stylesheet" type="text/css" href="../css/changelog.css" />
+  <link rel="stylesheet" type="text/css" href="../css/global.css" />
+  <link rel="stylesheet" type="text/css" href="../css/external/fontawesome-all.min.css" />
+  <style>
+    .tool-list {
+      margin: 10px 0 10px 20px;
+    }
+    .tool-list li {
+      margin: 4px 0;
+      color: #444;
+    }
+    .tool-category {
+      font-weight: 600;
+      color: #af282f;
+      margin-top: 15px;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="top-banner">
+    <div id="main-title"><img src="../images/wordmark.png" alt="CivicPlus"></div>
+    <div id="sub-title"><i class="fas fa-wrench"></i>Internal Toolkit</div>
+  </div>
+  <div id="outerWrap">
+    <h1>Changelog</h1>
+    <hr>
+    <div id="message"></div>
+    <div id="version-list">
+      <div class="version v1.2">
+        <h4>Version 1.2.0</h4>
+        <h5>New Tools, Snippets Page &amp; Options Enhancements</h5>
+
+        <div class="tool-category">New Features</div>
+        <ul class="tool-list">
+          <li><strong>CSS Snippet Library — Full Page Viewer:</strong> New dedicated page for viewing, editing, creating, and deleting CSS snippets. Accessible via the expand button in the sidebar snippet panel. Features grid and list views, category grouping with icons, inline code blocks with syntax-themed dark backgrounds, and copy-to-clipboard on each snippet.</li>
+          <li><strong>Copy Multiple Skins:</strong> New on-demand tool for bulk copying widget skins between sites. Export tab saves skins from the current site, Import tab applies saved skins to targets on another site. Supports auto-match by name, creating new skins, and custom naming. Two-phase save process for new skin creation (create → save → apply styles → save).</li>
+          <li><strong>On-Demand Tools Options:</strong> Added a new "On-Demand Tools (Context Menu)" section to the Options page. Users can now disable individual on-demand tools to hide them from the right-click context menu. Changes take effect immediately.</li>
+        </ul>
+
+        <div class="tool-category">Enhancements</div>
+        <ul class="tool-list">
+          <li><strong>CSS Snippets — Interaction Model:</strong> Changed quick snippets dropdown to hover-to-open (previously click). Click now opens the full sidebar panel. Removed hardcoded built-in snippets — dropdown now only shows user-saved snippets marked as "always in quick list".</li>
+          <li><strong>CSS Snippets — Generic Storage Bridge:</strong> Added a reusable storage bridge for MAIN world scripts to read/write chrome.storage.local via CustomEvents. Used by the Copy Multiple Skins tool and available for future on-demand tools.</li>
+          <li><strong>CSS Snippets — Fullscreen Button:</strong> Added expand icon next to the sidebar close button that opens the full-page snippet library in a new tab.</li>
+        </ul>
+
+        <div class="tool-category">Bug Fixes</div>
+        <ul class="tool-list">
+          <li><strong>CSS Snippets Dropdown:</strong> Fixed gray border appearing at top of empty quick snippets dropdown. Made separator conditional on having items above it.</li>
+          <li><strong>CSS Snippets Dropdown:</strong> Fixed empty dropdown still showing a bordered box when visible but containing no items.</li>
+          <li><strong>Mini IDE:</strong> Fixed empty dropdown showing border with CSS rule to hide <code>.css-code-popup</code> when visible but has no list items.</li>
+          <li><strong>Copy Multiple Skins:</strong> Fixed "Widget skin to be modified does not exist on Db" error when creating new skins. Now uses a two-phase approach: create and save first, then apply styles and save again.</li>
+          <li><strong>Copy Multiple Skins:</strong> Fixed <code>processNewSkin</code> opening the CMS Manage Widget Skins modal during bulk operations. Intercepts the function to perform only data operations without UI refresh.</li>
+          <li><strong>Snippets Page:</strong> Fixed <code>skins.forEach is not a function</code> error when copied skins were stored as an object instead of an array.</li>
+        </ul>
+
+        <div class="tool-category">UI Updates</div>
+        <ul class="tool-list">
+          <li><strong>CSS Snippets Dropdown:</strong> Removed "User" badge from dropdown items since hardcoded snippets were removed.</li>
+          <li><strong>Snippet Library Page:</strong> Grid view displays exactly 2 columns. Lone items on the last row or in single-item categories expand to full width. Code blocks wrap long lines instead of horizontal scrolling.</li>
+        </ul>
+      </div>
+
+      <div class="version v1.1">
+        <h4>Version 1.1.0</h4>
+        <h5>New Features, Bug Fixes &amp; UI Updates</h5>
+
+        <div class="tool-category">New Features</div>
+        <ul class="tool-list">
+          <li><strong>Import Fancy Buttons — Social Icons Tab:</strong> Bulk-upload social media icons (Black, White, Color, or All variants) as graphic links. Select icons, choose a Document Center folder, and upload them all at once with a progress bar and log.</li>
+          <li><strong>Import Fancy Buttons — Export JSON:</strong> Export any existing fancy button's styles as JSON. Options to copy to clipboard, download as a file, or save to your personal button library.</li>
+          <li><strong>Import Fancy Buttons — Custom Button Library:</strong> Save exported buttons for reuse. Your saved buttons appear alongside built-in templates in the Template Library tab and can be deleted individually.</li>
+          <li><strong>Prevent Session Timeout — Server Keep-Alive:</strong> Sends a background ping every 5 minutes to keep the ASP.NET server session alive, preventing save failures after long idle periods.</li>
+          <li><strong>Prevent Session Timeout — Badge Counter:</strong> The extension icon now shows a badge count of how many times the session was auto-refreshed.</li>
+          <li><strong>Link Autofill — New Socials:</strong> Added autofill entries for Bluesky, Everbridge, Flickr, Mastodon, Nextdoor, RSS, Threads, and TikTok.</li>
+        </ul>
+
+        <div class="tool-category">Bug Fixes</div>
+        <ul class="tool-list">
+          <li><strong>Widget Skin Default Override:</strong> Fixed the Manage Widget Skins modal opening twice after creating or copying a skin. The tool was explicitly reopening the modal, but the CMS save callback already does that automatically.</li>
+          <li><strong>Enforce Advanced Styles Text Limits:</strong> Fixed MiscAdvStyles maxlength from 255 to 1000 to match the actual server-side limit for widget skin advanced styles.</li>
+          <li><strong>Export Fancy Button:</strong> Fixed export not capturing advanced styles. Textarea fields (where advanced styles live) were not being collected — only inputs and selects were.</li>
+          <li><strong>Mini IDE:</strong> Fixed errors when MutationObservers tried to attach before document.body existed.</li>
+          <li><strong>Remember Image Picker State:</strong> Fixed the tool from interfering with hidden iframes created by other toolkit tools (folder lookup, upload flows).</li>
+          <li><strong>Prevent Session Timeout:</strong> Rewrote to directly detect the Session Timeout popover modal and dismiss it via MAIN world execution, instead of relying on the older inline UI message pattern. Reduced check interval from 2 minutes to 15 seconds.</li>
+        </ul>
+
+        <div class="tool-category">UI Updates</div>
+        <ul class="tool-list">
+          <li><strong>Import Theme:</strong> Redesigned from a bare file picker to a full styled modal matching the toolkit style guide.</li>
+          <li><strong>Multiple Category Upload:</strong> Restyled modal to match the toolkit style guide with proper header/body/footer layout and CivicPlus red buttons.</li>
+          <li><strong>Import Fancy Buttons:</strong> Updated modal styling — CivicPlus red for active tabs, primary buttons, and focus rings. Fixed button line-height conflicts with CMS styles.</li>
+        </ul>
+      </div>
+
+      <div class="version v1.0">
+        <h4>Version 1.0</h4>
+        <h5>Initial Release</h5>
+        <div>Initial release of the CivicPlus Internal Toolkit (Manifest V3). Introduced the following tools:</div>
+        
+        <div class="tool-category">On-Load Tools (run automatically)</div>
+        <ul class="tool-list" id="on-load-tools-list"></ul>
+        
+        <div class="tool-category">On-Demand Tools (context menu)</div>
+        <ul class="tool-list" id="on-demand-tools-list"></ul>
+      </div>
+    </div>
+  </div>
+  <script src="../js/changelog.js"></script>
+</body>
+
+</html>

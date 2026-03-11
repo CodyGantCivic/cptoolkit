@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CivicPlus Internal Toolkit - CSS Snippets</title>
+  <link rel="stylesheet" type="text/css" href="../css/snippets.css" />
+</head>
+<body>
+  <div id="top-banner">
+    <div id="banner-content">
+      <div id="banner-text">
+        <h1>Snippet Library</h1>
+        <p>Your saved snippets</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="page-wrap">
+    <div id="tabs" style="display:none;">
+      <button class="tab active" data-tab="snippets">Snippets</button>
+    </div>
+
+    <div id="tab-snippets" class="tab-content active">
+      <div id="snippets-toolbar">
+        <div id="toolbar-left">
+          <button id="btn-new-snippet" class="toolbar-btn primary" title="Create new snippet">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            New Snippet
+          </button>
+        </div>
+        <div id="toolbar-right">
+          <button id="btn-sort-category" class="toolbar-btn" title="Group by category">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="14" y2="12"></line><line x1="4" y1="18" x2="8" y2="18"></line></svg>
+            Categories
+          </button>
+          <div id="view-toggle" title="Switch view">
+            <button class="view-btn active" data-view="grid">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect></svg>
+            </button>
+            <button class="view-btn" data-view="list">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="snippets-empty" class="empty-state" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+          <line x1="7" y1="7" x2="7.01" y2="7"></line>
+        </svg>
+        <h3>No Snippets Yet</h3>
+        <p>Add snippets from the sidebar in the CMS Theme Manager, or click "New Snippet" above.</p>
+      </div>
+      <div id="snippets-grid"></div>
+    </div>
+
+  </div>
+
+  <!-- Edit/Create Modal -->
+  <div id="snippet-modal-overlay" style="display:none;">
+    <div id="snippet-modal">
+      <div id="snippet-modal-header">
+        <h3 id="snippet-modal-title">New Snippet</h3>
+        <button id="snippet-modal-close">&times;</button>
+      </div>
+      <div id="snippet-modal-body">
+        <div class="form-group">
+          <label for="snippet-name">Name</label>
+          <input type="text" id="snippet-name" placeholder="Snippet name" />
+        </div>
+        <div class="form-group">
+          <label for="snippet-category">Category</label>
+          <select id="snippet-category">
+            <option value="">None</option>
+            <option value="Buttons">Buttons</option>
+            <option value="News">News</option>
+            <option value="Slideshow">Slideshow</option>
+            <option value="Mega Menu">Mega Menu</option>
+            <option value="Nav Items">Nav Items</option>
+            <option value="Footer">Footer</option>
+            <option value="Links">Links</option>
+            <option value="Calendar">Calendar</option>
+            <option value="Socials">Socials</option>
+            <option value="Headers">Headers</option>
+            <option value="Custom">Custom</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="snippet-code">CSS Code</label>
+          <textarea id="snippet-code" rows="12" placeholder="Paste your CSS here..."></textarea>
+        </div>
+        <div class="form-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="snippet-dynamic" />
+            Dynamic selector (uses template variables like <code>{{FULL_SELECTOR}}</code>)
+          </label>
+        </div>
+        <div class="form-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="snippet-quicklist" />
+            Always show in quick list
+          </label>
+        </div>
+      </div>
+      <div id="snippet-modal-footer">
+        <button id="snippet-modal-delete" class="modal-btn delete" style="display:none;">Delete</button>
+        <div style="flex:1;"></div>
+        <button id="snippet-modal-cancel" class="modal-btn secondary">Cancel</button>
+        <button id="snippet-modal-save" class="modal-btn primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/snippets-page.js"></script>
+</body>
+</html>

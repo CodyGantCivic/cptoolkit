@@ -1,0 +1,48 @@
+/*
+** file: css/options.css
+** description: custom styling for "html/options.html" file
+*/
+
+div#options-outer {
+  margin: 5px;
+}
+
+div#options-inner {
+  padding: 8px;
+}
+
+
+
+div#options-area {
+  margin-bottom: 2em;
+}
+
+.module {
+  padding: 1em;
+  border-top: 1px solid #000;
+}
+.module:last-of-type {
+  border-bottom: 1px solid #000;
+}
+
+.delete-module {
+  padding: 0 4px 4px 4px;
+  line-height: 0.8em;
+  text-decoration: none !important;
+  background-color: red;
+  color: #fff !important;
+  float: right;
+  margin-top: -1.5em;
+  cursor: pointer;
+}
+.fa-icon {
+  width: calc(100% - 100px);
+}
+
+.icon-preview {
+  border: 1px solid #000;
+  padding: 1em 0;
+  margin-left: 1em;
+  width: 3em;
+  text-align: center;
+}

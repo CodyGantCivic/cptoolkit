@@ -1,0 +1,88 @@
+{
+  "name": "CivicPlus Internal Toolkit",
+  "version": "1.1.0",
+  "manifest_version": 3,
+  "description": "Tools for use by employees at CivicPlus.",
+  "icons": {
+    "16": "images/icon_19.png",
+    "32": "images/icon_38.png",
+    "128": "images/icon_128.png"
+  },
+  "background": {
+    "service_worker": "js/background/service-worker.js"
+  },
+  "action": {
+    "default_title": "CivicPlus Toolkit",
+    "default_icon": {
+      "16": "images/icon_19.png",
+      "32": "images/icon_38.png"
+    },
+    "default_popup": "html/main.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "all_frames": true,
+      "js": [
+        "js/detect_cp_site.js",
+        "js/content/instrument-bridge.js",
+        "js/external/jquery-3.3.1.min.js",
+        "js/tools/on-load/title-changer.js",
+        "js/tools/on-load/keyboard-shortcuts.js",
+        "js/tools/on-load/auto-dismiss-help-welcome.js",
+        "js/tools/on-load/enforce-advanced-styles-text-limits.js",
+        "js/tools/on-load/theme-manager-enhancer.js",
+        "js/tools/on-load/theme-manager-skin-organizer.js",
+        "js/tools/on-load/widget-skin-default-override.js",
+        "js/tools/on-load/module-icons.js",
+        "js/tools/on-load/cp-MultipleCategoryUpload.js",
+        "js/tools/on-load/cp-MultipleItemUpload.js",
+        "js/tools/on-load/cp-MultipleQuickLinks.js",
+        "js/tools/on-load/widget-skin-advanced-style-helper.js",
+        "js/tools/on-load/graphic-link-advanced-style-helper.js",
+        "js/tools/on-load/css-snippets.js",
+        "js/tools/on-load/mini-ide.js",
+        "js/tools/on-load/custom-css-deployer.js",
+        "js/tools/on-load/prevent-timeout.js",
+        "js/tools/on-load/graphic-link-autofill.js",
+        "js/tools/on-load/quick-link-autofill.js",
+        "js/tools/on-load/input-focus.js",
+        "js/tools/on-load/xml-change-alerts.js",
+        "js/tools/on-load/download-xml-css.js",
+        "js/tools/on-load/layout-manager-sorter.js",
+        "js/tools/on-load/cp-ImportFancyButton.js",
+        "js/tools/on-load/remember-image-picker-state.js",
+        "js/tools/on-load/fix-copied-skin-references.js",
+        "js/tools/on-load/adfs.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "options_page": "html/options.html",
+  "permissions": [
+    "storage",
+    "downloads",
+    "contextMenus",
+    "scripting",
+    "alarms",
+    "webNavigation",
+    "webRequest"
+  ],
+  "host_permissions": [
+    "*://*/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "data/*",
+        "images/*",
+        "js/tools/on-demand/*",
+        "js/tools/on-load/helpers/*",
+        "socials/*",
+        "css/external/fontawesome-all.min.css",
+        "css/external/fontawesome-fonts/*"
+      ],
+      "matches": ["*://*/*"]
+    }
+  ]
+}

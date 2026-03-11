@@ -1,0 +1,8 @@
+.tool {
+  margin-left: 1em;
+}
+
+#persistant-tools,
+#on-demand-tools {
+  margin-bottom: 4em;
+}

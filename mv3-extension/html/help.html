@@ -1,0 +1,52 @@
+<html>
+
+<head>
+    <title>CivicPlus Internal Toolkit - Help</title>
+    <link rel="stylesheet" type="text/css" href="../css/external/bootstrap.min.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/help.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/global.css"/>
+    <link rel="stylesheet" type="text/css" href="../css/external/fontawesome-all.min.css" />
+</head>
+
+<body>
+    <div id="top-banner">
+        <div id="main-title"><img src="../images/wordmark.png" alt="CivicPlus"></div>
+        <div id="sub-title"><i class="fas fa-wrench"></i>Internal Toolkit</div>
+    </div>
+    <div id="outerWrap">
+        <div id="first-run-message" style="display: none; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; padding: 15px; margin-bottom: 20px;">
+            <h3 style="color: #155724; margin-top: 0;"><i class="fas fa-check-circle"></i> Welcome to CivicPlus Internal Toolkit!</h3>
+            <p style="color: #155724; margin-bottom: 0;">The extension has been installed successfully. Review the tools below to get started.</p>
+        </div>
+        <h1>Help</h1>
+        <hr>
+        <div id="persistant-tools">
+            <h2>Persistent Tools</h2>
+            <div class="tool">
+                <h4>Getting Started</h4>
+                <div>The CivicPlus internal toolkit contains several different tools. Information about each one will be in its section below.</div>
+            </div>
+            <div class="tool" id="main-menu">
+                <h4>Main Menu</h4>
+                <div>The main menu is shown when clicking the <img src="../images/icon_19.png" style="vertical-align: middle;"> icon at the top right corner of the browser. It contains checkboxes to enable or disable any of the tools in the toolkit.</div>
+            </div>
+            <div class="tool" id="settings">
+                <h4>Settings</h4>
+                <div>You can open the settings by right-clicking the Main Menu (<img src="../images/icon_19.png" style="vertical-align: middle;">) icon and selecting Options. The settings page will allow you to enable or disable any of the tools in the toolkit, and will also allow you to pick additional options for each tool.</div>
+            </div>
+        </div>
+        <div id="on-load-tools">
+            <h2>On-Load Tools</h2>
+            <p>These tools run automatically when you visit CivicPlus sites.</p>
+            <div id="on-load-tools-list"></div>
+        </div>
+        <div id="on-demand-tools">
+            <h2>On-Demand Tools</h2>
+            <p>These tools can be triggered from the context menu (right-click) on compatible pages.</p>
+            <div id="on-demand-tools-list"></div>
+        </div>
+    </div>
+    <script src="../js/help.js"></script>
+</body>
+
+</html>

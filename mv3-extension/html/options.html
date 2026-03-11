@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CivicPlus Toolkit Options</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      padding: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+      background: #f5f5f5;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #af282f, #8c2026);
+      color: white;
+      padding: 20px 25px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      flex-direction:column;
+      gap: 10px;
+      text-transform:uppercase;
+    }
+    
+    .header-logo {
+      flex-shrink: 0;
+    }
+    
+    .header-logo img {
+      height: 40px;
+      width: auto;
+    }
+    
+    .header-text {
+      flex-grow: 1;
+    }
+    
+    h1 {
+      margin: 0 0 5px 0;
+      font-size: 24px;
+      font-weight: 600;
+    }
+    
+    .version {
+      opacity: 0.9;
+      font-size: 14px;
+    }
+    
+    .section {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .section h2 {
+      color: #af282f;
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0 0 15px 0;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f8e0e1;
+    }
+    
+    .tool-option {
+      margin: 12px 0;
+      padding: 14px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      background: #fafafa;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    
+    .tool-option:hover {
+      border-color: #af282f;
+      box-shadow: 0 2px 4px rgba(175, 40, 47, 0.1);
+    }
+    
+    label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+    
+    input[type="checkbox"] {
+      margin-right: 12px;
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #af282f;
+    }
+    
+    .tool-name {
+      font-weight: 600;
+      color: #333;
+      font-size: 14px;
+    }
+    
+    .description {
+      color: #666;
+      font-size: 13px;
+      margin-left: 30px;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+    
+    .help-text {
+      color: #555;
+      font-size: 12px;
+      margin-left: 30px;
+      padding: 0 12px;
+      background: #f0f0f0;
+      border-radius: 4px;
+      line-height: 1.4;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      margin-top: 0;
+      transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.25s ease, margin 0.25s ease;
+    }
+
+    .help-text.active {
+      max-height: 200px;
+      opacity: 1;
+      padding: 8px 12px;
+      margin-top: 8px;
+    }
+    
+    .status {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      background: #4caf50;
+      color: white;
+      border-radius: 6px;
+      display: none;
+      font-weight: 500;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+    
+    .note {
+      background: #fff3e0;
+      border-left: 4px solid #ff9800;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      border-radius: 0 6px 6px 0;
+      font-size: 13px;
+      color: #b45309;
+    }
+    
+    /* Focus styles for ADA compliance */
+    input[type="checkbox"]:focus {
+      outline: 2px solid #af282f;
+      outline-offset: 2px;
+    }
+    
+    a {
+      color: #8c2026;
+    }
+    
+    a:hover {
+      color: #af282f;
+    }
+    
+    a:focus {
+      outline: 2px solid #af282f;
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-logo">
+      <img src="../images/wordmark.png" alt="CivicPlus">
+    </div>
+    <div class="header-text">
+      <h1>Internal Toolkit Settings</h1>
+    </div>
+  </div>
+  
+  <div class="note">
+    <strong>Note:</strong> Changes take effect immediately. Refresh any open CivicPlus pages to see changes.
+  </div>
+  
+  <div id="tools-container">
+    <div class="loading">Loading tools configuration...</div>
+  </div>
+  
+  <div class="status" id="status">✓ Settings saved!</div>
+  
+  <script src="../js/options.js"></script>
+</body>
+</html>

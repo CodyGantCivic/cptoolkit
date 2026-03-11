@@ -1,0 +1,111 @@
+/*
+** file: css/global.css
+** description: global stylesheet containing css definitions for elements across the entire chrome extension, styles
+**              unique to a single page should be defined in their own "page.html" file
+*/
+
+div.page-title {
+  font-size: 20px;
+  line-height: 24px;
+}
+
+div.page-subtitle {
+  font-size: 16px;
+  line-height: 20px;
+}
+
+* {
+  font-family: sans-serif;
+}
+
+div#main-additional-info {
+  margin: 4px 0;
+  font-weight: bold;
+  color: #222223;
+  font-style: italic;
+  text-align: center;
+}
+
+.fas {
+  margin-right: 0.5em;
+}
+
+img {
+  max-width: 100%;
+}
+
+.dropdown button {
+  background-color: #055587;
+  color: #fff;
+  width: 100%;
+  margin-bottom: 0.5em;
+}
+
+.dropdown button:hover {
+  background-color: #033554;
+}
+
+.dropdown-menu {
+  width: 100%;
+}
+
+.checkbox span {
+  margin-left: 0.5em;
+}
+
+div#top-banner {
+  background-color: #af282f;
+  margin: 0;
+  padding: 1em;
+  max-width: 100%;
+}
+
+div#main-title {
+  font-size: 16px;
+  text-align: center;
+  font-weight: bold;
+}
+
+div#main-title img {
+  margin: 0 auto;
+  max-width: 600px;
+}
+
+div#sub-title {
+  padding-top: 0.5em;
+  font-size: 1.6em;
+  color: #fff;
+  text-align: center;
+}
+
+h4 {
+  margin-bottom: 0.5em;
+}
+
+.sub-action {
+  font-size: 0.8em;
+  margin-top: 2px;
+}
+
+.description {
+  font-style: italic;
+  font-size: 0.8em;
+  line-height: 1em;
+  margin-top: 2px;
+}
+
+.tool {
+  margin-top: 1em;
+}
+
+@media (max-width: 600px) {
+  img {
+    max-width: 100% !important;
+  }
+}
+
+#outerWrap {
+  padding: 1em;
+  max-width: 1600px;
+  margin: 0 auto;
+}

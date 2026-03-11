@@ -1,0 +1,118 @@
+{
+  "Apply Figma Styles": {
+    "file": "apply-figma-styles.js",
+    "urlPatterns": ["*://*/DesignCenter/Themes/*"],
+    "help": "Upload a Figma JSON export to automatically apply Module Colors, Table Styles, Font Styles, Navigation Styles, and Container Backgrounds. Automatically saves after applying styles.",
+    "helpPages": "Theme Manager"
+  },
+  "Copy containers to another layout": {
+    "file": "Copy containers to another layout.js",
+    "urlPatterns": ["*://*/*Layout-Page"],
+    "help": "You can use this tool to quickly copy containers from one layout to another. It will skip Mega Menu containers and the Feature column.",
+    "helpPages": "Layout Pages"
+  },
+  "Copy Google Translate Script": {
+    "file": "copyGoogleTranslate.js",
+    "urlPatterns": ["*://*/*"],
+    "help": "You can use this tool to quickly copy the mobile compatible Google Translate Script.",
+    "helpPages": "All Pages"
+  },
+
+  "Copy Comprehensive Script": {
+    "file": "copyComprehensive.js",
+    "urlPatterns": ["*://*/*"],
+    "help": "You can use this tool to quickly copy the Headers Comprehensive Script.",
+    "helpPages": "All Pages"
+  },
+  "Clear Cache": {
+    "file": "clear-cache.js",
+    "urlPatterns": ["*://*/*"],
+    "help": "Navigates to the site's Clear Cache page to rebuild the cache.",
+    "helpPages": "All Pages"
+  },
+
+  "Copy main navigation dropdown to secondary navigation": {
+    "file": "Copy main navigation dropdown to secondary navigation.js",
+    "urlPatterns": ["*://*/DesignCenter/Themes/*"],
+    "help": "You can use this tool to copy the Main Navigation dropdown styles to the secondary navigation (both menus and accordions).",
+    "helpPages": "Theme Manager"
+  },
+  "Copy secondary navigation main item font styles to all secondary nav": {
+    "file": "Copy secondary nav main item font styles to all secondary nav.js",
+    "urlPatterns": ["*://*/DesignCenter/Themes/*"],
+    "help": "You can use this tool to copy the Secondary Navigation styles to the rest of the secondary navigation.",
+    "helpPages": "Theme Manager"
+  },
+  "Copy multiple skins": {
+    "file": "copy-multiple-skins.js",
+    "urlPatterns": ["*://*/DesignCenter/Themes/*"],
+    "help": "Apply multiple saved skins from your library to the current site at once. Each saved skin can be mapped to an existing skin or create a new one. Auto-match by name for fast setup.",
+    "helpPages": "Theme Manager"
+  },
+  "Copy widget skin component(s) to another widget skin": {
+    "file": "copy-widget-skin-components.js",
+    "urlPatterns": ["*://*/DesignCenter/Themes/*"],
+    "help": "Enhanced tool to copy widget skin components with three modes: Local Copy (same site), Export (copy to clipboard for use on another site), and Import (paste from clipboard). Includes automatic 'touch' functionality to refresh Advanced Styles after copying.",
+    "helpPages": "Theme Manager"
+  },
+  "Create example news items": {
+    "file": "createExampleNewsItems.js",
+    "urlPatterns": ["*://*/admin/CivicAlerts.aspx", "*://*/Admin/CivicAlerts.aspx"],
+    "help": "You can use this tool to create example news flash items.",
+    "helpPages": "News Flash Module"
+  },
+  "Create Sitemap": {
+    "file": "Create Sitemap.js",
+    "urlPatterns": ["*://*/sitemap", "*://*/SiteMap"],
+    "help": "You can use this tool to create a text sitemap for a site.",
+    "helpPages": "Site Map"
+  },
+  "Export current theme": {
+    "file": "Export current theme.js",
+    "urlPatterns": ["*://*/DesignCenter/Themes/*"],
+    "help": "Export the current theme.",
+    "helpPages": "Theme Manager"
+  },
+  "Generate Client PDF": {
+    "file": "Generate client pdf.js",
+    "urlPatterns": ["*://*/*"],
+    "help": "Generate a client guide to colors, fonts, and images from any CivicPlus website.",
+    "helpPages": "Everywhere"
+  },
+  "Import theme": {
+    "file": "Import theme.js",
+    "urlPatterns": ["*://*/DesignCenter/Themes/*"],
+    "help": "Import a theme that was exported using the toolkit's 'Export current theme' tool.",
+    "helpPages": "Theme Manager"
+  },
+  "Insert Government Websites by CivicPlus": {
+    "file": "insertPoweredByHTML.js",
+    "urlPatterns": ["*://*/*Layout-Page"],
+    "help": "This tool will insert the byline in a placed Custom HTML widget. You must upload the logo before running this tool (if applicable).",
+    "helpPages": "Layout Pages"
+  },
+  "Copy Links": {
+    "file": "copyLinks.js",
+    "urlPatterns": ["*://*/*"],
+    "help": "This tool will copy links and link text from selection.",
+    "helpPages": "Everywhere"
+  },
+  "Import Links": {
+    "file": "importLinks.js",
+    "urlPatterns": ["*://*/*"],
+    "help": "This tool will import links and link text which was copied from \"Copy Links\"",
+    "helpPages": "Everywhere"
+  },
+  "Sort Staff Directory": {
+    "file": "sortStaffDirectory.js",
+    "urlPatterns": ["*://*/*"],
+    "help": "This tool will sort the staff directory alphabetically.",
+    "helpPages": "Everywhere"
+  },
+  "Setup Defaults V2": {
+    "file": "setupDefaultsV2.js",
+    "urlPatterns": ["*://*/DesignCenter/Themes/*", "*://*/Admin/DesignCenter/Themes/*"],
+    "help": "Comprehensive theme setup tool that configures professional defaults for Site Styles (typography, spacing), Menu Styles (main nav, secondary nav, mega menu, dropdowns), Banner Styles, Container Styles, and Widget Skins (Default, Features, Social Media, Mega Menu, Graphic Buttons, Footer). Walks you through configuration options with prompts.",
+    "helpPages": "Theme Manager"
+  }
+}

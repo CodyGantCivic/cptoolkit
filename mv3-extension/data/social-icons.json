@@ -1,0 +1,139 @@
+{
+  "icons": [
+    {
+      "name": "Bluesky",
+      "linkUrl": "/bluesky",
+      "files": {
+        "Black": null,
+        "White": "Bluesky - White.svg",
+        "Color": "Bluesky - Color.svg"
+      }
+    },
+    {
+      "name": "Everbridge",
+      "linkUrl": "/everbridge",
+      "files": {
+        "Black": "Everbridge - Black.svg",
+        "White": "Everbridge - White.svg",
+        "Color": "Everbridge - Color.svg"
+      }
+    },
+    {
+      "name": "Facebook",
+      "linkUrl": "/facebook",
+      "files": {
+        "Black": "Facebook - Black.svg",
+        "White": "Facebook - White.svg",
+        "Color": "Facebook - Color.svg"
+      }
+    },
+    {
+      "name": "Flickr",
+      "linkUrl": "/flickr",
+      "files": {
+        "Black": "Flickr - Black.svg",
+        "White": "Flickr - White.svg",
+        "Color": "Flickr - Color.svg"
+      }
+    },
+    {
+      "name": "Instagram",
+      "linkUrl": "/instagram",
+      "files": {
+        "Black": "Instagram - Black.svg",
+        "White": "Instagram - White.svg",
+        "Color": "Instagram - Color.svg"
+      }
+    },
+    {
+      "name": "LinkedIn",
+      "linkUrl": "/linkedin",
+      "files": {
+        "Black": "LinkedIn - Black.svg",
+        "White": "LinkedIn - White.svg",
+        "Color": "LinkedIn - Color.svg"
+      }
+    },
+    {
+      "name": "Mastodon",
+      "linkUrl": "/mastodon",
+      "files": {
+        "Black": "Mastodon - Black.svg",
+        "White": "Mastodon - White.svg",
+        "Color": "Mastodon - Color.svg"
+      }
+    },
+    {
+      "name": "Nextdoor",
+      "linkUrl": "/nextdoor",
+      "files": {
+        "Black": "Nextdoor - Black.svg",
+        "White": "Nextdoor - White.svg",
+        "Color": "Nextdoor - Color.svg"
+      }
+    },
+    {
+      "name": "Pinterest",
+      "linkUrl": "/pinterest",
+      "files": {
+        "Black": "Pinterest - Black.svg",
+        "White": "Pinterest - White.svg",
+        "Color": "Pinterest - Color.svg"
+      }
+    },
+    {
+      "name": "RSS",
+      "linkUrl": "/rss",
+      "files": {
+        "Black": "RSS - Black.svg",
+        "White": "RSS - White.svg",
+        "Color": "RSS - Color.svg"
+      }
+    },
+    {
+      "name": "Threads",
+      "linkUrl": "/threads",
+      "files": {
+        "Black": "Threads - Black.svg",
+        "White": "Threads - White.svg",
+        "Color": null
+      }
+    },
+    {
+      "name": "TikTok",
+      "linkUrl": "/tiktok",
+      "files": {
+        "Black": "TikTok - Black.svg",
+        "White": "TikTok - White.svg",
+        "Color": "TikTok - Color.svg"
+      }
+    },
+    {
+      "name": "Vimeo",
+      "linkUrl": "/vimeo",
+      "files": {
+        "Black": "Vimeo - Black.svg",
+        "White": "Vimeo - White.svg",
+        "Color": "Vimeo - Color.svg"
+      }
+    },
+    {
+      "name": "X",
+      "linkUrl": "/x",
+      "files": {
+        "Black": "X - Black.svg",
+        "White": "X - White.svg",
+        "Color": null
+      }
+    },
+    {
+      "name": "YouTube",
+      "linkUrl": "/youtube",
+      "files": {
+        "Black": "YouTube - Black.svg",
+        "White": "YouTube - White.svg",
+        "Color": "YouTube - Color.svg"
+      }
+    }
+  ]
+}

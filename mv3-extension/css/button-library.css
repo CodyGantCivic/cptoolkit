@@ -1,0 +1,557 @@
+/* Fancy Button Library Page */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: #f5f5f5;
+  color: #333;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==================== BANNER ==================== */
+#top-banner {
+  background: linear-gradient(135deg, #af282f 0%, #8a1f24 100%);
+  padding: 1em;
+  display: flex;
+  text-align: center;
+}
+
+#banner-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+#banner-logo {
+  height: 36px;
+  width: auto;
+}
+
+#banner-text h1 {
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+#banner-text p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+/* ==================== LAYOUT ==================== */
+#page-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 40px 60px;
+}
+
+/* ==================== TOOLBAR ==================== */
+#buttons-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 12px;
+}
+
+#toolbar-left, #toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.toolbar-btn:hover {
+  background: #f5f5f5;
+  border-color: #aaa;
+}
+
+.toolbar-btn.primary {
+  background: #af282f;
+  border-color: #af282f;
+  color: #fff;
+}
+
+.toolbar-btn.primary:hover {
+  background: #c42f37;
+  border-color: #c42f37;
+}
+
+.toolbar-btn svg {
+  flex-shrink: 0;
+}
+
+#search-input {
+  padding: 7px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 13px;
+  width: 200px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+#search-input:focus {
+  border-color: #af282f;
+}
+
+/* View toggle */
+#view-toggle {
+  display: flex;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.view-btn {
+  padding: 7px 10px;
+  border: none;
+  background: #fff;
+  cursor: pointer;
+  color: #888;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.view-btn:first-child {
+  border-right: 1px solid #ccc;
+}
+
+.view-btn:hover {
+  background: #f5f5f5;
+  color: #555;
+}
+
+.view-btn.active {
+  background: #af282f;
+  color: #fff;
+}
+
+/* ==================== EMPTY STATE ==================== */
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: #888;
+}
+
+.empty-state svg {
+  color: #ccc;
+  margin-bottom: 16px;
+}
+
+.empty-state h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  font-size: 14px;
+  max-width: 400px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* ==================== SECTION HEADERS ==================== */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.section-header h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.section-count {
+  background: #af282f;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.section-group {
+  margin-bottom: 32px;
+}
+
+/* ==================== BUTTON CARD ==================== */
+.cp-template-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 400px;
+}
+
+.cp-template-card:hover {
+  border-color: #ccc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.cp-template-card-preview {
+  padding: 20px;
+  width: 400px !important;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fafafa;
+  border-bottom: 1px solid #eee;
+  pointer-events: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.cp-template-card-preview [class^="cpPrev"] {
+  width: 100%;
+}
+
+.cp-template-card-preview.cp-preview-dark {
+  background: #2a2a2a;
+}
+
+.cp-template-card-darkbg,
+.cp-template-card-edit {
+  position: absolute;
+  top: 4px;
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  pointer-events: auto;
+  z-index: 1;
+}
+
+.cp-template-card-darkbg {
+  right: 4px;
+}
+
+.cp-template-card-edit {
+  right: 28px;
+}
+
+.cp-template-card-darkbg:hover,
+.cp-template-card-edit:hover {
+  color: #333;
+  background: rgba(0,0,0,0.08);
+}
+
+.cp-template-card-darkbg.active {
+  color: #fff;
+  background: rgba(0,0,0,0.5);
+}
+
+.cp-template-card-edit.active {
+  color: #af282f;
+  background: rgba(175,40,47,0.1);
+}
+
+.cp-template-card-preview.cp-editing {
+  pointer-events: auto;
+}
+
+.cp-template-card-preview.cp-editing .cpText {
+  pointer-events: auto;
+  cursor: text;
+  outline: 2px dashed #af282f;
+  outline-offset: 2px;
+  min-height: 1em;
+}
+
+.cp-template-card-info {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cp-template-card-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cp-template-card-type {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.cp-template-card-type.builtin {
+  color: #1976d2;
+  background: rgba(25, 118, 210, 0.08);
+}
+
+.cp-template-card-type.custom {
+  color: #af282f;
+  background: rgba(175, 40, 47, 0.08);
+}
+
+.cp-template-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.cp-template-card-actions button {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  color: #888;
+  font-size: 12px;
+  border-radius: 4px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.cp-template-card-actions button:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.cp-template-card-actions .btn-delete:hover {
+  background: #fff0f0;
+  color: #c62828;
+}
+
+/* ==================== GRID VIEW ==================== */
+#buttons-grid.view-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+#buttons-grid.view-grid > .section-group {
+  grid-column: 1 / -1;
+}
+
+#buttons-grid.view-grid .section-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+/* ==================== LIST VIEW ==================== */
+#buttons-grid.view-list .cp-template-card {
+  flex-direction: row;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+#buttons-grid.view-list .cp-template-card-preview {
+  width: 200px;
+  min-width: 200px;
+  border-bottom: none;
+  border-right: 1px solid #eee;
+}
+
+#buttons-grid.view-list .cp-template-card-info {
+  flex: 1;
+}
+
+#buttons-grid.view-list .section-group {
+  margin-bottom: 24px;
+}
+
+/* ==================== JSON MODAL ==================== */
+#json-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#json-modal {
+  background: #fff;
+  border-radius: 8px;
+  width: 620px;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+#json-modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#json-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+#json-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+#json-modal-close:hover { color: #333; }
+
+#json-modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+#json-modal-code {
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 12px;
+  font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+  font-size: 12px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+#json-modal-code:focus {
+  border-color: #af282f;
+  outline: none;
+}
+
+#json-modal-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.modal-btn.primary {
+  background: #af282f;
+  color: #fff;
+}
+
+.modal-btn.primary:hover { background: #c42f37; }
+
+.modal-btn.secondary {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.modal-btn.secondary:hover { background: #d0d0d0; }
+
+.modal-btn.delete {
+  background: none;
+  color: #c62828;
+  border: 1px solid #e0b0b0;
+}
+
+.modal-btn.delete:hover {
+  background: #fff5f5;
+  border-color: #c62828;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 900px) {
+  #buttons-grid.view-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  #buttons-grid.view-grid .section-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  #top-banner { padding: 24px 20px; }
+  #page-wrap { padding: 16px 20px 40px; }
+  #banner-text h1 { font-size: 18px; }
+
+  #buttons-grid.view-grid {
+    grid-template-columns: 1fr;
+  }
+  #buttons-grid.view-grid .section-cards {
+    grid-template-columns: 1fr;
+  }
+
+  #buttons-toolbar {
+    flex-wrap: wrap;
+  }
+
+  #search-input {
+    width: 100%;
+  }
+
+  #buttons-grid.view-list .cp-template-card {
+    flex-direction: column;
+  }
+  #buttons-grid.view-list .cp-template-card-preview {
+    width: auto;
+    min-width: auto;
+    border-right: none;
+    border-bottom: 1px solid #eee;
+  }
+}

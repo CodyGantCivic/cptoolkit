@@ -1,0 +1,2930 @@
+{
+  "FancyButtons": {
+    "Standard_2": {
+      "savedImages": {
+        "/ImageRepository/Document?documentID=242": "ext:images/templates/standard2-outer-circle.svg",
+        "/ImageRepository/Document?documentID=243": "ext:images/templates/standard2-inner-icon.svg"
+      },
+      "styles": [
+        {
+          "Key": "fancyButtonNormalOuterBackgroundColor",
+          "Value": "rgb(255, 255, 255)"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundGradientStartColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundGradientEndColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundGradientDegrees",
+          "Value": "45"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImageSource",
+          "Value": "/ImageRepository/Document?documentID=242"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionXPrecise",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionX",
+          "Value": "20"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionYPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderWidth",
+          "Value": "4"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderColor",
+          "Value": "rgba(78, 89, 110, 0.75)"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderApplyToTop",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderApplyToRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderApplyToBottom",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderApplyToLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadius",
+          "Value": "8"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadiusApplyToTopLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadiusApplyToTopRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadiusApplyToBottomRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadiusApplyToBottomLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundGradientStartColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundGradientEndColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundGradientDegrees",
+          "Value": "45"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImageSource",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionXPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionYPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderWidth",
+          "Value": "4"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderColor",
+          "Value": "rgb(177, 192, 128)"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderApplyToTop",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderApplyToRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderApplyToBottom",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderApplyToLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadiusApplyToTopLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadiusApplyToTopRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadiusApplyToBottomRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadiusApplyToBottomLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonOuterBackgroundNormalForceSquare",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingTop",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingRight",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingBottom",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingLeft",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundWidth",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundHeight",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundGradientStartColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundGradientEndColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundGradientDegrees",
+          "Value": "45"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImageSource",
+          "Value": "/ImageRepository/Document?documentID=243"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionXPrecise",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionX",
+          "Value": "29"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionYPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderWidth",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderApplyToTop",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderApplyToRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderApplyToBottom",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderApplyToLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadiusApplyToTopLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadiusApplyToTopRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadiusApplyToBottomRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadiusApplyToBottomLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundGradientStartColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundGradientEndColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundGradientDegrees",
+          "Value": "45"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImageSource",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionXPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionYPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderWidth",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderApplyToTop",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderApplyToRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderApplyToBottom",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderApplyToLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadiusApplyToTopLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadiusApplyToTopRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadiusApplyToBottomRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadiusApplyToBottomLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingTop",
+          "Value": "10"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingRight",
+          "Value": "20"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingBottom",
+          "Value": "10"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingLeft",
+          "Value": "108"
+        },
+        {
+          "Key": "fancyButtonNormalTextColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextFontSize",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextUnderline",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonNormalTextShadowColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextShadowBlurRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextShadowOffsetX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextShadowOffsetY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextFontSize",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextUnderline",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonHoverTextShadowColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextShadowBlurRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextShadowOffsetX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextShadowOffsetY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton2NormalTextColor",
+          "Value": "rgb(0, 0, 0)"
+        },
+        {
+          "Key": "fancyButton2NormalTextFontSize",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton2NormalTextUnderline",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButton2NormalTextShadowColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton2NormalTextShadowBlurRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton2NormalTextShadowOffsetX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton2NormalTextShadowOffsetY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton2HoverTextColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton2HoverTextFontSize",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton2HoverTextUnderline",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButton2HoverTextShadowColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton2HoverTextShadowBlurRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton2HoverTextShadowOffsetX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton2HoverTextShadowOffsetY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton1NormalTextColor",
+          "Value": "rgb(30, 68, 30)"
+        },
+        {
+          "Key": "fancyButton1NormalTextFontSize",
+          "Value": "1.2"
+        },
+        {
+          "Key": "fancyButton1NormalTextUnderline",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButton1NormalTextShadowColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton1NormalTextShadowBlurRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton1NormalTextShadowOffsetX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton1NormalTextShadowOffsetY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton1HoverTextColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton1HoverTextFontSize",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton1HoverTextUnderline",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButton1HoverTextShadowColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton1HoverTextShadowBlurRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton1HoverTextShadowOffsetX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton1HoverTextShadowOffsetY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingTop",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingRight",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingBottom",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingLeft",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton2NormalTextStylePaddingTop",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton2NormalTextStylePaddingRight",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton2NormalTextStylePaddingBottom",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton2NormalTextStylePaddingLeft",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton1NormalTextStylePaddingTop",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton1NormalTextStylePaddingRight",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton1NormalTextStylePaddingBottom",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton1NormalTextStylePaddingLeft",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundGradientDirection",
+          "Value": "vertical"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionXKeyword",
+          "Value": "left"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionXUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionYKeyword",
+          "Value": "center"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionYUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImageRepeat",
+          "Value": "no-repeat"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderStyle",
+          "Value": "solid"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadiusUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundGradientDirection",
+          "Value": "vertical"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionXKeyword",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionXUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionYKeyword",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionYUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImageRepeat",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderStyle",
+          "Value": "solid"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadiusUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingTopUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingRightUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingBottomUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingLeftUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundWidthUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundHeightUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundGradientDirection",
+          "Value": "vertical"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionXKeyword",
+          "Value": "left"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionXUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionYKeyword",
+          "Value": "center"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionYUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImageRepeat",
+          "Value": "no-repeat"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderStyle",
+          "Value": "None"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadiusUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundGradientDirection",
+          "Value": "vertical"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionXKeyword",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionXUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionYKeyword",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionYUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImageRepeat",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderStyle",
+          "Value": "None"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadiusUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingTopUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingRightUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingBottomUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingLeftUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalTextAlignment",
+          "Value": "left"
+        },
+        {
+          "Key": "fancyButtonHoverTextAlignment",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton2NormalTextAlignment",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton2HoverTextAlignment",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton1NormalTextAlignment",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton1HoverTextAlignment",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingTopUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingRightUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingBottomUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingLeftUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButton2NormalTextStylePaddingTopUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButton2NormalTextStylePaddingRightUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButton2NormalTextStylePaddingBottomUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButton2NormalTextStylePaddingLeftUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButton1NormalTextStylePaddingTopUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButton1NormalTextStylePaddingRightUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButton1NormalTextStylePaddingBottomUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButton1NormalTextStylePaddingLeftUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundMiscStyles",
+          "Value": "transition: all .2s ease-in-out;"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundMiscStyles",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundMiscStyles",
+          "Value": "line-height: 1.2;\nheight: 105px;"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundMiscStyles",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextMiscStyles",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextMiscStyles",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton2NormalTextMiscStyles",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton2HoverTextMiscStyles",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButton1NormalTextMiscStyles",
+          "Value": "display: inline-block;\npadding-bottom: 6px;"
+        },
+        {
+          "Key": "fancyButton1HoverTextMiscStyles",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextFontFamily",
+          "Value": "Arial"
+        },
+        {
+          "Key": "fancyButtonNormalTextFontVariant",
+          "Value": "400"
+        },
+        {
+          "Key": "fancyButton1NormalTextFontFamily",
+          "Value": "Montserrat"
+        },
+        {
+          "Key": "fancyButton1NormalTextFontVariant",
+          "Value": "700"
+        },
+        {
+          "Key": "fancyButton2NormalTextFontFamily",
+          "Value": "Montserrat"
+        },
+        {
+          "Key": "fancyButton2NormalTextFontVariant",
+          "Value": "400"
+        }
+      ],
+      "previewText": "<span class=\"textStyle1\">Standard 2</span><span class=\"textStyle2\">Secondary Text</span>",
+      "buttonText": "<span class=\"textStyle1\">Agendas &amp; Minutes</span><br><span class=\"textStyle2\">Brief secondary text populates here.</span>",
+      "image": "",
+      "hoverImage": "",
+      "startDate": "",
+      "endDate": "",
+      "linkUrl": "/",
+      "openInNewWindow": false
+    },
+    "Standard_3": {
+      "savedImages": {
+        "/ImageRepository/Document?documentID=132": "ext:images/templates/standard-outer-bg.svg",
+        "/ImageRepository/Document?documentID=121": "ext:images/templates/standard-inner-icon.svg"
+      },
+      "styles": [
+        {
+          "Key": "fancyButtonNormalOuterBackgroundColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundGradientStartColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundGradientEndColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundGradientDegrees",
+          "Value": "45"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImageSource",
+          "Value": "/ImageRepository/Document?documentID=132"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionXPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionYPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderWidth",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderApplyToTop",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderApplyToRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderApplyToBottom",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderApplyToLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadiusApplyToTopLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadiusApplyToTopRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadiusApplyToBottomRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadiusApplyToBottomLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundGradientStartColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundGradientEndColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundGradientDegrees",
+          "Value": "45"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImageSource",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionXPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionYPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderWidth",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderApplyToTop",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderApplyToRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderApplyToBottom",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderApplyToLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadiusApplyToTopLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadiusApplyToTopRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadiusApplyToBottomRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadiusApplyToBottomLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonOuterBackgroundNormalForceSquare",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingTop",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingRight",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingBottom",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingLeft",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundWidth",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundHeight",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundGradientStartColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundGradientEndColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundGradientDegrees",
+          "Value": "45"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImageSource",
+          "Value": "/ImageRepository/Document?documentID=121"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionXPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionYPrecise",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionY",
+          "Value": "20"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderWidth",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderApplyToTop",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderApplyToRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderApplyToBottom",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderApplyToLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadiusApplyToTopLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadiusApplyToTopRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadiusApplyToBottomRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadiusApplyToBottomLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundGradientStartColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundGradientEndColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundGradientDegrees",
+          "Value": "45"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImageSource",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionXPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionYPrecise",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionY",
+          "Value": "15"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderWidth",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderApplyToTop",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderApplyToRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderApplyToBottom",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderApplyToLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadiusApplyToTopLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadiusApplyToTopRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadiusApplyToBottomRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadiusApplyToBottomLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingTop",
+          "Value": "115"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingRight",
+          "Value": "5"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingBottom",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingLeft",
+          "Value": "5"
+        },
+        {
+          "Key": "fancyButtonNormalTextColor",
+          "Value": "rgb(34, 34, 34)"
+        },
+        {
+          "Key": "fancyButtonNormalTextFontSize",
+          "Value": "1.1"
+        },
+        {
+          "Key": "fancyButtonNormalTextUnderline",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonNormalTextShadowColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextShadowBlurRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextShadowOffsetX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextShadowOffsetY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextFontSize",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextUnderline",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverTextShadowColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextShadowBlurRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextShadowOffsetX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextShadowOffsetY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingTop",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingRight",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingBottom",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingLeft",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundGradientDirection",
+          "Value": "vertical"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionXKeyword",
+          "Value": "center"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionXUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionYKeyword",
+          "Value": "top"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionYUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImageRepeat",
+          "Value": "no-repeat"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderStyle",
+          "Value": "None"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadiusUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundGradientDirection",
+          "Value": "vertical"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionXKeyword",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionXUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionYKeyword",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionYUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImageRepeat",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderStyle",
+          "Value": "None"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadiusUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingTopUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingRightUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingBottomUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingLeftUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundWidthUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundHeightUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundGradientDirection",
+          "Value": "vertical"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionXKeyword",
+          "Value": "center"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionXUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionYKeyword",
+          "Value": "top"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionYUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImageRepeat",
+          "Value": "no-repeat"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderStyle",
+          "Value": "None"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadiusUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundGradientDirection",
+          "Value": "vertical"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionXKeyword",
+          "Value": "center"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionXUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionYKeyword",
+          "Value": "top"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionYUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImageRepeat",
+          "Value": "no-repeat"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderStyle",
+          "Value": "None"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadiusUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingTopUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingRightUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingBottomUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingLeftUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalTextAlignment",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextAlignment",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingTopUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingRightUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingBottomUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingLeftUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundMiscStyles",
+          "Value": "transition: all .3s ease-in-out;"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundMiscStyles",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundMiscStyles",
+          "Value": "line-height: 1.2;\nbackground-size: 60px;\nposition: relative;\ntransition: all .2s ease-in-out;"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundMiscStyles",
+          "Value": "background-size: 70px;"
+        },
+        {
+          "Key": "fancyButtonNormalTextMiscStyles",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextMiscStyles",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextFontFamily",
+          "Value": "Roboto"
+        },
+        {
+          "Key": "fancyButtonNormalTextFontVariant",
+          "Value": "700"
+        }
+      ],
+      "previewText": "Standard 3",
+      "buttonText": "Agendas &amp; Minutes",
+      "image": "",
+      "hoverImage": "",
+      "startDate": "",
+      "endDate": "",
+      "linkUrl": "/",
+      "openInNewWindow": false
+    },
+    "Standard_4": {
+      "savedImages": {
+        "/ImageRepository/Document?documentID=128": "ext:images/templates/standard4-outer-icon.svg"
+      },
+      "styles": [
+        {
+          "Key": "fancyButtonNormalOuterBackgroundColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundGradientStartColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundGradientEndColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundGradientDegrees",
+          "Value": "45"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImageSource",
+          "Value": "/ImageRepository/Document?documentID=128"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionXPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionYPrecise",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionY",
+          "Value": "5"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderWidth",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderApplyToTop",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderApplyToRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderApplyToBottom",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderApplyToLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadiusApplyToTopLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadiusApplyToTopRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadiusApplyToBottomRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadiusApplyToBottomLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundGradientStartColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundGradientEndColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundGradientDegrees",
+          "Value": "45"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImageSource",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionXPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionYPrecise",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionY",
+          "Value": "0"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderWidth",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderApplyToTop",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderApplyToRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderApplyToBottom",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderApplyToLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadiusApplyToTopLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadiusApplyToTopRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadiusApplyToBottomRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadiusApplyToBottomLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonOuterBackgroundNormalForceSquare",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingTop",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingRight",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingBottom",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingLeft",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundWidth",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundHeight",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundGradientStartColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundGradientEndColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundGradientDegrees",
+          "Value": "45"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImageSource",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionXPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionYPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderWidth",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderApplyToTop",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderApplyToRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderApplyToBottom",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderApplyToLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadiusApplyToTopLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadiusApplyToTopRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadiusApplyToBottomRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadiusApplyToBottomLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundGradientStartColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundGradientEndColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundGradientDegrees",
+          "Value": "45"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImageSource",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionXPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionYPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderWidth",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderApplyToTop",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderApplyToRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderApplyToBottom",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderApplyToLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadiusApplyToTopLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadiusApplyToTopRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadiusApplyToBottomRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadiusApplyToBottomLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingTop",
+          "Value": "98"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingRight",
+          "Value": "5"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingBottom",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingLeft",
+          "Value": "5"
+        },
+        {
+          "Key": "fancyButtonNormalTextColor",
+          "Value": "rgb(24, 56, 59)"
+        },
+        {
+          "Key": "fancyButtonNormalTextFontSize",
+          "Value": "1.1"
+        },
+        {
+          "Key": "fancyButtonNormalTextUnderline",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonNormalTextShadowColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextShadowBlurRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextShadowOffsetX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextShadowOffsetY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextFontSize",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextUnderline",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverTextShadowColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextShadowBlurRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextShadowOffsetX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextShadowOffsetY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingTop",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingRight",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingBottom",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingLeft",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundGradientDirection",
+          "Value": "vertical"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionXKeyword",
+          "Value": "center"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionXUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionYKeyword",
+          "Value": "top"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionYUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImageRepeat",
+          "Value": "no-repeat"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderStyle",
+          "Value": "None"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadiusUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundGradientDirection",
+          "Value": "vertical"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionXKeyword",
+          "Value": "center"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionXUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionYKeyword",
+          "Value": "top"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionYUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImageRepeat",
+          "Value": "no-repeat"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderStyle",
+          "Value": "None"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadiusUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingTopUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingRightUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingBottomUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingLeftUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundWidthUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundHeightUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundGradientDirection",
+          "Value": "vertical"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionXKeyword",
+          "Value": "left"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionXUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionYKeyword",
+          "Value": "top"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionYUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImageRepeat",
+          "Value": "no-repeat"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderStyle",
+          "Value": "None"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadiusUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundGradientDirection",
+          "Value": "vertical"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionXKeyword",
+          "Value": "left"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionXUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionYKeyword",
+          "Value": "top"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionYUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImageRepeat",
+          "Value": "no-repeat"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderStyle",
+          "Value": "None"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadiusUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingTopUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingRightUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingBottomUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingLeftUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalTextAlignment",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextAlignment",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingTopUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingRightUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingBottomUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingLeftUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundMiscStyles",
+          "Value": "background-size: 92px;\ntransition: all .3s ease-in-out;\nposition: relative;"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundMiscStyles",
+          "Value": "background-size: 102px;"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundMiscStyles",
+          "Value": "line-height: 1.2;"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundMiscStyles",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextMiscStyles",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextMiscStyles",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextFontFamily",
+          "Value": "Lato"
+        },
+        {
+          "Key": "fancyButtonNormalTextFontVariant",
+          "Value": "700"
+        }
+      ],
+      "previewText": "Standard 4",
+      "buttonText": "Agendas &amp; Minutes",
+      "image": "",
+      "hoverImage": "",
+      "startDate": "",
+      "endDate": "",
+      "linkUrl": "/",
+      "openInNewWindow": false
+    },
+    "Standard_5": {
+      "savedImages": {
+        "/ImageRepository/Document?documentID=147": "ext:images/templates/standard5-outer-icon.svg"
+      },
+      "styles": [
+        {
+          "Key": "fancyButtonNormalOuterBackgroundColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundGradientStartColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundGradientEndColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundGradientDegrees",
+          "Value": "45"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImageSource",
+          "Value": "/ImageRepository/Document?documentID=147"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionXPrecise",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionX",
+          "Value": "20"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionYPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderWidth",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderApplyToTop",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderApplyToRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderApplyToBottom",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderApplyToLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadiusApplyToTopLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadiusApplyToTopRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadiusApplyToBottomRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadiusApplyToBottomLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundColor",
+          "Value": "rgb(166, 77, 41)"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundGradientStartColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundGradientEndColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundGradientDegrees",
+          "Value": "45"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImageSource",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionXPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionYPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderWidth",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderApplyToTop",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderApplyToRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderApplyToBottom",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderApplyToLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadiusApplyToTopLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadiusApplyToTopRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadiusApplyToBottomRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadiusApplyToBottomLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonOuterBackgroundNormalForceSquare",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingTop",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingRight",
+          "Value": "20"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingBottom",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingLeft",
+          "Value": "85"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundWidth",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundHeight",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundGradientStartColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundGradientEndColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundGradientDegrees",
+          "Value": "45"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImageSource",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionXPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionYPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderWidth",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderApplyToTop",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderApplyToRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderApplyToBottom",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderApplyToLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadiusApplyToTopLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadiusApplyToTopRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadiusApplyToBottomRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadiusApplyToBottomLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundGradientStartColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundGradientEndColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundGradientDegrees",
+          "Value": "45"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImageSource",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionXPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionYPrecise",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderWidth",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderApplyToTop",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderApplyToRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderApplyToBottom",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderApplyToLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadiusApplyToTopLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadiusApplyToTopRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadiusApplyToBottomRight",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadiusApplyToBottomLeft",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingTop",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingRight",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingBottom",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingLeft",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextColor",
+          "Value": "rgb(255, 255, 255)"
+        },
+        {
+          "Key": "fancyButtonNormalTextFontSize",
+          "Value": "1.2"
+        },
+        {
+          "Key": "fancyButtonNormalTextUnderline",
+          "Value": "False"
+        },
+        {
+          "Key": "fancyButtonNormalTextShadowColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextShadowBlurRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextShadowOffsetX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextShadowOffsetY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextFontSize",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextUnderline",
+          "Value": "True"
+        },
+        {
+          "Key": "fancyButtonHoverTextShadowColor",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextShadowBlurRadius",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextShadowOffsetX",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextShadowOffsetY",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingTop",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingRight",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingBottom",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingLeft",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundGradientDirection",
+          "Value": "vertical"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionXKeyword",
+          "Value": "left"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionXUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionYKeyword",
+          "Value": "center"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImagePositionYUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundImageRepeat",
+          "Value": "no-repeat"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderStyle",
+          "Value": "None"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundBorderRadiusUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundGradientDirection",
+          "Value": "vertical"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionXKeyword",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionXUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionYKeyword",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImagePositionYUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundImageRepeat",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderStyle",
+          "Value": "None"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundBorderRadiusUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingTopUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingRightUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingBottomUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundPaddingLeftUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundWidthUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundHeightUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundGradientDirection",
+          "Value": "vertical"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionXKeyword",
+          "Value": "left"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionXUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionYKeyword",
+          "Value": "top"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImagePositionYUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundImageRepeat",
+          "Value": "no-repeat"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderStyle",
+          "Value": "None"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundBorderRadiusUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundGradientDirection",
+          "Value": "vertical"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionXKeyword",
+          "Value": "left"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionXUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionYKeyword",
+          "Value": "top"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImagePositionYUnit",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundImageRepeat",
+          "Value": "no-repeat"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderStyle",
+          "Value": "None"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundBorderRadiusUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingTopUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingRightUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingBottomUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundPaddingLeftUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalTextAlignment",
+          "Value": "left"
+        },
+        {
+          "Key": "fancyButtonHoverTextAlignment",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingTopUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingRightUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingBottomUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalTextStylePaddingLeftUnits",
+          "Value": "px"
+        },
+        {
+          "Key": "fancyButtonNormalOuterBackgroundMiscStyles",
+          "Value": "transition: all .3s ease-in-out;\nline-height: 1.2;"
+        },
+        {
+          "Key": "fancyButtonHoverOuterBackgroundMiscStyles",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalInnerBackgroundMiscStyles",
+          "Value": "height: 120px;\n"
+        },
+        {
+          "Key": "fancyButtonHoverInnerBackgroundMiscStyles",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextMiscStyles",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonHoverTextMiscStyles",
+          "Value": ""
+        },
+        {
+          "Key": "fancyButtonNormalTextFontFamily",
+          "Value": "Poppins"
+        },
+        {
+          "Key": "fancyButtonNormalTextFontVariant",
+          "Value": "700"
+        }
+      ],
+      "previewText": "Standard 5",
+      "buttonText": "Agendas &amp; Minutes",
+      "image": "",
+      "hoverImage": "",
+      "startDate": "",
+      "endDate": "",
+      "linkUrl": "/",
+      "openInNewWindow": false
+    }
+  }
+}

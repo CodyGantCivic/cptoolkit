@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CivicPlus Toolkit - Custom CSS Deployments</title>
+  <link rel="stylesheet" type="text/css" href="../css/custom-css-deployments.css" />
+</head>
+<body>
+  <header class="top-banner">
+    <div class="banner-inner">
+      <h1>Custom CSS Deployments</h1>
+      <p>Rule-based CSS overrides for CivicPlus pages</p>
+    </div>
+  </header>
+
+  <main class="page-wrap">
+    <section class="status-panel" id="tool-status-panel">
+      <div class="status-text" id="tool-status-text">Loading tool status...</div>
+      <button type="button" class="status-action" id="enable-tool-btn" style="display: none;">Enable Tool</button>
+    </section>
+
+    <section class="toolbar">
+      <button type="button" class="toolbar-btn primary" id="new-rule-btn">New Rule</button>
+      <button type="button" class="toolbar-btn" id="import-json-btn">Import JSON</button>
+      <button type="button" class="toolbar-btn" id="export-json-btn">Export JSON</button>
+      <button type="button" class="toolbar-btn" id="import-css-btn">Import CSS File</button>
+      <input type="file" id="import-json-file" accept=".json,application/json" hidden />
+      <input type="file" id="import-css-file" accept=".css,text/css" hidden />
+    </section>
+
+    <section class="notice">
+      Default scope is <strong>Admin Pages Only</strong>. This prevents accidental styling of live public pages.
+    </section>
+
+    <section id="rules-list" class="rules-list"></section>
+
+    <section id="empty-state" class="empty-state" style="display: none;">
+      <h2>No Deployment Rules Yet</h2>
+      <p>Create your first rule to deploy custom CSS to specific CMS pages.</p>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" style="display: none;"></div>
+
+  <div class="modal-overlay" id="rule-modal-overlay" style="display: none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="rule-modal-title">New Deployment Rule</h3>
+        <button type="button" class="modal-close" id="rule-modal-close" aria-label="Close">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-row">
+          <label for="rule-name">Rule Name</label>
+          <input type="text" id="rule-name" placeholder="Theme Manager polish" />
+        </div>
+
+        <div class="form-row inline">
+          <label class="checkbox-row">
+            <input type="checkbox" id="rule-enabled" checked />
+            <span>Rule is enabled</span>
+          </label>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-row">
+            <label for="rule-scope">Scope</label>
+            <select id="rule-scope">
+              <option value="admin-only">Admin Pages Only (Recommended)</option>
+              <option value="all-pages">Any Page on This Site</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <label for="rule-match-type">Page Match Type</label>
+            <select id="rule-match-type">
+              <option value="path-prefix">Path Starts With</option>
+              <option value="path-exact">Exact Path</option>
+              <option value="path-contains">Path Contains</option>
+              <option value="url-contains">URL Contains</option>
+              <option value="regex-path">Regex on Path</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="rule-match-value">Match Value</label>
+          <input type="text" id="rule-match-value" placeholder="/Admin/DesignCenter/Themes" />
+          <p class="hint" id="rule-match-hint">Example: <code>/Admin/DesignCenter/Themes</code></p>
+        </div>
+
+        <div class="form-row">
+          <label for="rule-css">CSS</label>
+          <textarea id="rule-css" rows="14" placeholder=".cpPopOver { border-radius: 10px; }"></textarea>
+          <div class="textarea-actions">
+            <button type="button" class="toolbar-btn small" id="modal-import-css-btn">Load CSS File</button>
+            <input type="file" id="modal-import-css-file" accept=".css,text/css" hidden />
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="toolbar-btn danger" id="rule-delete-btn" style="display: none;">Delete</button>
+        <div class="spacer"></div>
+        <button type="button" class="toolbar-btn" id="rule-cancel-btn">Cancel</button>
+        <button type="button" class="toolbar-btn primary" id="rule-save-btn">Save Rule</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/custom-css-deployments-page.js"></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+.version {
+  margin: 1em 0 2em 1em;
+  padding: 1em;
+}
+
+h4 {
+  font-weight: bold;
+}
+
+h5 {
+  margin: 1em 0 0.5em 1em;
+  font-weight: bold;
+}
+
+.version > div {
+  padding-bottom: 1em;
+  padding-left: 2em;
+}
+
+.version > div i {
+  display: block;
+  font-weight: bold;
+}

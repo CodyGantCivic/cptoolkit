@@ -1,0 +1,7 @@
+﻿# Ignore generated or machine-local files
+mv3-extension-dev/
+mv3-extension-prod/
+*.zip
+_merge_backup_*/
+_cody_repo_latest/
+.vscode/

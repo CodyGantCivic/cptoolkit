@@ -1,0 +1,418 @@
+{
+  "Content": {
+    "Activities": {
+      "url": "/Admin/Activities",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Agenda Center": {
+      "url": "/Admin/AgendaCenter",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Alert Center": {
+      "url": "/Admin/AlertCenter.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Analytics": {
+      "url": "/Admin/Analytics/Parameters",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Archive Center": {
+      "url": "/Admin/Archive.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Bid Postings": {
+      "url": "/Admin/Bids.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Blog": {
+      "url": "/Admin/Blog.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Calendar": {
+      "url": "/Admin/Calendar.aspx",
+      "default-icon": "fa fa-calendar-alt",
+      "default-favorite": true
+    },
+    "Carbon Calculator": {
+      "url": "/Admin/carboncalculator.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "CivicMedia": {
+      "url": "/Admin/CivicMedia.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "CivicSend": {
+      "url": "/Admin/CivicSend",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Classifieds": {
+      "url": "/Admin/Classifieds.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Community Connection": {
+      "url": "/Admin/CommunityConnection",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Community Voice": {
+      "url": "/Admin/CommunityVoice",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Document Center": {
+      "url": "/Admin/DocumentCenter",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "ePayment Center": {
+      "url": "/Admin/EPayment",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Facilities": {
+      "url": "/Admin/Facilities",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Facilities": {
+      "url": "/Admin/Facilities.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "FAQs": {
+      "url": "/Admin/FAQ.aspx",
+      "default-icon": "fa fa-question-circle",
+      "default-favorite": true
+    },
+    "Form Center": {
+      "url": "/Admin/FormCenter",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Forms": {
+      "url": "/Admin/Forms.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Graphic Links": {
+      "url": "/Admin/GraphicLinks.aspx",
+      "default-icon": "fa fa-th",
+      "default-favorite": true
+    },
+    "Healthy City": {
+      "url": "/Admin/healthycity.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "iCalendar": {
+      "url": "/Admin/iCalendar.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Info": {
+      "url": "/Admin/Info.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Info Advanced": {
+      "url": "/Admin/InfoII.aspx",
+      "default-icon": "fa fa-info-circle",
+      "default-favorite": true
+    },
+    "Jobs": {
+      "url": "/Admin/Jobs.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Licenses": {
+      "url": "/Admin/licenses.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Locations": {
+      "url": "/Admin/Locations",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Media Center": {
+      "url": "/Admin/MediaCenter.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "My Account": {
+      "url": "/Admin/MyAccount",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "My Dashboard": {
+      "url": "/Admin/MyDashboard",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "News Flash": {
+      "url": "/Admin/CivicAlerts.aspx",
+      "default-icon": "fa fa-newspaper",
+      "default-favorite": true
+    },
+    "Notify Me": {
+      "url": "/Admin/list.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Online Job Application": {
+      "url": "/Admin/Application.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Opinion Polls": {
+      "url": "/Admin/CityPolls.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Pages": {
+      "url": "/Admin/Pages",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Photo Gallery": {
+      "url": "/Admin/Gallery.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Postcard": {
+      "url": "/Admin/Postcard.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Quick Links": {
+      "url": "/Admin/QuickLinks.aspx",
+      "default-icon": "fa fa-link",
+      "default-favorite": true
+    },
+    "Real Estate Locator": {
+      "url": "/Admin/RealEstate.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "RequestTracker": {
+      "url": "/Admin/RequestTracker.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Resource Directory": {
+      "url": "/Admin/BusinessDirectoryii.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Services": {
+      "url": "/Admin/Services.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Site Search": {
+      "url": "/Admin/Search.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Staff Directory": {
+      "url": "/Admin/Directory.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    }
+  },
+  "Site Tools": {
+    "Content Report": {
+      "url": "/Admin/ContentReport",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Custom404": {
+      "url": "/Admin/Custom404",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Design Center": {
+      "url": "/Admin/DesignCenter",
+      "default-icon": "fa fa-object-group",
+      "default-favorite": true
+    },
+    "Email Page": {
+      "url": "/Admin/EmailPage",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Expiring Items": {
+      "url": "/Admin/Expiring.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Group Administration": {
+      "url": "/Admin/GroupAdmin.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "History Log": {
+      "url": "/Admin/HistoryLog.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Page Notes": {
+      "url": "/Admin/Notebook",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Piwik": {
+      "url": "/Admin/AnalyticsRedirect.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Public Login": {
+      "url": "/Admin/PublicLogin.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Redirects": {
+      "url": "/Admin/Redirects",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "RSS": {
+      "url": "/Admin/rss.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Search": {
+      "url": "/Admin/Search",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Site Administration": {
+      "url": "/Admin/siteAdmin.aspx",
+      "default-icon": "fa fa-wrench",
+      "default-favorite": true
+    },
+    "Site Cleanup": {
+      "url": "/Admin/SiteCleanup.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Site Map": {
+      "url": "/SiteMap",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Site Properties": {
+      "url": "/Admin/SiteProperties",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Subscriber Management": {
+      "url": "/Admin/SubscriberManagement",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Tag Management": {
+      "url": "/Admin/TagManagement",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "User Administration": {
+      "url": "/Admin/UserAdmin.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    }
+  },
+  "Live Edit": {
+    "Activities": {
+      "url": "/Activities",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Alert Center": {
+      "url": "/AlertCenter.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Blog": {
+      "url": "/Blog.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Calendar": {
+      "url": "/Calendar.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "CivicMedia": {
+      "url": "/CivicMedia.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Community Voice": {
+      "url": "/CommunityVoice",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Design Center": {
+      "url": "/DesignCenter",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Facilities": {
+      "url": "/Facilities",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "FAQs": {
+      "url": "/FAQ.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Jobs": {
+      "url": "/Jobs.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Media Center": {
+      "url": "/MediaCenter.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "My Dashboard": {
+      "url": "/MyDashboard",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "News Flash": {
+      "url": "/CivicAlerts.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Pages": {
+      "url": "/Pages",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Photo Gallery": {
+      "url": "/Gallery.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    },
+    "Quick Links": {
+      "url": "/QuickLinks.aspx",
+      "default-icon": "",
+      "default-favorite": false
+    }
+  }
+}

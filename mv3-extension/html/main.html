@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" type="text/css" href="../css/external/fontawesome-all.min.css" />
+  <style>
+    body {
+      width: 340px;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      margin: 0;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    .header {
+      background: linear-gradient(135deg, #af282f, #8c2026);
+      color: white;
+      padding: 12px 15px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-direction:column;
+      text-transform:uppercase;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header img {
+      height: 24px;
+      width: auto;
+    }
+    .header-text h2 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .header-text .version {
+      font-size: 11px;
+      opacity: 0.9;
+      margin-top: 2px;
+    }
+    .content {
+      padding: 15px;
+    }
+    .status {
+      padding: 10px;
+      margin: 0 0 10px 0;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    .status.active {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #a5d6a7;
+    }
+    .status.inactive {
+      background: #fff3e0;
+      color: #b45309;
+      border: 1px solid #ffcc80;
+    }
+    .section {
+      margin-top: 10px;
+    }
+    .capture-panel {
+      border: 1px solid #e3c2c4;
+      border-radius: 6px;
+      background: #fff8f8;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .capture-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #af282f;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .capture-status {
+      font-size: 12px;
+      color: #5c3537;
+      margin-bottom: 8px;
+      line-height: 1.35;
+    }
+    .capture-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+      align-items: center;
+    }
+    .capture-panel button {
+      margin-top: 0;
+      width: auto;
+      padding: 8px 10px;
+      font-size: 12px;
+      line-height: 1;
+    }
+    .capture-btn.secondary {
+      background: #7b7b7b;
+    }
+    .capture-btn.secondary:hover {
+      background: #666;
+    }
+    .capture-input {
+      flex: 1;
+      border: 1px solid #c9a8aa;
+      border-radius: 4px;
+      font-size: 12px;
+      padding: 7px 8px;
+      min-width: 0;
+    }
+    .section-title {
+      font-size: 10px;
+      font-weight: 600;
+      color: #af282f;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .tools {
+      margin-top: 3px;
+    }
+    .tool {
+      padding: 6px 8px;
+      margin: 4px 0;
+      background: #f5f5f5;
+      border-radius: 3px;
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: background-color 0.15s, transform 0.1s;
+      user-select: none;
+    }
+    .tool:hover {
+      background: #ebebeb;
+    }
+    .tool:active {
+      transform: scale(0.98);
+    }
+    .tool.enabled {
+      background: #e8f5e9;
+    }
+    .tool.enabled:hover {
+      background: #d7ecd9;
+    }
+    .tool-status {
+      font-size: 10px;
+      font-weight: bold;
+    }
+    .tool-status.on {
+      color: #2e7d32;
+    }
+    .tool-status.off {
+      color: #999;
+    }
+    .tool-open-btn {
+      width: auto;
+      margin: 0 6px 0 auto;
+      padding: 5px 8px;
+      background: #fff;
+      border: 1px solid #d1d1d1;
+      border-radius: 3px;
+      color: #666;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1;
+    }
+    .tool-open-btn:hover {
+      background: rgba(175, 40, 47, 0.1);
+      border-color: #af282f;
+      color: #af282f;
+    }
+    .tool-open-btn:focus {
+      outline: 2px solid #af282f;
+      outline-offset: 1px;
+    }
+    #tools-container {
+    font-size: 16px;
+    overflow-y: scroll;
+    max-height: 300px;
+    }
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      background: #af282f;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #8c2026;
+    }
+    button:focus {
+      outline: 2px solid #af282f;
+      outline-offset: 2px;
+    }
+    #tool-mini-ide {
+      width: calc(100% - 54px);
+      position: relative;
+    }
+    #tool-mini-ide.enabled {
+      background: #e8f5e9;
+    }
+    #tool-mini-ide.enabled:hover:not(:has(.tool-snippets-btn:hover)) {
+      background: #d7ecd9;
+    }
+    #tool-mini-ide:hover:not(.enabled):not(:has(.tool-snippets-btn:hover)) {
+      background: #ebebeb;
+    }
+    #tool-mini-ide:has(.tool-snippets-btn:hover) {
+      background: #e8f5e9;
+    }
+    #tool-mini-ide:not(.enabled):has(.tool-snippets-btn:hover) {
+      background: #f5f5f5;
+    }
+    .tool-snippets-btn {
+      width: auto;
+      margin: 0 auto;
+      padding: 7px 7px;
+      background: none;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      color: #555;
+      cursor: pointer;
+      display: flex;
+      float: right;
+      align-items: center;
+      flex-shrink: 0;
+      transition: background 0.15s, border-color 0.15s;
+      position: absolute;
+      right: -34px;
+    }
+    .tool-snippets-btn:hover {
+      background: rgba(175, 40, 47, 0.1);
+      border-color: #af282f;
+      color: #af282f;
+    }
+    .tool-snippets-btn:focus {
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="../images/wordmark.png" alt="CivicPlus">
+    <div class="header-text">
+      <h2>Internal Toolkit</h2>
+    </div>
+  </div>
+  
+  <div class="content">
+    <div id="site-status" class="status"></div>
+
+    <div id="capture-panel" class="capture-panel">
+      <div class="capture-title">MCP Capture</div>
+      <div id="capture-status" class="capture-status">Checking capture status...</div>
+      <div class="capture-row">
+        <button id="toggle-capture" class="capture-btn secondary">Start Capture</button>
+        <button id="export-capture" class="capture-btn">Export JSON</button>
+      </div>
+      <div class="capture-row">
+        <input id="mcp-endpoint" class="capture-input" type="text" value="http://localhost:9001/collect" />
+        <button id="upload-capture" class="capture-btn">Send</button>
+      </div>
+    </div>
+    
+    <div id="tools-container">
+      <div class="loading">Loading tools...</div>
+    </div>
+    
+    <button id="open-options"><i class="fas fa-cog"></i> Open Settings</button>
+  </div>
+  
+  <script src="../js/popup.js"></script>
+</body>
+</html>

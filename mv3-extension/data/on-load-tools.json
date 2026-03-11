@@ -1,0 +1,207 @@
+{
+  "mini-ide": {
+    "name": "Mini IDE",
+    "description": "Adds syntax highlighting, validation, themes, and line numbers to CSS textareas.",
+    "enabled-by-default": true,
+    "version-introduced": "1.14.0",
+    "help-text": "Adds a VS Code-like editing experience to CSS textareas in Theme Manager, Widget Manager, and Fancy Button Builder. Features include syntax highlighting with light/dark themes, CSS validation with error detection, line numbers, character counting, and a CSS snippets library. Disable this if you prefer the plain textarea. Note: Core CSS functionality (.skinN replacement, text limits) is handled by the separate 'Widget Skin Advanced Style Helper' and 'Graphic Link Advanced Style Helper' tools."
+  },
+  "custom-css-deployer": {
+    "name": "Custom CSS Deployer",
+    "description": "Deploy your own CSS overrides to selected CMS pages using rule-based matching.",
+    "enabled-by-default": true,
+    "version-introduced": "1.1.0",
+    "help-text": "Lets you create reusable CSS deployment rules with page targeting (path prefix/exact/contains, URL contains, or regex). Rules are stored locally and can be imported/exported as JSON. Default scope is admin pages only so site-front styling is not affected unless you explicitly choose all-pages.",
+    "settings-link": {
+      "url": "/html/custom-css-deployments.html",
+      "text": "Open Custom CSS Deployments"
+    }
+  },
+  "auto-dismiss-help-welcome": {
+    "name": "Auto-dismiss Help and Welcome Messages",
+    "description": "Automatically dismisses welcome and help messages.",
+    "enabled-by-default": true,
+    "version-introduced": "1.5.0",
+    "help-text": "Automatically dismisses welcome and help messages."
+  },
+  "cp-ImportFancyButton": {
+    "name": "Import Fancy Buttons",
+    "description": "Allows you to Import Default Fancy Buttons.",
+    "enabled-by-default": true,
+    "version-introduced": "1.6.0",
+    "help-text": "Import fancy buttons from a built-in template library, your saved custom buttons, or pasted JSON. Also includes Export JSON (copy, download, or save to your personal library) and a Socials tab for bulk-uploading social media icon graphic links (Black, White, or Color SVGs) to a Document Center folder."
+  },
+  "cp-MultipleCategoryUpload": {
+    "name": "Multiple Category Upload",
+    "description": "Upload Multiple Categories at a time for several modules.",
+    "enabled-by-default": true,
+    "version-introduced": "1.5.9",
+    "help-text": "Upload Multiple Categories at a time for the Graphic Links, Quick Links, Info Advanced, Form Center, Calendar, and News Flash modules."
+  },
+  "cp-MultipleItemUpload": {
+    "name": "News Flash Related Categories Upload",
+    "description": "Displays a related Categories section for new News Flash items.",
+    "enabled-by-default": true,
+    "version-introduced": "1.5.9",
+    "help-text": "Displays a related Categories section for new News Flash items."
+  },
+  "cp-MultipleQuickLinks": {
+    "name": "Multiple Quick Links Upload",
+    "description": "Allows you to upload multiple Quick Links at a single time.",
+    "enabled-by-default": true,
+    "version-introduced": "1.5.9",
+    "help-text": "Allows you to upload multiple Quick Links at a single time via the appended 'Post Items' button."
+  },
+  "download-xml-css": {
+    "name": "Download XML/CSS",
+    "description": "Adds the ability to download a layout's XML and/or CSS from the Layout Manager",
+    "enabled-by-default": true,
+    "version-introduced": "1.5.0",
+    "help-text": "Adds the ability to download a layout's XML and/or CSS from the Layout Manager."
+  },
+  "layout-manager-sorter": {
+    "name": "Layout Manager Sorter",
+    "description": "Adds sorting and filtering controls to Layout Manager to reduce layout selection mistakes.",
+    "enabled-by-default": true,
+    "version-introduced": "1.1.0",
+    "help-text": "Adds a sort mode picker and quick filter on /Admin/DesignCenter/Layouts. Sort mode is persisted and automatically reapplied after activate/inactivate list refreshes."
+  },
+  "enforce-advanced-styles-text-limits": {
+    "name": "Enforce advanced styles text limits",
+    "description": "Enforce the 1000 character limit on widget skins and the 255 character limit on widget option sets.",
+    "enabled-by-default": true,
+    "version-introduced": "1.3.5",
+    "help-text": "Enforces the 1000 character limit on widget skin advanced styles (MiscAdvStyles) and the 255 character limit on widget option sets."
+  },
+  "module-icons": {
+    "name": "Favorite Module Icons",
+    "description": "Add icons and bold the text of favorite modules in the modules menu.",
+    "enabled-by-default": true,
+    "version-introduced": "1.0.0",
+    "settings-link": {
+      "url": "/html/options.html#favorite-modules",
+      "text": "Edit Favorite Modules"
+    },
+    "help-text": "This tool adds icons and bolds the text of favorite modules in the modules menu. You can add or remove favorite modules on the settings page."
+  },
+  "graphic-link-advanced-style-helper": {
+    "name": "Graphic Link Advanced Style Helper",
+    "description": "Makes writing advanced styles for graphic links easier.",
+    "enabled-by-default": true,
+    "version-introduced": "1.2.4",
+    "help-text": "This tool will replace any selector for a Graphic Link in its advanced styles with the correct selector."
+  },
+  "graphic-link-autofill": {
+    "name": "Graphic Link Autofill",
+    "description": "Automatically set the URL for common graphic links.",
+    "enabled-by-default": true,
+    "version-introduced": "1.0.5",
+    "help-text": "This tool will look at the text entered in a Graphic Link when it is edited, then it will automatically set the link if a relevant link is known. You can turn this off in the edit screen so that if you need to override the automatic link you can."
+  },
+  "input-focus": {
+    "name": "Input Field Focuser",
+    "description": "Automatically focus the first input in a form when any admin pages load.",
+    "enabled-by-default": true,
+    "version-introduced": "1.2.4",
+    "help-text": "This tool will automatically focus the first input in a form when any admin pages load. No need to click into the first field!"
+  },
+  "keyboard-shortcuts": {
+    "name": "Keyboard Shortcuts",
+    "description": "Add keyboard shortcuts for various tasks.",
+    "enabled-by-default": true,
+    "version-introduced": "1.2.0",
+    "settings-link": {
+      "url": "/html/help.html#keyboard-shortcuts",
+      "text": "View Shortcut Keys"
+    },
+    "help-text": "This tool adds keyboard shortcuts for save, save and push, save and publish, and add new item. On Windows, the shortcuts are CTRL+S to save, CTRL+SHIFT+S to save and push/publish, and CTRL+I to add a new item. On macOS it is ⌘+S to save, ⌘+SHIFT+S to save and push/publish, and ⌘+I to add a new item."
+  },
+  "prevent-timeout": {
+    "name": "Prevent Session Timeout",
+    "description": "Automatically continue the current session when it is about to expire.",
+    "enabled-by-default": true,
+    "version-introduced": "1.0.0",
+    "help-text": "Automatically dismisses the Session Timeout modal and restarts the session timer. Also sends a server keep-alive ping every 5 minutes to prevent the ASP.NET session from expiring independently. A badge counter on the extension icon shows how many times the session was auto-refreshed."
+  },
+  "quick-link-autofill": {
+    "name": "Quick Link Autofill",
+    "description": "Automatically set the URL for common quick links.",
+    "enabled-by-default": true,
+    "version-introduced": "1.0.4",
+    "help-text": "This tool will look at the text entered in a Quick Link when it is edited, then it will automatically set the link if a relevant link is known. You can turn this off in the edit screen so that if you need to override the automatic link you can."
+  },
+  "remember-image-picker-state": {
+    "name": "Remember Image Picker State",
+    "description": "Automatically opens the last-opened folder in the image picker modal.",
+    "enabled-by-default": true,
+    "version-introduced": "1.5.5",
+    "help-text": "Automatically opens the last-opened folder in the image picker modal, so you don't have to navigate to it every time. Ignores hidden iframes used by other toolkit tools."
+  },
+  "show-changelog": {
+    "name": "Show Changelog",
+    "description": "Show a changelog and highlight new features when the plugin updates.",
+    "enabled-by-default": false,
+    "version-introduced": "1.1.0",
+    "settings-link": {
+      "url": "/html/changelog.html",
+      "text": "View changelog now"
+    },
+    "help-text": "When this extension updates, this option will show you a page with the changes introduced. The changelog describes new tools, bug fixes, and/or other relevant information."
+  },
+  "theme-manager-enhancer": {
+    "name": "Theme Manager enhancer",
+    "description": "Minor fixes and enhancements to Theme Manager",
+    "enabled-by-default": true,
+    "version-introduced": "1.5.0",
+    "help-text": "This tool adds minor fixes and enhancements to Theme Manager, including changing the outline of the selected container in exploded view and unfixing the sticky structural container in exploded view. In Options, you can also choose how the toolkit handles .cpComponent:before bounds (safe override, CMS default, or off)."
+  },
+  "theme-manager-skin-organizer": {
+    "name": "Theme Manager Skin Organizer",
+    "description": "Adds category-based organization and filtering to Container Preview skins in Theme Manager.",
+    "enabled-by-default": true,
+    "version-introduced": "1.1.0",
+    "help-text": "On /DesignCenter/Themes/Index, this adds a category manager for Container Preview skins. Create your own categories (with colors), assign skins to categories, filter to include/exclude selected categories, and show color-coded skin ID badges next to each skin name."
+  },
+  "title-changer": {
+    "name": "Title Changer",
+    "description": "Add the current page's title to the tab title.",
+    "enabled-by-default": true,
+    "version-introduced": "1.0.0",
+    "help-text": "This tool will add the current page's title to the tab title, so that if you have multiple tabs open on a site you can tell which is which."
+  },
+  "widget-skin-advanced-style-helper": {
+    "name": "Widget Skin Advanced Style Helper",
+    "description": "Makes writing advanced styles for widget skins easier.",
+    "enabled-by-default": true,
+    "version-introduced": "1.3.5",
+    "help-text": "This tool will replace any selector for a widget skin in its advanced styles with the correct selector."
+  },
+  "widget-skin-default-override": {
+    "name": "Widget Skin Default Override",
+    "description": "Changes the default widget skin settings.",
+    "enabled-by-default": true,
+    "version-introduced": "1.5.1",
+    "help-text": "When creating a new widget skin, prompts you to override the default settings with more sensible values (e.g., Wrapper FontSize null, TextAlignment 0, Tab padding). Only applies to 'Create Skin', not 'Copy Skin'. Automatically saves the theme after applying overrides."
+  },
+  "xml-change-alerts": {
+    "name": "XML Major Change Alert",
+    "description": "Alerts you to changes that could cause data loss when uploading a new XML file.",
+    "enabled-by-default": true,
+    "version-introduced": "1.1.2",
+    "help-text": "This tool will alert you if any containers are missing on a new XML upload, which could cause any widgets, theme data, and other information associated with those containers to be lost."
+  },
+  "fix-copied-skin-references": {
+    "name": "Fix Copied Skin References",
+    "description": "Automatically fixes CSS skin ID references when copying widget skins.",
+    "enabled-by-default": true,
+    "version-introduced": "1.0.2",
+    "help-text": "When you copy a widget skin, the advanced styles (MiscellaneousStyles) may still reference the source skin's ID (e.g., .widget.skin101) instead of the new skin's ID. This tool automatically detects copies and updates the CSS references after the new skin gets its ID from the server. A notification will appear when references are fixed, prompting you to save again."
+  },
+  "adfs": {
+    "name": "ADFS / SSO Bypass",
+    "description": "Bypasses SAML/ADFS login redirects so you can use the standard CivicPlus login.",
+    "enabled-by-default": true,
+    "version-introduced": "1.0.0",
+    "help-text": "Some client sites use a corporate identity provider (ADFS, Entra ID, Okta) for admin login via SAML. This redirects the login page to the client's SSO, which CivicPlus employees can't authenticate against. This tool detects SAML login redirects and bypasses them to the standard CivicPlus login page (/Admin/?saml=off). It also auto-follows ADFS redirects on the CivicPlus identity server."
+  }
+}
