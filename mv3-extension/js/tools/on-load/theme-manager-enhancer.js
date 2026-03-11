@@ -57,13 +57,51 @@ body:not(.exploded) .cpComponent:before {
   function getBaseEnhancerCss() {
     return `
 /* [CP Toolkit] Theme Manager Enhancer Styles */
-/* 
-   Add your custom Theme Manager CSS below.
-   This block is intentionally left blank.
-   Keep selectors scoped to admin UI targets like:
-   .cpPopOver.common.options.adminWrap { ... }
-   .liveEditActionMenu { ... }
-*/
+
+/* Change outline when focused in exploded view */
+.exploded [data-cprole$="Container"].focused {
+    outline-style: dashed !important;
+}
+
+/* Unfix stickyStructural on exploded view */
+.exploded .stickySticky {
+    position: relative;
+    top: auto !important;
+}
+
+/* Fix padding when unfixed stickySticky on exploded view */
+.exploded #bodyWrapper {
+    padding-top: 47px !important;
+}
+
+/* Fix z-index issue with stickyStructural hover (caused by cpComponent hover z-index) */
+.stickyStructuralContainer.stickySticky:hover,
+.stickyStructuralContainer.stickyCollapsed:hover {
+    z-index: 100;
+}
+
+/* Fix Widget Skin cut-off */
+.modalContainer.modalContainerCP.manageWidgetSkins .cpForm>li .status {
+    position: static;
+}
+
+.modalContainer.modalContainerCP.manageWidgetSkins .cpForm>li .status:before {
+    content: "The skin above is ";
+}
+
+.modalContainer.modalContainerCP.manageWidgetSkins .cpForm>li input[type=text] {
+    padding-right: .5rem !important;
+}
+
+.currentWidgetSkins li.rename[data-active="False"] input {
+    background: #DDD;
+}
+
+/* Fix horizontal scroll bar (don't negative position first structuralContainer when exploded) */
+.exploded #bodyWrapper > .structuralContainer:before {
+    left: 0 !important;
+    right: 0 !important;
+}
 `;
   }
 

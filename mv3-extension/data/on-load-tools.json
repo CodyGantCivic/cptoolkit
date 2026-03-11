@@ -203,5 +203,12 @@
     "enabled-by-default": true,
     "version-introduced": "1.0.0",
     "help-text": "Some client sites use a corporate identity provider (ADFS, Entra ID, Okta) for admin login via SAML. This redirects the login page to the client's SSO, which CivicPlus employees can't authenticate against. This tool detects SAML login redirects and bypasses them to the standard CivicPlus login page (/Admin/?saml=off). It also auto-follows ADFS redirects on the CivicPlus identity server."
+  },
+  "redesign-manager-skin-sorter": {
+    "name": "Redesign Manager Skin Sorter",
+    "description": "Sorts widget skins in Redesign Manager by their Skin Organizer categories.",
+    "enabled-by-default": true,
+    "version-introduced": "1.1.0",
+    "help-text": "On /DesignCenter/RedesignManager/Index, this groups and sorts the Widget Skins list by the categories you defined in the Theme Manager Skin Organizer. Each category gets a colored header bar showing the category name and skin count. Uncategorized skins appear at the bottom. Requires the Skin Organizer to have categories and assignments configured."
   }
 }

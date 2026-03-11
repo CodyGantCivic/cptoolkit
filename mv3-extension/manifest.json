@@ -53,7 +53,8 @@
         "js/tools/on-load/cp-ImportFancyButton.js",
         "js/tools/on-load/remember-image-picker-state.js",
         "js/tools/on-load/fix-copied-skin-references.js",
-        "js/tools/on-load/adfs.js"
+        "js/tools/on-load/adfs.js",
+        "js/tools/on-load/redesign-manager-skin-sorter.js"
       ],
       "run_at": "document_start"
     }
@@ -79,6 +80,7 @@
         "js/tools/on-demand/*",
         "js/tools/on-load/helpers/*",
         "socials/*",
+        "css/custom-css-deployments.css",
         "css/external/fontawesome-all.min.css",
         "css/external/fontawesome-fonts/*"
       ],

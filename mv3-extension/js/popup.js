@@ -18,6 +18,7 @@ const categories = {
     "widget-skin-default-override",
     "theme-manager-enhancer",
     "theme-manager-skin-organizer",
+    "redesign-manager-skin-sorter",
     "enforce-advanced-styles-text-limits",
     "fix-copied-skin-references"
   ],
@@ -409,9 +410,9 @@ function generateToolsUI(settings) {
 
       if (toolId === 'custom-css-deployer') {
         const manageBtn = document.createElement('button');
-        manageBtn.className = 'tool-open-btn';
-        manageBtn.textContent = 'Manage';
+        manageBtn.className = 'tool-snippets-btn';
         manageBtn.title = 'Open Custom CSS Deployment Manager';
+        manageBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>';
         manageBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           openCustomCssManager();
@@ -456,6 +457,7 @@ document.getElementById('mcp-endpoint').addEventListener('keydown', (event) => {
     uploadCapture();
   }
 });
+
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {

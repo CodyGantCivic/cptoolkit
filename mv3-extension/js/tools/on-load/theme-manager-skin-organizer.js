@@ -16,6 +16,8 @@
   var categoryIdCounter = 0;
   var allData = {};
   var siteData = createDefaultSiteData();
+  var modalOpen = false;
+  var saveTimer = null;
 
   function isThemesIndexPage() {
     var path = String(window.location.pathname || "").toLowerCase();
@@ -166,12 +168,15 @@
     allData[siteKey] = sanitizeSiteData(siteData);
     var payload = {};
     payload[DATA_KEY] = allData;
-    chrome.storage.local.set(payload, function() {
-      if (chrome.runtime.lastError) {
-        console.error("[CP Toolkit] Error saving settings for " + thisTool + ":", chrome.runtime.lastError);
-      }
-      if (callback) callback();
-    });
+    if (callback) callback();
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function() {
+      chrome.storage.local.set(payload, function() {
+        if (chrome.runtime.lastError) {
+          console.error("[CP Toolkit] Error saving settings for " + thisTool + ":", chrome.runtime.lastError);
+        }
+      });
+    }, 150);
   }
 
   function ensureStyles() {
@@ -459,7 +464,9 @@
     if (!list || !window.MutationObserver) return;
 
     var localObserver = new MutationObserver(function() {
+      if (modalOpen) return;
       setTimeout(function() {
+        if (modalOpen) return;
         if (document.body && document.body.contains(popover)) {
           ensureControls(popover);
           applyFilterAndBadges(popover);
@@ -578,6 +585,7 @@
 </div>
 `;
     document.body.appendChild(overlay);
+    modalOpen = true;
 
     var closeButton = overlay.querySelector(".cp-toolkit-skin-organizer-modal-close");
     var closeSecondary = overlay.querySelector(".cp-toolkit-skin-organizer-close-secondary");
@@ -593,17 +601,20 @@
     var filterOptionsContainer = overlay.querySelector(".cp-toolkit-skin-organizer-filter-options");
 
     function closeModal() {
+      modalOpen = false;
       if (overlay && overlay.parentNode) {
         overlay.parentNode.removeChild(overlay);
       }
+      applyToAllPopovers();
     }
 
-    function updateAfterDataChange() {
+    function updateAfterDataChange(sectionsToSkip) {
       pruneAssignmentsForDeletedCategories();
+      var skip = sectionsToSkip || {};
       saveData(function() {
-        renderCategoryRows();
-        renderModalFilterOptions();
-        renderAssignmentRows();
+        if (!skip.categories) renderCategoryRows();
+        if (!skip.filters) renderModalFilterOptions();
+        if (!skip.assignments) renderAssignmentRows();
         applyToAllPopovers();
       });
     }
@@ -680,7 +691,7 @@
             var current = getCategoryById(categoryId);
             if (!current) return;
             current.color = normalizeHexColor(colorInput.value, DEFAULT_BADGE_COLOR);
-            updateAfterDataChange();
+            updateAfterDataChange({ categories: true, assignments: true });
           });
 
           var nameInput = document.createElement("input");
@@ -693,7 +704,7 @@
             if (!current) return;
             var nextName = normalizeText(nameInput.value);
             current.name = nextName || current.name;
-            updateAfterDataChange();
+            updateAfterDataChange({ categories: true });
           });
 
           var deleteButton = document.createElement("button");
@@ -836,7 +847,11 @@
         });
       });
     }
-    assignmentSearch.addEventListener("input", renderAssignmentRows);
+    var searchTimer = null;
+    assignmentSearch.addEventListener("input", function() {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(renderAssignmentRows, 120);
+    });
 
     renderCategoryRows();
     renderModalFilterOptions();
@@ -850,6 +865,7 @@
     if (observer || !window.MutationObserver || !document.body) return;
 
     observer = new MutationObserver(function(mutations) {
+      if (modalOpen) return;
       for (var i = 0; i < mutations.length; i++) {
         if (mutations[i] && mutations[i].addedNodes && mutations[i].addedNodes.length) {
           scheduleScanAndEnhance();
