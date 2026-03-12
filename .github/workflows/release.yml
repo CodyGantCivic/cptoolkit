@@ -1,0 +1,77 @@
+name: Package and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.2.0). Leave blank to use latest tag.'
+        required: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Version: $VERSION"
+
+      - name: Read manifest version
+        id: manifest
+        run: |
+          MANIFEST_VER=$(grep '"version"' mv3-extension/manifest.json | head -1 | sed 's/.*: *"\(.*\)".*/\1/')
+          echo "manifest_version=$MANIFEST_VER" >> "$GITHUB_OUTPUT"
+          echo "Manifest version: $MANIFEST_VER"
+
+      - name: Package extension
+        run: |
+          cd mv3-extension
+          zip -r ../mv3-toolkit.zip \
+            manifest.json \
+            css/ \
+            data/ \
+            html/ \
+            images/ \
+            js/ \
+            socials/ \
+            -x "*.backup"
+          cd ..
+          echo "Packaged: mv3-toolkit.zip ($(du -h mv3-toolkit.zip | cut -f1))"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: CivicPlus Toolkit ${{ steps.version.outputs.version }}
+          body: |
+            ## CivicPlus Internal Toolkit ${{ steps.version.outputs.version }}
+
+            Manifest version: ${{ steps.manifest.outputs.manifest_version }}
+
+            ### Installation
+            1. Download `mv3-toolkit.zip` below
+            2. Extract it to a permanent folder on your computer
+            3. Open Chrome and go to `chrome://extensions`
+            4. Enable **Developer Mode** (toggle in top-right)
+            5. Click **Load unpacked** and select the extracted folder
+
+            **Updating?** Download the new ZIP, extract to the same folder (overwrite), then click the refresh icon on the extension card in `chrome://extensions`.
+          files: mv3-toolkit.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

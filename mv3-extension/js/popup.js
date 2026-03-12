@@ -7,6 +7,8 @@ let captureStatus = {
 };
 const MCP_ENDPOINT_KEY = 'mcp-capture-endpoint';
 const MCP_DEFAULT_ENDPOINT = 'http://localhost:9001/collect';
+const GITHUB_REPO = 'CodyGantCivic/MV3-Toolkit';
+const DOWNLOAD_PAGE = 'https://codygantcivic.github.io/MV3-Toolkit/';
 
 // Tool categories - same as options.js
 const categories = {
@@ -45,6 +47,27 @@ const categories = {
   "Session & Status": ["prevent-timeout"],
   "Other Tools": ["remember-image-picker-state", "show-changelog"],
 };
+
+// Check for extension updates via GitHub Releases API
+async function checkForUpdate() {
+  const updateDiv = document.getElementById('update-status');
+  try {
+    const currentVersion = chrome.runtime.getManifest().version;
+    const resp = await fetch('https://api.github.com/repos/' + GITHUB_REPO + '/releases/latest');
+    if (!resp.ok) return;
+    const release = await resp.json();
+    const latestTag = (release.tag_name || '').replace(/^v/, '');
+    if (latestTag && latestTag !== currentVersion) {
+      updateDiv.innerHTML = '<i class="fas fa-arrow-circle-up"></i> Update available: v' + latestTag + ' (you have v' + currentVersion + '). Click to download.';
+      updateDiv.style.display = '';
+      updateDiv.addEventListener('click', () => {
+        chrome.tabs.create({ url: DOWNLOAD_PAGE });
+      });
+    }
+  } catch (e) {
+    // Silently ignore — network errors, rate limits, etc.
+  }
+}
 
 // Check if current tab is a CivicPlus site
 async function checkCivicPlusSite() {
@@ -462,6 +485,7 @@ document.getElementById('mcp-endpoint').addEventListener('keydown', (event) => {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
   checkCivicPlusSite();
+  checkForUpdate();
   loadToolsAndSettings();
   loadCaptureSettings();
   refreshCaptureStatus();

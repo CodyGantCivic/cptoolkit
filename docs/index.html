@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CivicPlus Internal Toolkit — Chrome Extension</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #333;
+      background: #f5f5f5;
+      line-height: 1.6;
+    }
+
+    /* Header */
+    .header {
+      background: #af282f;
+      color: #fff;
+      text-align: center;
+      padding: 48px 20px 40px;
+    }
+    .header img {
+      width: 80px;
+      height: 80px;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      background: #fff;
+      padding: 8px;
+    }
+    .header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .header p {
+      font-size: 16px;
+      opacity: 0.9;
+    }
+    .version-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      padding: 2px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    /* Main content */
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* Download section */
+    .download-section {
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .download-btn {
+      display: inline-block;
+      background: #af282f;
+      color: #fff;
+      text-decoration: none;
+      font-size: 18px;
+      font-weight: 600;
+      padding: 16px 40px;
+      border-radius: 8px;
+      transition: background 0.2s;
+      box-shadow: 0 4px 16px rgba(175,40,47,0.3);
+    }
+    .download-btn:hover {
+      background: #c42f37;
+    }
+    .download-hint {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #888;
+    }
+
+    /* Steps */
+    .steps-section {
+      padding: 40px 20px;
+    }
+    .steps-section h2 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .step {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .step-number {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      background: #af282f;
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+    }
+    .step-content h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .step-content p {
+      font-size: 14px;
+      color: #555;
+    }
+    .step-content code {
+      background: #f0f0f0;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 13px;
+    }
+
+    /* Update note */
+    .update-section {
+      padding: 0 20px 40px;
+    }
+    .update-card {
+      background: #fff;
+      border-left: 4px solid #af282f;
+      padding: 16px 20px;
+      border-radius: 0 8px 8px 0;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .update-card h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .update-card p {
+      font-size: 14px;
+      color: #555;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 32px 20px;
+      font-size: 13px;
+      color: #888;
+      border-top: 1px solid #e0e0e0;
+    }
+    .footer a {
+      color: #af282f;
+      text-decoration: none;
+    }
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <img src="icon_128.png" alt="CivicPlus Toolkit Icon">
+    <h1>CivicPlus Internal Toolkit</h1>
+    <p>Chrome Extension for CivicPlus CMS</p>
+    <span class="version-badge" id="version-badge">Loading version...</span>
+  </div>
+
+  <div class="container">
+
+    <div class="download-section">
+      <a class="download-btn" href="https://github.com/CodyGantCivic/MV3-Toolkit/releases/latest/download/mv3-toolkit.zip">
+        Download Latest Version
+      </a>
+      <p class="download-hint">Downloads a .zip file. Follow the steps below to install.</p>
+    </div>
+
+    <div class="steps-section">
+      <h2>How to Install</h2>
+
+      <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <h3>Download the ZIP</h3>
+          <p>Click the download button above to get the latest version.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <h3>Extract the ZIP</h3>
+          <p>Right-click the downloaded file and choose <strong>Extract All</strong>. Pick a permanent location — don't leave it in Downloads, because if you delete it the extension will break.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <h3>Open Chrome Extensions</h3>
+          <p>Type <code>chrome://extensions</code> into your address bar and press Enter. You have to type it — clicking a link won't work.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">4</div>
+        <div class="step-content">
+          <h3>Enable Developer Mode</h3>
+          <p>Toggle the <strong>Developer mode</strong> switch in the top-right corner of the page.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">5</div>
+        <div class="step-content">
+          <h3>Load Unpacked</h3>
+          <p>Click the <strong>Load unpacked</strong> button that appears in the top-left.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-number">6</div>
+        <div class="step-content">
+          <h3>Select the Folder</h3>
+          <p>Browse to the extracted folder (the one containing <code>manifest.json</code>) and select it. The extension should now appear in your toolbar.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="update-section">
+      <div class="update-card">
+        <h3>Updating to a New Version</h3>
+        <p>Download the new ZIP, extract it to the <strong>same folder</strong> (overwrite the old files), then go to <code>chrome://extensions</code> and click the <strong>refresh icon</strong> on the extension card.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <p>Internal tool for CivicPlus employees &middot; <a href="https://github.com/CodyGantCivic/MV3-Toolkit">GitHub Repository</a></p>
+  </div>
+
+  <script>
+    fetch('https://api.github.com/repos/CodyGantCivic/MV3-Toolkit/releases/latest')
+      .then(function(r) { return r.json(); })
+      .then(function(release) {
+        if (release && release.tag_name) {
+          document.getElementById('version-badge').textContent = release.tag_name;
+        } else {
+          document.getElementById('version-badge').style.display = 'none';
+        }
+      })
+      .catch(function() {
+        document.getElementById('version-badge').style.display = 'none';
+      });
+  </script>
+
+</body>
+</html>

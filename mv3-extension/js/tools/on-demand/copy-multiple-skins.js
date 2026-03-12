@@ -14,6 +14,7 @@
 
   var TOOLKIT_NAME = '[CP Copy Multiple Skins]';
   var STORAGE_KEY  = 'cp-toolkit-multi-skins';
+  var MAX_CREATE_NEW = 8;
 
   // ==================== STORAGE BRIDGE ====================
   // Content script (css-snippets.js) listens for these and relays to chrome.storage.local
@@ -584,6 +585,12 @@
 
       if (toExisting.length === 0 && toCreate.length === 0) {
         status.textContent = 'Select at least one skin and choose a target.';
+        status.className = 'cms-status error';
+        return;
+      }
+
+      if (toCreate.length > MAX_CREATE_NEW) {
+        status.textContent = 'You can create a maximum of ' + MAX_CREATE_NEW + ' new skins at once. You selected ' + toCreate.length + '.';
         status.className = 'cms-status error';
         return;
       }

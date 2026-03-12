@@ -58,6 +58,16 @@
       color: #b45309;
       border: 1px solid #ffcc80;
     }
+    .status.update {
+      background: #e3f2fd;
+      color: #1565c0;
+      border: 1px solid #90caf9;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .status.update:hover {
+      background: #bbdefb;
+    }
     .section {
       margin-top: 10px;
     }
@@ -269,6 +279,7 @@
   
   <div class="content">
     <div id="site-status" class="status"></div>
+    <div id="update-status" class="status update" style="display:none;"></div>
 
     <div id="capture-panel" class="capture-panel">
       <div class="capture-title">MCP Capture</div>
