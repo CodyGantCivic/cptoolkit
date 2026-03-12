@@ -63,6 +63,7 @@ function categorizeTools() {
       "widget-skin-default-override",
       "theme-manager-enhancer",
       "theme-manager-skin-organizer",
+      "redesign-manager-skin-sorter",
       "enforce-advanced-styles-text-limits",
       "fix-copied-skin-references",
     ],
