@@ -5,3 +5,4 @@ mv3-extension-prod/
 _merge_backup_*/
 _cody_repo_latest/
 .vscode/
+.claude/

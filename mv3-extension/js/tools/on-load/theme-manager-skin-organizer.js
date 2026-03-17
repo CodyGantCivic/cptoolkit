@@ -8,6 +8,13 @@
   var DEFAULT_BADGE_COLOR = "#6e7f99";
   var DEFAULT_UNCATEGORIZED_COLOR = "#9aa8bf";
   var DEFAULT_FILTER_MODE = "all";
+  var BASE_SKIN_NAMES = ["default", "features", "mega menu", "footer", "graphic links", "graphic buttons"];
+  var AUTO_CATEGORY_PALETTE = [
+    "#4a90d9", "#50b878", "#e6a023", "#9b59b6",
+    "#e67e22", "#1abc9c", "#e74c3c", "#34495e",
+    "#f39c12", "#2ecc71", "#8e44ad", "#16a085"
+  ];
+  var MIN_AUTO_GROUP_SIZE = 2;
 
   var siteKey = String(window.location.hostname || "unknown").toLowerCase();
   var initialized = false;
@@ -233,6 +240,9 @@
 .cp-toolkit-skin-organizer-modal-footer{border-top:1px solid #e4ebf6;padding:12px 18px;display:flex;justify-content:flex-end;gap:8px}
 .cp-toolkit-skin-organizer-modal-footer button{height:32px;border-radius:6px;border:1px solid #b9c7dc;background:#fff;color:#2a4168;font-size:12px;line-height:1;padding:0 12px;cursor:pointer}
 .cp-toolkit-skin-organizer-modal-footer .primary{border-color:#af282f;background:#af282f;color:#fff}
+.cp-toolkit-skin-organizer-auto-categorize{display:block;width:100%;height:30px;margin-bottom:10px;border:1px dashed #af282f;border-radius:6px;background:#fff6f7;color:#af282f;font-size:12px;font-weight:600;cursor:pointer;line-height:1;box-sizing:border-box}
+.cp-toolkit-skin-organizer-auto-categorize:hover{background:#af282f;color:#fff;border-style:solid}
+.cp-toolkit-skin-organizer-auto-feedback{font-size:11px;font-style:italic;color:#5b6f93;margin-bottom:6px;min-height:0}
 @media (max-width:940px){.cp-toolkit-skin-organizer-modal-body{grid-template-columns:1fr}.cp-toolkit-skin-organizer-assignment-row{grid-template-columns:1fr}}
 `;
     (document.head || document.documentElement).appendChild(style);
@@ -282,6 +292,20 @@
     var b = parseInt(color.substring(4, 6), 16);
     var luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
     return luminance > 0.6 ? "#1f3558" : "#ffffff";
+  }
+
+  function getNextAutoColor(existingCategories, offset) {
+    var used = {};
+    for (var i = 0; i < existingCategories.length; i++) {
+      used[existingCategories[i].color] = true;
+    }
+    for (var j = 0; j < AUTO_CATEGORY_PALETTE.length; j++) {
+      var idx = (offset + j) % AUTO_CATEGORY_PALETTE.length;
+      if (!used[AUTO_CATEGORY_PALETTE[idx]]) {
+        return AUTO_CATEGORY_PALETTE[idx];
+      }
+    }
+    return AUTO_CATEGORY_PALETTE[offset % AUTO_CATEGORY_PALETTE.length];
   }
 
   function updateSkinBadge(item, skinId, category) {
@@ -518,6 +542,47 @@
     siteData.filterCategoryIds = cleanFilterIds;
   }
 
+  function computeAutoCategories(skins, categories, assignments) {
+    var groups = {};
+    var baseLookup = {};
+    for (var b = 0; b < BASE_SKIN_NAMES.length; b++) {
+      baseLookup[BASE_SKIN_NAMES[b]] = true;
+    }
+
+    for (var i = 0; i < skins.length; i++) {
+      var skin = skins[i];
+      if (assignments[skin.id]) continue;
+
+      var parts = skin.name.split(" - ");
+      for (var p = 0; p < parts.length; p++) {
+        parts[p] = parts[p].replace(/\s+/g, " ").trim();
+      }
+
+      var leaf = parts[parts.length - 1].toLowerCase();
+      if (baseLookup[leaf]) {
+        var basePrefix = parts.length > 1 ? parts.slice(0, -1).join(" - ") : "";
+        var baseCatName = basePrefix ? basePrefix + " - Base" : "Base";
+        if (!groups[baseCatName]) groups[baseCatName] = [];
+        groups[baseCatName].push(skin.id);
+      } else if (parts.length >= 2) {
+        var prefix = parts.slice(0, -1).join(" - ");
+        if (!groups[prefix]) groups[prefix] = [];
+        groups[prefix].push(skin.id);
+      }
+    }
+
+    var result = {};
+    var keys = Object.keys(groups);
+    for (var k = 0; k < keys.length; k++) {
+      var catName = keys[k];
+      var isBase = catName === "Base" || / - Base$/i.test(catName);
+      if (isBase || groups[catName].length >= MIN_AUTO_GROUP_SIZE) {
+        result[catName] = groups[catName];
+      }
+    }
+    return result;
+  }
+
   function openManagerModal(popover) {
     var skins = [];
     var items = getSkinItems(popover);
@@ -555,6 +620,8 @@
         <input type="color" class="cp-toolkit-skin-organizer-new-color" value="#6e7f99" />
         <button type="button" class="cp-toolkit-skin-organizer-new-add">Add</button>
       </div>
+      <button type="button" class="cp-toolkit-skin-organizer-auto-categorize">Auto-Categorize</button>
+      <div class="cp-toolkit-skin-organizer-auto-feedback"></div>
       <div class="cp-toolkit-skin-organizer-category-list"></div>
       <div class="cp-toolkit-skin-organizer-filter-block">
         <h5>Filter</h5>
@@ -596,6 +663,8 @@
     var categoryList = overlay.querySelector(".cp-toolkit-skin-organizer-category-list");
     var assignmentSearch = overlay.querySelector(".cp-toolkit-skin-organizer-assignment-search");
     var assignmentList = overlay.querySelector(".cp-toolkit-skin-organizer-assignment-list");
+    var autoCategorizeButton = overlay.querySelector(".cp-toolkit-skin-organizer-auto-categorize");
+    var autoFeedback = overlay.querySelector(".cp-toolkit-skin-organizer-auto-feedback");
     var filterModeSelect = overlay.querySelector(".cp-toolkit-skin-organizer-filter-mode");
     var filterResetButton = overlay.querySelector(".cp-toolkit-skin-organizer-filter-reset");
     var filterOptionsContainer = overlay.querySelector(".cp-toolkit-skin-organizer-filter-options");
@@ -805,6 +874,65 @@
       newNameInput.focus();
     }
 
+    function applyAutoCategories() {
+      var proposed = computeAutoCategories(skins, siteData.categories, siteData.assignments);
+      var proposedNames = Object.keys(proposed);
+      if (!proposedNames.length) {
+        if (autoFeedback) {
+          var allAssigned = skins.length > 0 && skins.every(function(s) { return !!siteData.assignments[s.id]; });
+          autoFeedback.textContent = allAssigned ? "All skins are already assigned." : "No patterns detected in skin names.";
+          setTimeout(function() { if (autoFeedback) autoFeedback.textContent = ""; }, 4000);
+        }
+        return;
+      }
+
+      var existingNameMap = {};
+      for (var i = 0; i < siteData.categories.length; i++) {
+        existingNameMap[siteData.categories[i].name.toLowerCase()] = siteData.categories[i].id;
+      }
+
+      var colorOffset = 0;
+      var nameToId = {};
+      var newCount = 0;
+      var assignCount = 0;
+
+      for (var n = 0; n < proposedNames.length; n++) {
+        var catName = proposedNames[n];
+        var existing = existingNameMap[catName.toLowerCase()];
+        if (existing) {
+          nameToId[catName] = existing;
+        } else {
+          var newId = createCategoryId();
+          var newColor = getNextAutoColor(siteData.categories, colorOffset);
+          colorOffset += 1;
+          siteData.categories.push({ id: newId, name: catName, color: newColor });
+          existingNameMap[catName.toLowerCase()] = newId;
+          nameToId[catName] = newId;
+          newCount += 1;
+        }
+      }
+
+      for (var c = 0; c < proposedNames.length; c++) {
+        var name = proposedNames[c];
+        var ids = proposed[name];
+        var targetId = nameToId[name];
+        for (var s = 0; s < ids.length; s++) {
+          if (!siteData.assignments[ids[s]]) {
+            siteData.assignments[ids[s]] = targetId;
+            assignCount += 1;
+          }
+        }
+      }
+
+      updateAfterDataChange();
+      console.log("[CP Toolkit](theme-manager-skin-organizer) Auto-categorized " + assignCount + " skins into " + newCount + " new categories");
+
+      if (autoFeedback) {
+        autoFeedback.textContent = "Created " + newCount + " categories, assigned " + assignCount + " skins.";
+        setTimeout(function() { if (autoFeedback) autoFeedback.textContent = ""; }, 4000);
+      }
+    }
+
     closeButton.addEventListener("click", closeModal);
     closeSecondary.addEventListener("click", closeModal);
     closePrimary.addEventListener("click", closeModal);
@@ -812,6 +940,9 @@
       if (event.target === overlay) closeModal();
     });
     addButton.addEventListener("click", addCategoryFromInputs);
+    if (autoCategorizeButton) {
+      autoCategorizeButton.addEventListener("click", applyAutoCategories);
+    }
     newNameInput.addEventListener("keydown", function(event) {
       if (event.key === "Enter") {
         event.preventDefault();

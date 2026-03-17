@@ -252,7 +252,7 @@
       ts1.normal + outerN + "}";
     if (outerH || ts1.hover)
       css += ".cp-template-card:hover ." + scope + " .cpFB{" + ts1.hover + outerH + "}";
-    css += "." + scope + " .cpFB>span{display:flex;min-height:inherit;height:100%;}";
+    css += "." + scope + " .cpFB>span{display:flex;height:100%;}";
     css += "." + scope + " .cpFB>span>span{display:flex;flex-direction:column;width:100%;}";
     // Inner background goes on .cpText (matches CMS .text element)
     // textN must come before innerN because MiscStyles in innerN may
@@ -310,16 +310,17 @@
         var weights = Object.keys(fontsNeeded[ff]).join(";");
         return "family=" + encodeURIComponent(ff) + ":wght@" + weights;
       }).join("&");
-      fontImport = '@import url("https://fonts.googleapis.com/css2?' + params + '&display=swap");';
+      fontImport = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?' + params + '&display=swap">';
     }
 
     var html =
+      fontImport +
       '<div class="' + scope + '">' +
       '<a class="cpFB" style="pointer-events:none;">' +
       '<span><span><span class="cpText">' +
       buttonText +
       "</span></span></span></a></div>" +
-      "<style>" + fontImport + css + "</style>";
+      "<style>" + css + "</style>";
 
     return html;
   }
@@ -562,7 +563,7 @@
         if (contentH > containerH && containerH > 0) {
           var scale = containerH / contentH;
           inner.style.transform = "scale(" + scale + ")";
-          inner.style.transformOrigin = "top center";
+          inner.style.transformOrigin = "center center";
         }
       });
     });

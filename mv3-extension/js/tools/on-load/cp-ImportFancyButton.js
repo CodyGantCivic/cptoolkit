@@ -383,7 +383,7 @@
           css +=
             "." +
             scope +
-            " .cpFB>span{display:flex;min-height:inherit;height:100%;}";
+            " .cpFB>span{display:flex;height:100%;}";
           css +=
             "." +
             scope +
@@ -489,12 +489,13 @@
               })
               .join("&");
             fontImport =
-              '@import url("https://fonts.googleapis.com/css2?' +
+              '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?' +
               params +
-              '&display=swap");';
+              '&display=swap">';
           }
 
           var html =
+            fontImport +
             '<div class="' +
             scope +
             '">' +
@@ -503,7 +504,6 @@
             buttonText +
             "</span></span></span></a></div>" +
             "<style>" +
-            fontImport +
             css +
             "</style>";
 

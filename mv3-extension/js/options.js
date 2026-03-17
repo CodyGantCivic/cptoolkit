@@ -8,6 +8,7 @@ const MCP_CAPTURE_ALLOW_REMOTE_UPLOAD_KEY = "mcp-capture-allow-remote-upload";
 const MCP_CAPTURE_INCLUDE_RESPONSE_BODIES_KEY = "mcp-capture-include-response-bodies";
 const MCP_CAPTURE_DEFAULT_ENDPOINT = "http://localhost:9001/collect";
 const MCP_CAPTURE_DEFAULT_MAX_EVENTS = 800;
+const SHOW_MCP_CAPTURE_PANEL_KEY = "show-mcp-capture-panel";
 const THEME_MANAGER_PSEUDO_MODE_KEY = "theme-manager-enhancer-pseudo-mode";
 const THEME_MANAGER_PSEUDO_MODE_DEFAULT = "legacy-fix";
 
@@ -45,6 +46,8 @@ async function initialize() {
     loadOnDemandSettings();
     bindCaptureSettingsEvents();
     loadCaptureSettings();
+    bindMcpPanelVisibility();
+    loadMcpPanelVisibility();
   } catch (error) {
     console.error("Failed to load tools configuration:", error);
     document.getElementById("tools-container").innerHTML =
@@ -79,6 +82,7 @@ function categorizeTools() {
       "xml-change-alerts",
       "cp-MultipleCategoryUpload",
       "cp-MultipleItemUpload",
+      "cp-MultipleInfoAdvancedItems",
     ],
     "UI Enhancements": [
       "title-changer",
@@ -389,6 +393,33 @@ function saveCaptureSettings() {
   maxEvents.value = settings[MCP_CAPTURE_MAX_EVENTS_KEY];
 
   chrome.storage.local.set(settings, () => {
+    showSavedStatus();
+  });
+}
+
+// ==================== MCP CAPTURE PANEL VISIBILITY ====================
+
+function bindMcpPanelVisibility() {
+  var checkbox = document.getElementById("show-mcp-capture-panel-setting");
+  if (!checkbox) return;
+  checkbox.addEventListener("change", saveMcpPanelVisibility);
+}
+
+function loadMcpPanelVisibility() {
+  chrome.storage.local.get(SHOW_MCP_CAPTURE_PANEL_KEY, function (settings) {
+    var checkbox = document.getElementById("show-mcp-capture-panel-setting");
+    if (!checkbox) return;
+    // Default to true (shown) if not set
+    checkbox.checked = settings[SHOW_MCP_CAPTURE_PANEL_KEY] !== false;
+  });
+}
+
+function saveMcpPanelVisibility() {
+  var checkbox = document.getElementById("show-mcp-capture-panel-setting");
+  if (!checkbox) return;
+  var settings = {};
+  settings[SHOW_MCP_CAPTURE_PANEL_KEY] = checkbox.checked;
+  chrome.storage.local.set(settings, function () {
     showSavedStatus();
   });
 }

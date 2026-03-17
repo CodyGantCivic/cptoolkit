@@ -7,6 +7,7 @@ let captureStatus = {
 };
 const MCP_ENDPOINT_KEY = 'mcp-capture-endpoint';
 const MCP_DEFAULT_ENDPOINT = 'http://localhost:9001/collect';
+const SHOW_MCP_CAPTURE_PANEL_KEY = 'show-mcp-capture-panel';
 const GITHUB_REPO = 'cp-vlasak/cptoolkit';
 const DOWNLOAD_PAGE = 'https://cp-vlasak.github.io/cptoolkit/';
 
@@ -36,6 +37,7 @@ const categories = {
     "xml-change-alerts",
     "cp-MultipleCategoryUpload",
     "cp-MultipleItemUpload",
+    "cp-MultipleInfoAdvancedItems",
   ],
   "UI Enhancements": [
     "title-changer",
@@ -363,6 +365,9 @@ async function loadToolsAndSettings() {
     
     // Generate the UI
     generateToolsUI(settings);
+
+    // Build capture panel inside the container after tools are rendered
+    buildCapturePanel();
   } catch (error) {
     console.error('Failed to load tools configuration:', error);
     document.getElementById('tools-container').innerHTML = '<p style="color: red; font-size: 12px;">Error loading tools.</p>';
@@ -425,7 +430,7 @@ function generateToolsUI(settings) {
             await chrome.tabs.sendMessage(tab.id, { action: 'openSnippetsSidebar' });
             window.close();
           } catch (err) {
-            console.warn('Could not open snippets sidebar:', err);
+            // Content scripts only run on CivicPlus sites — silently ignore on other pages
           }
         });
         toolDiv.appendChild(snippetsBtn);
@@ -462,31 +467,55 @@ document.getElementById('open-options').addEventListener('click', () => {
   chrome.runtime.openOptionsPage();
 });
 
-document.getElementById('toggle-capture').addEventListener('click', () => {
-  toggleCapture();
-});
+// Build and insert capture panel into tools-container if enabled
+async function buildCapturePanel() {
+  const settings = await chrome.storage.local.get(SHOW_MCP_CAPTURE_PANEL_KEY);
+  if (settings[SHOW_MCP_CAPTURE_PANEL_KEY] === false) return;
 
-document.getElementById('export-capture').addEventListener('click', () => {
-  exportCapture();
-});
+  const container = document.getElementById('tools-container');
+  if (!container) return;
 
-document.getElementById('upload-capture').addEventListener('click', () => {
-  uploadCapture();
-});
+  const panel = document.createElement('div');
+  panel.id = 'capture-panel';
+  panel.className = 'capture-panel';
+  panel.innerHTML =
+    '<div class="capture-title">MCP Capture</div>' +
+    '<div id="capture-status" class="capture-status">Checking capture status...</div>' +
+    '<div class="capture-row">' +
+      '<button id="toggle-capture" class="capture-btn secondary">Start Capture</button>' +
+      '<button id="export-capture" class="capture-btn">Export JSON</button>' +
+    '</div>' +
+    '<div class="capture-row">' +
+      '<input id="mcp-endpoint" class="capture-input" type="text" value="' + MCP_DEFAULT_ENDPOINT + '">' +
+      '<button id="upload-capture" class="capture-btn">Send</button>' +
+    '</div>';
 
-document.getElementById('mcp-endpoint').addEventListener('keydown', (event) => {
-  if (event.key === 'Enter') {
-    event.preventDefault();
+  container.prepend(panel);
+
+  // Bind events now that elements exist
+  document.getElementById('toggle-capture').addEventListener('click', () => {
+    toggleCapture();
+  });
+  document.getElementById('export-capture').addEventListener('click', () => {
+    exportCapture();
+  });
+  document.getElementById('upload-capture').addEventListener('click', () => {
     uploadCapture();
-  }
-});
+  });
+  document.getElementById('mcp-endpoint').addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      uploadCapture();
+    }
+  });
 
+  loadCaptureSettings();
+  refreshCaptureStatus();
+}
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
   checkCivicPlusSite();
   checkForUpdate();
   loadToolsAndSettings();
-  loadCaptureSettings();
-  refreshCaptureStatus();
 });

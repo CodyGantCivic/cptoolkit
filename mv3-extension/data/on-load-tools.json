@@ -204,6 +204,13 @@
     "version-introduced": "1.0.0",
     "help-text": "Some client sites use a corporate identity provider (ADFS, Entra ID, Okta) for admin login via SAML. This redirects the login page to the client's SSO, which CivicPlus employees can't authenticate against. This tool detects SAML login redirects and bypasses them to the standard CivicPlus login page (/Admin/?saml=off). It also auto-follows ADFS redirects on the CivicPlus identity server."
   },
+  "cp-MultipleInfoAdvancedItems": {
+    "name": "Multiple Info Advanced Items Upload",
+    "description": "Add multiple Info Advanced items at once by pasting text (one item per line).",
+    "enabled-by-default": true,
+    "version-introduced": "1.1.2",
+    "help-text": "On /Admin/InfoII.aspx, adds an 'Add Multiple Items' button next to 'Add Category'. Select a category, choose Draft or Published, and paste a block of text — each line becomes a separate Info Advanced item with the line as both the item name and body content."
+  },
   "redesign-manager-skin-sorter": {
     "name": "Redesign Manager Skin Sorter",
     "description": "Sorts widget skins in Redesign Manager by their Skin Organizer categories.",

@@ -54,6 +54,7 @@
         "js/tools/on-load/remember-image-picker-state.js",
         "js/tools/on-load/fix-copied-skin-references.js",
         "js/tools/on-load/adfs.js",
+        "js/tools/on-load/cp-MultipleInfoAdvancedItems.js",
         "js/tools/on-load/redesign-manager-skin-sorter.js"
       ],
       "run_at": "document_start"

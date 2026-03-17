@@ -117,12 +117,23 @@
       });
 
       if (foundSkin) {
-        // Close modal, save theme (which reopens the manage skins modal on its own)
+        // Close modal and remove the backdrop.
+        // The CMS close handler crashes on "ga is not defined" (Google Analytics),
+        // leaving the modal and backdrop orphaned. Force-close both.
         $(".modalClose").click();
+        $("#mvcModal_backgroundElement").hide();
+        // Also close the modal container itself if .modalClose didn't work
+        $("#mvcModal_mainElement").hide();
 
         if (typeof window.saveTheme === 'function') {
           window.saveTheme();
         }
+
+        // Clean up backdrop after saveTheme in case it gets re-shown
+        setTimeout(function() {
+          $("#mvcModal_backgroundElement").hide();
+          $("#mvcModal_mainElement").hide();
+        }, 500);
 
         // Periodically try to remove the temporary skin indicator
         var clearSkin = setInterval(function() {

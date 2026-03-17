@@ -143,6 +143,24 @@
       });
     }
     
+    // ==================== FIX HTML-ENCODED CSS ====================
+    // The CMS sometimes HTML-encodes CSS inside <style> tags on the
+    // graphic link edit page (e.g. content: &quot;&quot; instead of content: "").
+    // HTML entities are not decoded inside <style> tags, so the CSS breaks.
+    // Only decode &quot; and &amp; — skip &lt;/&gt; to avoid any risk.
+    function fixHtmlEncodedStyles() {
+      const allStyles = document.querySelectorAll('style');
+      allStyles.forEach(styleTag => {
+        const css = styleTag.textContent;
+        if (css.indexOf('fancyButton') < 0) return;
+        if (css.indexOf('&quot;') < 0 && css.indexOf('&amp;') < 0) return;
+        const fixed = css.replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+        if (fixed !== css) {
+          styleTag.textContent = fixed;
+        }
+      });
+    }
+
     // ==================== PROCESS TEXTAREAS ====================
     function processTextareas() {
       const buttonId = getFancyButtonId();
@@ -300,6 +318,7 @@
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
           processTextareas();
+          fixHtmlEncodedStyles();
           fixRenderedFancyButtonStyles();
         }, 300);
       });

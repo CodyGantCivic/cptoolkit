@@ -271,6 +271,13 @@
         '<div class="cms-tab-content cms-tab-import">' +
           buildImportTab(savedSkins, siteSkins) +
         '</div>' +
+        '<div class="cms-progress">' +
+          '<div class="cms-progress-text">Starting...</div>' +
+          '<div class="cms-progress-bar-wrap">' +
+            '<div class="cms-progress-bar"></div>' +
+          '</div>' +
+          '<div class="cms-progress-log"></div>' +
+        '</div>' +
         '<div class="cms-footer">' +
           '<div class="cms-status"></div>' +
           '<button class="cms-cancel-btn">Cancel</button>' +
@@ -370,6 +377,27 @@
     return html;
   }
 
+  // ==================== TARGET EXCLUSIVITY ====================
+
+  function syncTargetSelects(overlay) {
+    var selects = overlay.querySelectorAll('.cms-target-select');
+    var taken = {};
+    selects.forEach(function(sel) {
+      if (sel.value && sel.value !== '__create__') {
+        taken[sel.value] = true;
+      }
+    });
+    selects.forEach(function(sel) {
+      Array.from(sel.options).forEach(function(opt) {
+        if (!opt.value || opt.value === '__create__') {
+          opt.disabled = false;
+          return;
+        }
+        opt.disabled = taken[opt.value] && opt.value !== sel.value;
+      });
+    });
+  }
+
   // ==================== EVENTS ====================
 
   function wireEvents(overlay, savedSkins, siteSkins) {
@@ -454,6 +482,8 @@
           if (best) { select.value = best; matched++; }
         });
 
+        syncTargetSelects(overlay);
+
         status.textContent = matched + ' of ' + rows.length + ' matched by name.';
         status.className = 'cms-status';
       });
@@ -487,13 +517,14 @@
       });
     });
 
-    // Show/hide name input when "Create new skin" is selected
+    // Show/hide name input when "Create new skin" is selected, and sync target exclusivity
     overlay.querySelectorAll('.cms-target-select').forEach(function(sel) {
       sel.addEventListener('change', function() {
         var nameInput = sel.closest('.cms-row-target').querySelector('.cms-new-name');
         if (nameInput) {
           nameInput.style.display = sel.value === '__create__' ? '' : 'none';
         }
+        syncTargetSelects(overlay);
       });
     });
 
@@ -520,7 +551,14 @@
 
         if (skin) {
           var data = readSkinData(skin);
-          var key = generateKey(skin.Name);
+          var existingKey = null;
+          Object.keys(savedSkins).forEach(function(k) {
+            var s = savedSkins[k];
+            if (s.sourceSkinID === data.sourceSkinID && s.sourceUrl === data.sourceUrl) {
+              existingKey = k;
+            }
+          });
+          var key = existingKey || generateKey(skin.Name);
           savedSkins[key] = data;
           row.classList.add('applied');
           saved++;
@@ -595,52 +633,110 @@
         return;
       }
 
+      // --- Enter progress mode ---
+      var progressSection = overlay.querySelector('.cms-progress');
+      var progressText = overlay.querySelector('.cms-progress-text');
+      var progressBar = overlay.querySelector('.cms-progress-bar');
+      var progressLog = overlay.querySelector('.cms-progress-log');
+      var headerTitle = overlay.querySelector('.cms-header h3');
+
+      // Hide tabs and tab content, show progress
+      overlay.querySelectorAll('.cms-tab-content').forEach(function(c) { c.style.display = 'none'; });
+      overlay.querySelector('.cms-tabs').style.display = 'none';
+      progressSection.style.display = 'block';
+
+      // Set initial header based on what we're doing
+      if (toCreate.length > 0 && toExisting.length === 0) {
+        headerTitle.textContent = 'Creating Skins...';
+      } else if (toCreate.length > 0 && toExisting.length > 0) {
+        headerTitle.textContent = 'Applying Styles...';
+      } else {
+        headerTitle.textContent = 'Applying Styles...';
+      }
+
+      // Hide footer buttons, keep status
+      importBtn.style.display = 'none';
+      overlay.querySelector('.cms-cancel-btn').style.display = 'none';
+
+      function tick() {
+        return new Promise(function(r) { setTimeout(r, 0); });
+      }
+
+      function updateProgress(current, total, label) {
+        var pct = Math.round((current / total) * 100);
+        progressBar.style.width = pct + '%';
+        progressText.textContent = label + ' (' + current + ' of ' + total + ')';
+      }
+
+      function logProgress(message, type) {
+        var entry = document.createElement('div');
+        if (type) entry.className = 'log-' + type;
+        entry.textContent = message;
+        progressLog.appendChild(entry);
+        progressLog.scrollTop = progressLog.scrollHeight;
+      }
+
       importBtn.disabled = true;
-      importBtn.textContent = 'Applying...';
       window.cpToolkitSkipSkinDefaultOverride = true;
 
       var applied = 0;
       var failed = 0;
       var total = toExisting.length + toCreate.length;
 
+      logProgress('Starting — ' + total + ' skin(s) to process');
+      await tick();
+
       // Phase 1: Apply styles to existing skin targets
       for (var i = 0; i < toExisting.length; i++) {
         var item = toExisting[i];
         var skin = savedSkins[item.key];
-        status.textContent = 'Applying ' + (i + 1) + ' of ' + total + '...';
+        var skinLabel = skin.name || 'Skin ' + (i + 1);
+        updateProgress(i + 1, total, 'Applying "' + skinLabel + '"');
+        await tick();
 
         var result = applySkinToTarget(item.targetId, skin);
         if (result.success) {
           item.row.classList.add('applied');
           applied++;
+          logProgress('Applied "' + skinLabel + '" → ' + (result.targetName || 'target'), 'success');
         } else {
           item.row.classList.add('error');
           failed++;
+          logProgress('Failed "' + skinLabel + '": ' + (result.error || 'unknown error'), 'error');
         }
-        await new Promise(function(r) { setTimeout(r, 50); });
+        await new Promise(function(r) { setTimeout(r, 150); });
       }
 
       // Phase 2: Create new skins → save → apply styles
       if (toCreate.length > 0) {
         // 2a: Create all new skins via API
-        status.textContent = 'Creating ' + toCreate.length + ' new skin(s)...';
+        headerTitle.textContent = 'Creating Skins...';
         var createdItems = [];
 
         for (var j = 0; j < toCreate.length; j++) {
           var createItem = toCreate[j];
+          updateProgress(toExisting.length + j + 1, total, 'Creating "' + createItem.skinName + '"');
+          logProgress('Creating new skin "' + createItem.skinName + '"...');
+          await tick();
+
           var createResult = await createNewSkin(createItem.skinName);
           if (createResult.success) {
             createdItems.push({ row: createItem.row, key: createItem.key, skinName: createItem.skinName });
+            logProgress('Created "' + createItem.skinName + '"', 'success');
           } else {
             createItem.row.classList.add('error');
             failed++;
+            logProgress('Failed to create "' + createItem.skinName + '": ' + (createResult.error || 'unknown error'), 'error');
           }
-          await new Promise(function(r) { setTimeout(r, 100); });
+          await new Promise(function(r) { setTimeout(r, 300); });
         }
 
         if (createdItems.length > 0) {
           // 2b: Save theme to persist new skins to DB
-          status.textContent = 'Saving new skins to database...';
+          progressText.textContent = 'Saving new skins to database...';
+          logProgress('Saving theme to persist new skins...');
+          await tick();
+
           if (typeof saveTheme === 'function') {
             saveTheme();
           }
@@ -650,12 +746,18 @@
             try { ajaxPostBackEnd(); } catch (e) {}
           }
 
+          logProgress('Theme saved', 'success');
+          logProgress('Skins created! Moving on to applying styles...', 'success');
+          headerTitle.textContent = 'Applying Styles...';
+          await tick();
+
           // 2c: Apply styles to created skins (find by name — IDs may have changed after save)
           for (var k = 0; k < createdItems.length; k++) {
             var ci = createdItems[k];
             var savedSkin = savedSkins[ci.key];
             var step = toExisting.length + k + 1;
-            status.textContent = 'Applying styles to "' + ci.skinName + '" (' + step + ' of ' + total + ')...';
+            updateProgress(step, total, 'Applying styles to "' + ci.skinName + '"');
+            await tick();
 
             var targetSkin = findSkinByName(ci.skinName);
             if (targetSkin) {
@@ -663,15 +765,18 @@
               if (applyResult.success) {
                 ci.row.classList.add('applied');
                 applied++;
+                logProgress('Applied styles to "' + ci.skinName + '"', 'success');
               } else {
                 ci.row.classList.add('error');
                 failed++;
+                logProgress('Failed to apply styles to "' + ci.skinName + '": ' + (applyResult.error || 'unknown'), 'error');
               }
             } else {
               ci.row.classList.add('error');
               failed++;
+              logProgress('Could not find created skin "' + ci.skinName + '" after save', 'error');
             }
-            await new Promise(function(r) { setTimeout(r, 50); });
+            await new Promise(function(r) { setTimeout(r, 150); });
           }
         }
       }
@@ -682,19 +787,38 @@
         try { ajaxPostBackEnd(); } catch (e) {}
       }
 
+      // --- Completion state ---
+      progressBar.style.width = '100%';
+
       var summary = applied + ' applied';
       if (failed > 0) summary += ', ' + failed + ' failed';
+
+      if (failed === 0) {
+        progressBar.style.background = '#4CAF50';
+        headerTitle.textContent = 'Styles Applied!';
+        logProgress('All ' + applied + ' skin(s) applied successfully', 'success');
+      } else if (applied > 0) {
+        progressBar.style.background = '#cc6600';
+        headerTitle.textContent = 'Completed with Errors';
+        logProgress(summary, 'error');
+      } else {
+        progressBar.style.background = '#c62828';
+        headerTitle.textContent = 'Apply Failed';
+        logProgress('All operations failed', 'error');
+      }
+
+      progressText.textContent = summary;
       status.textContent = summary;
       status.className = failed > 0 ? 'cms-status error' : 'cms-status success';
 
       // Final save and refresh
       if (applied > 0 && typeof saveTheme === 'function') {
-        status.textContent = summary + ' — Saving theme...';
+        logProgress('Saving theme...');
         saveTheme();
       }
 
-      status.textContent = summary + ' — Refreshing page...';
-      importBtn.textContent = 'Refreshing...';
+      progressText.textContent = summary + ' — Refreshing page...';
+      logProgress('Refreshing page in 3 seconds...');
       setTimeout(function() {
         window.location.reload();
       }, 3000);
@@ -709,13 +833,14 @@
       });
     });
 
-    // Show/hide name input when "Create new skin" is selected
+    // Show/hide name input when "Create new skin" is selected, and sync target exclusivity
     overlay.querySelectorAll('.cms-target-select').forEach(function(sel) {
       sel.addEventListener('change', function() {
         var nameInput = sel.closest('.cms-row-target').querySelector('.cms-new-name');
         if (nameInput) {
           nameInput.style.display = sel.value === '__create__' ? '' : 'none';
         }
+        syncTargetSelects(overlay);
       });
     });
 
@@ -757,6 +882,8 @@
 
           if (best) { select.value = best; matched++; }
         });
+
+        syncTargetSelects(overlay);
 
         var statusEl = overlay.querySelector('.cms-status');
         statusEl.textContent = matched + ' of ' + rows.length + ' matched.';
@@ -875,12 +1002,24 @@
         'font-size: 13px; background: #fff; color: #333; cursor: pointer;' +
       '}' +
       '.cms-target-select:focus { border-color: #af282f; outline: none; }' +
+      '.cms-target-select option:disabled { color: #aaa; }' +
       '.cms-new-name {' +
         'width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px;' +
-        'font-size: 13px; background: #fff; color: #333; margin-top: 6px;' +
+        'font-size: 13px; background: #fff; color: #333; margin-top: 6px !important;' +
         'box-sizing: border-box;' +
       '}' +
       '.cms-new-name:focus { border-color: #af282f; outline: none; }' +
+
+      /* Progress */
+      '.cms-progress { display: none; padding: 0 20px 16px; }' +
+      '.cms-progress-text { font-size: 13px; font-weight: 500; color: #333; margin-bottom: 4px; }' +
+      '.cms-progress-bar-wrap { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; }' +
+      '.cms-progress-bar { height: 100%; background: #af282f; border-radius: 4px; transition: width 0.3s; width: 0%; }' +
+      '.cms-progress-log { background: #f5f5f5; border: 1px solid #e0e0e0; border-radius: 6px; padding: 12px; max-height: 200px; overflow-y: auto; font-family: Monaco, Consolas, monospace; font-size: 12px; color: #333; margin-top: 12px; }' +
+      '.cms-progress-log div { padding: 2px 0; border-bottom: 1px solid #eee; }' +
+      '.cms-progress-log div:last-child { border-bottom: none; }' +
+      '.cms-progress-log .log-success { color: #2e7d32; }' +
+      '.cms-progress-log .log-error { color: #c62828; }' +
 
       /* Footer */
       '.cms-footer {' +

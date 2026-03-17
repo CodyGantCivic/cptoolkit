@@ -2,44 +2,31 @@
   var thisTool = "cp-MultipleQuickLinks";
   chrome.storage.local.get(thisTool, function(settings) {
     detect_if_cp_site(function() {
-      if (settings[thisTool]) {
+      if (settings[thisTool] !== false) {
         console.log("[CP Toolkit] Loading " + thisTool);
         try {
           var $ = window.jQuery;
-          // Code:
-          var uploadMultiple = $(
-            '<textarea id="completedResults" style="display: none;margin: 0px 921px 0px 0px; height: 356px; width: 362px;"></textarea>'
-          );
-          var thisButtonSection = $("input[value*='Save and Publish']");
-          thisButtonSection.after(uploadMultiple[0]);
 
           function appendCode() {
             var addNew = `<br><input type="button" style="width: 30px; float: right; margin-top: 25px;" name="addNewSection" value="+">`,
               div = $(".formline.selfClear.multiple.link div:first-of-type")[0];
             div.insertAdjacentHTML("beforebegin", addNew);
-            var setStatus = `<select name="txtStatus" style="float: left; margin-right: 20px;"><option value="Save and Publish">Published</option><option value="Save">Draft</option></select>`,
-              div = $(".formline.selfClear.multiple.link div:first-of-type")[0];
-            div.insertAdjacentHTML("beforeend", setStatus);
 
             // Add New Section
             function addNewSectionClickHandler() {
               var str = `
-            <div class="formline selfClear multiple link" style="padding-top: 10px;">
+            <div class="formline selfClear multiple link cp-toolkit-added" style="padding-top: 10px;">
               <br>
               <input type="button" style="width: 30px; float: right; margin-top: 55px;" name="addNewSection" value="+">
-              <label for="txtLink">Link</label>
-              <div> <label for="txtLink">
-                  Web Address<br> <input type="text" name="txtLink" value=""> </label>
-                <label for="txtLinkText">
-                  Display Text<br> <input type="text" maxlength="500" name="txtLinkText" value="">
+              <label for="cp-txtLink">Link</label>
+              <div> <label for="cp-txtLink">
+                  Web Address<br> <input type="text" name="cp-txtLink" value=""> </label>
+                <label for="cp-txtLinkText">
+                  Display Text<br> <input type="text" maxlength="500" name="cp-txtLinkText" value="">
                 </label>
-                <label class="check" style="width:47%" for="ysnNewWindow">
-                  <input type="checkbox" name="ysnNewWindow">Open in new window
+                <label class="check" style="width:47%" for="cp-ysnNewWindow">
+                  <input type="checkbox" name="cp-ysnNewWindow">Open in new window
                 </label>
-                <select name="txtStatus" style="float: left; margin-right: 20px;">
-                  <option value="Save and Publish">Published</option>
-                  <option value="Save">Draft</option>
-                </select>
               </div>
             </div>`,
                 div = $(".formline.selfClear.multiple.link div:last-of-type")[0];
@@ -55,19 +42,8 @@
               addNewSectionClickHandler();
             });
           }
-          // Post Items
-          var categoryCount = 0;
 
           function addQuickLinks(displayText, webAddress, newWindow, status) {
-            completedResults++;
-            var newWindowChoice;
-
-            if (newWindow) {
-              newWindowChoice = 1;
-            } else {
-              newWindowChoice = 0;
-            }
-
             // Get Current Category ID
             var intQLCategoryID = document.getElementsByName("intQLCategoryID")[1].value;
             var lngResourceID = document.getElementsByName("lngResourceID")[1].value;
@@ -98,27 +74,68 @@
               save: status,
               txtLink: webAddress,
               txtLinkText: displayText.value,
-              ysnNewWindow: newWindow,
+              ysnNewWindow: newWindow ? 1 : 0,
               dtiStartDate: today,
               txtCategoryIDListSave: intQLCategoryID
             };
-            $.ajax({
+            return $.ajax({
               type: "POST",
               url: "https://" + document.location.hostname + "/admin/quicklinks.aspx",
               data: data
             }).done(function() {
               displayText.value = "Done";
-              categoryCount++;
-              document.getElementById("completedResults").value = categoryCount;
-              var qlCount = document.getElementsByName("txtLinkText");
-              if (categoryCount == qlCount.length) {
-                document.getElementById("toolkit-block").style.display = "none";
-                $('input[value="Back"]').click();
-              }
             });
           }
 
-          // Add Post Button
+          function batchPost(status) {
+            var addedRows = $(".cp-toolkit-added");
+            if (addedRows.length === 0) {
+              return false; // No extra rows — let native button handle it
+            }
+
+            // Show loading overlay via MAIN world (CSP-safe)
+            chrome.runtime.sendMessage({
+              action: "cp-execute-in-main",
+              code: 'ajaxPostBackStart("Please wait... This will only take a moment.");$("#divAjaxProgress").clone().attr("id", "toolkit-block").css("display", "block").appendTo("body");ajaxPostBackEnd();'
+            });
+
+            // Gather original CMS row fields
+            var origLink = document.getElementsByName("txtLink")[0];
+            var origText = document.getElementsByName("txtLinkText")[0];
+            var origWindow = $("[name=ysnNewWindow]:not(#enableQuickLinkAutochange):not([name^=cp-])")[0];
+
+            // Gather toolkit-added rows
+            var addedLinks = document.getElementsByName("cp-txtLink");
+            var addedTexts = document.getElementsByName("cp-txtLinkText");
+            var addedWindows = document.querySelectorAll("[name=cp-ysnNewWindow]");
+
+            // Build items array: original row + added rows
+            var items = [];
+            items.push({ text: origText, link: origLink.value, newWindow: origWindow ? origWindow.checked : false });
+            for (var i = 0; i < addedLinks.length; i++) {
+              items.push({ text: addedTexts[i], link: addedLinks[i].value, newWindow: addedWindows[i].checked });
+            }
+
+            // Post items sequentially to preserve order
+            var queue = $.Deferred().resolve();
+            for (var i = 0; i < items.length; i++) {
+              (function(item) {
+                queue = queue.then(function() {
+                  return addQuickLinks(item.text, item.link, item.newWindow, status);
+                });
+              })(items[i]);
+            }
+            queue.then(function() {
+              chrome.runtime.sendMessage({
+                action: "cp-execute-in-main",
+                code: 'var el = document.getElementById("toolkit-block"); if (el) el.style.display = "none";'
+              });
+              $('input[value="Back"]').click();
+            });
+            return true; // Handled by toolkit
+          }
+
+          // Hijack native buttons
 
           if (
             $(".formline.selfClear.multiple.link").length &&
@@ -126,35 +143,26 @@
             $("input[value*='Save and Publish']").length
           ) {
             appendCode();
-            var uploadMultiple = $(
-              '<input type="button" class="cp-button" value="Post Items" style="margin-left: 5px;">'
-            );
-            var thisButtonSection = $("input[value*='Save and Publish']");
-            thisButtonSection.after(uploadMultiple[0]);
-            uploadMultiple.click(function() {
-              var ajaxLoad =
-                'ajaxPostBackStart("Please wait... This will only take a moment.");$("#divAjaxProgress").clone().attr("id", "toolkit-block").css("display", "block").appendTo("body");ajaxPostBackEnd();';
-              var script = document.createElement("script");
-              script.innerHTML = ajaxLoad;
-              document.body.appendChild(script);
-              var webAddress = document.getElementsByName("txtLink");
-              var displayText = document.getElementsByName("txtLinkText");
-              var newWindow = $("[name=ysnNewWindow]:not(#enableQuickLinkAutochange)");
-              var status = document.getElementsByName("txtStatus");
-              var i;
-              for (i = 0; i < webAddress.length; i++) {
-                for (i = 0; i < displayText.length; i++) {
-                  for (i = 0; i < newWindow.length; i++) {
-                    for (i = 0; i < status.length; i++) {
-                      addQuickLinks(displayText[i], webAddress[i].value, newWindow[i].checked, status[i].value);
-                    }
-                  }
-                }
+
+            var publishBtn = $("input[value='Save and Publish']");
+            var saveBtn = $("input[value='Save']");
+
+            publishBtn.on("click.cpToolkit", function(e) {
+              if (batchPost("Save and Publish")) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+              }
+            });
+
+            saveBtn.on("click.cpToolkit", function(e) {
+              if (batchPost("Save")) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
               }
             });
           }
         } catch (err) {
-          console.warn(err);
+          console.warn("[CP Toolkit](cp-MultipleQuickLinks) error:", err);
         }
       }
     });

@@ -1170,16 +1170,120 @@
     })();
 
     // ========================================================================
+    // Mode Selection Modal
+    // ========================================================================
+
+    function showModeSelectionModal() {
+      ensureSkinSelectionStyles();
+      return new Promise(function (resolve) {
+        var overlay = document.createElement('div');
+        overlay.className = 'widget-skin-modal-overlay';
+
+        var modal = document.createElement('div');
+        modal.className = 'widget-skin-modal';
+        modal.style.maxWidth = '420px';
+
+        var header = document.createElement('div');
+        header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;';
+
+        var title = document.createElement('h2');
+        title.textContent = 'Copy Widget Skin Components';
+        title.style.margin = '0';
+
+        var closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.textContent = '\u00D7';
+        closeBtn.style.cssText = 'background:none;border:none;font-size:24px;cursor:pointer;color:#666;padding:0;line-height:1;';
+        closeBtn.addEventListener('mouseover', function() { closeBtn.style.color = '#333'; });
+        closeBtn.addEventListener('mouseout', function() { closeBtn.style.color = '#666'; });
+
+        header.appendChild(title);
+        header.appendChild(closeBtn);
+        modal.appendChild(header);
+
+        var desc = document.createElement('p');
+        desc.textContent = 'Select a mode:';
+        desc.style.cssText = 'margin:0 0 16px;font-size:14px;color:#333;';
+        modal.appendChild(desc);
+
+        var modes = [
+          { value: '1', label: 'Local Copy', detail: 'Copy components between skins on this site' },
+          { value: '2', label: 'Export', detail: 'Copy skin data to clipboard for another site' },
+          { value: '3', label: 'Import', detail: 'Paste skin data from clipboard' }
+        ];
+
+        var btnContainer = document.createElement('div');
+        btnContainer.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
+
+        var resolved = false;
+        function cleanup(value) {
+          if (resolved) return;
+          resolved = true;
+          document.removeEventListener('keydown', handleKey, true);
+          if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+          resolve(value);
+        }
+
+        modes.forEach(function(m) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.style.cssText = 'display:flex;flex-direction:column;align-items:flex-start;padding:12px 16px;border:1px solid #e0e0e0;border-radius:4px;background:#fff;cursor:pointer;text-align:left;transition:border-color 0.15s,background 0.15s;';
+
+          var labelSpan = document.createElement('span');
+          labelSpan.textContent = m.label;
+          labelSpan.style.cssText = 'font-size:14px;font-weight:600;color:#333;';
+
+          var detailSpan = document.createElement('span');
+          detailSpan.textContent = m.detail;
+          detailSpan.style.cssText = 'font-size:12px;color:#666;margin-top:2px;';
+
+          btn.appendChild(labelSpan);
+          btn.appendChild(detailSpan);
+
+          btn.addEventListener('mouseover', function() { btn.style.borderColor = '#af282f'; btn.style.background = '#fdf5f5'; });
+          btn.addEventListener('mouseout', function() { btn.style.borderColor = '#e0e0e0'; btn.style.background = '#fff'; });
+          btn.addEventListener('click', function() { cleanup(m.value); });
+
+          btnContainer.appendChild(btn);
+        });
+
+        modal.appendChild(btnContainer);
+
+        var actions = document.createElement('div');
+        actions.className = 'widget-skin-modal__actions';
+        actions.style.marginTop = '16px';
+
+        var cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.className = 'secondary';
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.addEventListener('click', function() { cleanup(null); });
+        actions.appendChild(cancelBtn);
+
+        modal.appendChild(actions);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        function handleKey(evt) {
+          if (evt.key === 'Escape') {
+            evt.preventDefault();
+            cleanup(null);
+          }
+        }
+        document.addEventListener('keydown', handleKey, true);
+
+        closeBtn.addEventListener('click', function() { cleanup(null); });
+      });
+    }
+
+    // ========================================================================
     // Main Interactive Flow
     // ========================================================================
 
     (async function mainFlow() {
-      const mode = prompt(
-        'Select mode:\n1 = Local Copy (same site)\n2 = Export (copy to clipboard)\n3 = Import (paste from clipboard)\n\nEnter 1, 2, or 3:'
-      );
+      const mode = await showModeSelectionModal();
 
-      if (!mode || !['1', '2', '3'].includes(mode.trim())) {
-        alert('Invalid mode selection. Operation cancelled.');
+      if (!mode) {
         return;
       }
 
@@ -1216,9 +1320,12 @@
           return;
         }
 
-        const correctSkinNames = confirm(
-          "Copying from skin '" + fromSkin.Name + "' to '" + toSkin.Name + "'. If this is not correct, click cancel."
-        );
+        const correctSkinNames = await showConfirmationModal({
+          title: 'Confirm Skins',
+          message: "Copying from skin '" + fromSkin.Name + "' to '" + toSkin.Name + "'.",
+          confirmText: 'Continue',
+          cancelText: 'Cancel'
+        });
 
         if (correctSkinNames && skinToCopy !== skinToEdit) {
           // Use new component selection modal

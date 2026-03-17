@@ -1763,6 +1763,42 @@
         color: #333;
         display: none;
       "></div>
+
+      <div id="cp-toolkit-amc-progress" style="display: none;">
+        <div id="cp-toolkit-amc-progress-text" style="
+          font-size: 14px;
+          color: #333;
+          font-weight: 500;
+          margin-bottom: 4px;
+        "></div>
+        <div style="
+          width: 100%;
+          height: 8px;
+          background: #e0e0e0;
+          border-radius: 4px;
+          margin: 8px 0 16px;
+          overflow: hidden;
+        ">
+          <div id="cp-toolkit-amc-progress-bar" style="
+            height: 100%;
+            background: #af282f;
+            border-radius: 4px;
+            transition: width 0.3s;
+            width: 0%;
+          "></div>
+        </div>
+        <div id="cp-toolkit-amc-progress-log" style="
+          background: #f5f5f5;
+          border: 1px solid #e0e0e0;
+          border-radius: 6px;
+          padding: 12px;
+          max-height: 300px;
+          overflow-y: auto;
+          font-family: 'Monaco', 'Consolas', monospace;
+          font-size: 12px;
+          color: #333;
+        "></div>
+      </div>
     `;
 
     // Footer
@@ -1817,6 +1853,12 @@
     const skinsArrow = document.getElementById('cp-toolkit-amc-skins-arrow');
     const yearInput = document.getElementById('cp-toolkit-amc-year');
 
+    // Progress view elements
+    const progressSection = document.getElementById('cp-toolkit-amc-progress');
+    const progressText = document.getElementById('cp-toolkit-amc-progress-text');
+    const progressBar = document.getElementById('cp-toolkit-amc-progress-bar');
+    const progressLog = document.getElementById('cp-toolkit-amc-progress-log');
+
     function closeOverlay() {
       overlay.remove();
     }
@@ -1847,7 +1889,8 @@
 
     // Logging function
     function log(message, type = 'info') {
-      logEl.style.display = 'block';
+      const targetLog = progressSection.style.display !== 'none' ? progressLog : logEl;
+      if (targetLog === logEl) targetLog.style.display = 'block';
       const line = document.createElement('div');
       line.style.cssText = `
         padding: 4px 0;
@@ -1857,9 +1900,44 @@
         ${type === 'warning' ? 'color: #f57c00;' : ''}
       `;
       line.textContent = message;
-      logEl.appendChild(line);
-      logEl.scrollTop = logEl.scrollHeight;
+      targetLog.appendChild(line);
+      targetLog.scrollTop = targetLog.scrollHeight;
       console.log(`${TOOL_NAME} ${message}`);
+    }
+
+    // Progress helpers
+    function tick() {
+      return new Promise(function(resolve) { setTimeout(resolve, 0); });
+    }
+
+    function updateProgress(current, total, label) {
+      const pct = Math.round((current / total) * 100);
+      progressBar.style.width = pct + '%';
+      progressText.textContent = label || ('Processing step ' + current + ' of ' + total + '...');
+    }
+
+    function enterProgressMode() {
+      // Update header title
+      const headerTitle = header.querySelector('h2');
+      if (headerTitle) headerTitle.textContent = 'Applying Styles...';
+
+      // Hide all body children except the progress section
+      const bodyChildren = content.children;
+      for (let i = 0; i < bodyChildren.length; i++) {
+        if (bodyChildren[i].id !== 'cp-toolkit-amc-progress') {
+          bodyChildren[i].style.display = 'none';
+        }
+      }
+
+      // Show progress section
+      progressSection.style.display = 'block';
+      progressLog.innerHTML = '';
+      progressBar.style.width = '0%';
+      progressBar.style.background = '#af282f';
+      progressText.textContent = 'Starting...';
+
+      // Hide footer
+      footer.style.display = 'none';
     }
 
     // Start button handler
@@ -1875,12 +1953,22 @@
       }
 
       startBtn.disabled = true;
-      startBtn.textContent = 'Processing...';
+
+      // Calculate total steps and enter progress mode
+      let totalSteps = 0;
+      if (shouldCreateSkins) totalSteps++;
+      if (file) totalSteps += 11; // parse, colors, tables, borders, adv-borders, text, secnav, sidebar, mainnav, secnavfont, save
+      let currentStep = 0;
+
+      enterProgressMode();
       logEl.innerHTML = '';
 
       try {
         // ==================== CREATE BASE SKINS (if enabled) ====================
         if (shouldCreateSkins) {
+          currentStep++;
+          updateProgress(currentStep, totalSteps, 'Creating base skins...');
+          await tick();
           const skinResults = await createBaseSkins(yearPrefix, log);
           if (skinResults.created > 0) {
             log(`Base skins created successfully!`, 'success');
@@ -1890,12 +1978,19 @@
         // If no file selected but skins were created, refresh immediately
         if (!file) {
           log('--- No Figma file selected - skin creation only ---');
+          progressBar.style.width = '100%';
+          progressBar.style.background = '#4CAF50';
+          progressText.textContent = 'Base skins created! Refreshing...';
+          const headerTitle = header.querySelector('h2');
+          if (headerTitle) headerTitle.textContent = 'Skins Created!';
           log('Refreshing page to load new skins...', 'success');
-          startBtn.textContent = 'Refreshing...';
           window.location.reload();
           return;
         }
 
+        currentStep++;
+        updateProgress(currentStep, totalSteps, 'Parsing Figma JSON...');
+        await tick();
         log(`Reading file: ${file.name} (${file.size} bytes)`);
         const text = await readFileAsText(file);
         const figmaJson = JSON.parse(text);
@@ -1912,6 +2007,9 @@
         const notFoundWarnings = []; // Track items not found in Figma file
 
         // ==================== APPLY MODULE COLORS ====================
+        currentStep++;
+        updateProgress(currentStep, totalSteps, 'Applying module colors...');
+        await tick();
         log('--- Module Colors (Rectangle 7-19) ---');
         
         for (let rect = 7; rect <= 19; rect++) {
@@ -1942,6 +2040,9 @@
         }
 
         // ==================== APPLY TABLE STYLES ====================
+        currentStep++;
+        updateProgress(currentStep, totalSteps, 'Applying table styles...');
+        await tick();
         log('--- Table Styles (via SiteStyles) ---');
         
         for (const mapping of TABLE_STYLE_MAPPINGS) {
@@ -1973,6 +2074,9 @@
         }
 
         // ==================== APPLY BORDER STYLES ====================
+        currentStep++;
+        updateProgress(currentStep, totalSteps, 'Applying border styles...');
+        await tick();
         log('--- Border Styles (via SiteStyles) ---');
         
         for (const mapping of BORDER_STYLE_MAPPINGS) {
@@ -2012,6 +2116,9 @@
         }
 
         // ==================== APPLY ADVANCED BORDER STYLES ====================
+        currentStep++;
+        updateProgress(currentStep, totalSteps, 'Applying advanced border styles...');
+        await tick();
         log('--- Advanced Border Styles (via MiscellaneousStyles) ---');
 
         for (const mapping of ADVANCED_BORDER_STYLE_MAPPINGS) {
@@ -2051,6 +2158,9 @@
         }
 
         // ==================== APPLY TEXT/FONT STYLES ====================
+        currentStep++;
+        updateProgress(currentStep, totalSteps, 'Applying text/font styles...');
+        await tick();
         log('--- Text/Font Styles (via SiteStyles) ---');
 
         for (const mapping of TEXT_STYLE_MAPPINGS) {
@@ -2093,6 +2203,9 @@
         }
 
         // ==================== APPLY SECONDARY NAV STYLES ====================
+        currentStep++;
+        updateProgress(currentStep, totalSteps, 'Applying secondary nav styles...');
+        await tick();
         log('--- Secondary Nav Styles (via MenuStyles) ---');
 
         // First, set SecondaryWrapper to Accordions mode (required for Level 1, 2, 3 items to appear)
@@ -2159,6 +2272,9 @@
         }
 
         // ==================== APPLY SIDEBAR CONTAINER STYLES ====================
+        currentStep++;
+        updateProgress(currentStep, totalSteps, 'Applying sidebar container styles...');
+        await tick();
         log('--- Sidebar Container Styles (via ContainerStyles) ---');
 
         for (const mapping of SIDEBAR_CONTAINER_STYLE_MAPPINGS) {
@@ -2188,6 +2304,9 @@
         }
 
         // ==================== APPLY MAIN NAV FONT STYLES ====================
+        currentStep++;
+        updateProgress(currentStep, totalSteps, 'Applying main nav font styles...');
+        await tick();
         log('--- Main Nav Font Styles (via MenuStyles) ---');
 
         for (const mapping of MAIN_NAV_FONT_STYLE_MAPPINGS) {
@@ -2227,6 +2346,9 @@
         }
 
         // ==================== APPLY SECONDARY NAV FONT STYLES ====================
+        currentStep++;
+        updateProgress(currentStep, totalSteps, 'Applying secondary nav font styles...');
+        await tick();
         log('--- Secondary Nav Font Styles (via MenuStyles) ---');
 
         for (const mapping of SECONDARY_NAV_FONT_STYLE_MAPPINGS) {
@@ -2269,10 +2391,25 @@
         // Deduplicate warnings (same rectangle might be checked multiple times)
         const uniqueWarnings = [...new Set(notFoundWarnings)];
 
+        // Update progress bar to completion state
+        progressBar.style.width = '100%';
+        if (totalFailed > 0) {
+          progressBar.style.background = '#cc6600';
+          progressText.textContent = 'Completed with ' + totalFailed + ' error(s). ' + totalApplied + ' applied.';
+        } else {
+          progressBar.style.background = '#4CAF50';
+          progressText.textContent = 'All styles applied successfully! (' + totalApplied + ' total)';
+        }
+
+        const completionTitle = header.querySelector('h2');
+        if (completionTitle) completionTitle.textContent = totalFailed > 0 ? 'Completed with Errors' : 'Styles Applied!';
+
         // Auto-save and refresh after save completes
         if (totalApplied > 0 && typeof saveTheme === 'function') {
+          currentStep++;
+          updateProgress(currentStep, totalSteps, 'Saving theme...');
+          await tick();
           log('Saving theme...');
-          startBtn.textContent = 'Saving...';
 
           // Use setTimeout to let the UI update before calling save
           setTimeout(() => {
@@ -2289,7 +2426,9 @@
                 }
 
                 log('Waiting for changes to propagate...', 'info');
-                startBtn.textContent = 'Refreshing...';
+                progressBar.style.width = '100%';
+                progressBar.style.background = '#4CAF50';
+                progressText.textContent = 'Refreshing page...';
                 // Wait 2 seconds for server to propagate changes, then hard refresh
                 setTimeout(() => {
                   const url = new URL(window.location.href);
@@ -2306,15 +2445,15 @@
               setTimeout(() => {
                 $(document).off('ajaxComplete', onSaveComplete);
                 log('Save timeout - refreshing anyway...', 'warning');
-                startBtn.textContent = 'Refreshing...';
+                progressText.textContent = 'Refreshing page...';
                 const url = new URL(window.location.href);
                 url.searchParams.set('_t', Date.now());
                 window.location.href = url.toString();
               }, 15000);
             } catch (saveErr) {
               log(`Save failed: ${saveErr.message}`, 'error');
-              startBtn.textContent = 'Apply Colors';
-              startBtn.disabled = false;
+              progressBar.style.background = '#d32f2f';
+              progressText.textContent = 'Save failed: ' + saveErr.message;
             }
           }, 50);
           return;
@@ -2322,17 +2461,14 @@
           log('saveTheme() not available - please save manually', 'warning');
         }
 
-        startBtn.textContent = 'Done!';
-        setTimeout(() => {
-          startBtn.textContent = 'Apply Colors';
-          startBtn.disabled = false;
-        }, 2000);
-
       } catch (err) {
         log(`Error: ${err.message}`, 'error');
         console.error(TOOL_NAME, err);
-        startBtn.textContent = 'Apply Colors';
-        startBtn.disabled = false;
+        progressBar.style.width = '100%';
+        progressBar.style.background = '#d32f2f';
+        progressText.textContent = 'Error: ' + err.message;
+        const errorTitle = header.querySelector('h2');
+        if (errorTitle) errorTitle.textContent = 'Error';
       }
     });
 
