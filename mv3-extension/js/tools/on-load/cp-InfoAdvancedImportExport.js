@@ -1,6 +1,6 @@
 (function loadTool() {
   var thisTool = "cp-InfoAdvancedImportExport";
-  var SCRIPT_REV = "iaie-2026-03-16-04";
+  var SCRIPT_REV = "iaie-2026-03-24-05";
 
   function hasExtensionContext() {
     try {
@@ -116,6 +116,7 @@
     var EXP_MODAL_ID = "cp-toolkit-info-export-modal";
     var IMP_MODAL_ID = "cp-toolkit-info-import-modal";
     var pendingImportNavAttemptAt = 0;
+    var pendingExportRetryAttemptAt = 0;
     var domObserver = null;
 
     handlePendingReturn();
@@ -128,6 +129,7 @@
       if (!hasExtensionContext()) return;
       addImportItemButton();
       injectExportOptions();
+      handlePendingExport();
       handlePendingImport();
     }, 700);
 
@@ -138,6 +140,7 @@
       }
       addImportItemButton();
       injectExportOptions();
+      handlePendingExport();
       handlePendingImport();
     });
     domObserver.observe(document.body, { childList: true, subtree: true });
@@ -199,7 +202,14 @@
           return;
         }
         var form = infoForm();
-        if (!form) return;
+        if (!isRealItemEditorForm(form)) {
+          if (Date.now() - pendingExportRetryAttemptAt > 300) {
+            pendingExportRetryAttemptAt = Date.now();
+            setTimeout(handlePendingExport, 320);
+          }
+          return;
+        }
+        pendingExportRetryAttemptAt = 0;
         prepareEditorForExport(form, function() {
           if (!hasExtensionContext()) return;
           var activeForm = infoForm() || form;
