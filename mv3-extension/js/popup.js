@@ -52,6 +52,19 @@ const categories = {
 };
 
 // Check for extension updates via GitHub Releases API
+function compareSemver(a, b) {
+  const pa = String(a || '').replace(/^v/i, '').split('.').map(n => parseInt(n, 10) || 0);
+  const pb = String(b || '').replace(/^v/i, '').split('.').map(n => parseInt(n, 10) || 0);
+  const max = Math.max(pa.length, pb.length);
+  for (let i = 0; i < max; i++) {
+    const av = pa[i] || 0;
+    const bv = pb[i] || 0;
+    if (av > bv) return 1;
+    if (av < bv) return -1;
+  }
+  return 0;
+}
+
 async function checkForUpdate() {
   const updateDiv = document.getElementById('update-status');
   try {
@@ -60,7 +73,7 @@ async function checkForUpdate() {
     if (!resp.ok) return;
     const release = await resp.json();
     const latestTag = (release.tag_name || '').replace(/^v/, '');
-    if (latestTag && latestTag !== currentVersion) {
+    if (latestTag && compareSemver(latestTag, currentVersion) === 1) {
       updateDiv.innerHTML = '<i class="fas fa-arrow-circle-up"></i> Update available: v' + latestTag + ' (you have v' + currentVersion + '). Click to download.';
       updateDiv.style.display = '';
       updateDiv.addEventListener('click', () => {
