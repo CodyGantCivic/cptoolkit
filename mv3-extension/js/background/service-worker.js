@@ -313,7 +313,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
 });
 
-// Create the prevent-timeout alarm on startup (idempotent â€” won't duplicate)
+// Create the prevent-timeout alarm on startup (idempotent - won't duplicate)
 chrome.alarms.get('cp-prevent-timeout', (existing) => {
   if (!existing) {
     chrome.alarms.create('cp-prevent-timeout', { periodInMinutes: 2 });
