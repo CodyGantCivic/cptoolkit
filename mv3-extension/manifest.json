@@ -36,7 +36,6 @@
         "js/tools/on-load/widget-skin-default-override.js",
         "js/tools/on-load/module-icons.js",
         "js/tools/on-load/cp-MultipleCategoryUpload.js",
-        "js/tools/on-load/cp-MultipleItemUpload.js",
         "js/tools/on-load/cp-MultipleQuickLinks.js",
         "js/tools/on-load/cp-InfoAdvancedImportExport.js",
         "js/tools/on-load/widget-skin-advanced-style-helper.js",

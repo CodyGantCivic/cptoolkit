@@ -81,7 +81,6 @@ function categorizeTools() {
       "layout-manager-sorter",
       "xml-change-alerts",
       "cp-MultipleCategoryUpload",
-      "cp-MultipleItemUpload",
       "cp-MultipleInfoAdvancedItems",
       "cp-InfoAdvancedImportExport",
     ],

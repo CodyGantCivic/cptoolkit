@@ -38,13 +38,6 @@
     "version-introduced": "1.5.9",
     "help-text": "Upload Multiple Categories at a time for the Graphic Links, Quick Links, Info Advanced, Form Center, Calendar, and News Flash modules."
   },
-  "cp-MultipleItemUpload": {
-    "name": "News Flash Related Categories Upload",
-    "description": "Displays a related Categories section for new News Flash items.",
-    "enabled-by-default": true,
-    "version-introduced": "1.5.9",
-    "help-text": "Displays a related Categories section for new News Flash items."
-  },
   "cp-MultipleQuickLinks": {
     "name": "Multiple Quick Links Upload",
     "description": "Allows you to upload multiple Quick Links at a single time.",

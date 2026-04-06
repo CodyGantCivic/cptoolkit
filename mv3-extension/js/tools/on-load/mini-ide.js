@@ -1785,6 +1785,74 @@
     };
 
     // ==================== VALIDATION ====================
+    function findCssFunctionCalls(value, functionName) {
+        const matches = [];
+        if (!value || !functionName) return matches;
+
+        const source = String(value);
+        const lowerSource = source.toLowerCase();
+        const needle = functionName.toLowerCase() + '(';
+        let searchIndex = 0;
+
+        while (searchIndex < lowerSource.length) {
+            const start = lowerSource.indexOf(needle, searchIndex);
+            if (start === -1) break;
+
+            let depth = 1;
+            let end = start + needle.length;
+
+            while (end < source.length && depth > 0) {
+                const char = source[end];
+                if (char === '(') depth++;
+                if (char === ')') depth--;
+                end++;
+            }
+
+            if (depth !== 0) {
+                break;
+            }
+
+            matches.push({
+                start,
+                end,
+                content: source.slice(start + needle.length, end - 1)
+            });
+            searchIndex = end;
+        }
+
+        return matches;
+    }
+
+    function splitTopLevel(value, separatorChar) {
+        const parts = [];
+        let current = '';
+        let depth = 0;
+
+        for (let i = 0; i < value.length; i++) {
+            const char = value[i];
+            if (char === '(') depth++;
+            if (char === ')' && depth > 0) depth--;
+
+            if (char === separatorChar && depth === 0) {
+                parts.push(current.trim());
+                current = '';
+                continue;
+            }
+
+            current += char;
+        }
+
+        if (current.trim() || !parts.length) {
+            parts.push(current.trim());
+        }
+
+        return parts.filter(part => part !== '');
+    }
+
+    function isGradientDirectionSegment(value) {
+        return /^(?:to\b|[-+]?\d*\.?\d+(?:deg|grad|rad|turn)\b)/i.test(String(value || '').trim());
+    }
+
     function validateCSS(code) {
         const errors = [];
         const warnings = [];
@@ -2813,21 +2881,19 @@
 
                     // Check for invalid gradient syntax
                     if (propertyName === 'background' || propertyName === 'background-image') {
-                        // Check linear-gradient - handle nested parentheses properly
-                        const linearGradientMatch = propertyValue.match(/linear-gradient\(((?:[^()]+|\([^()]*\))*)\)/i);
-                        if (linearGradientMatch) {
-                            const gradientContent = linearGradientMatch[1];
+                        const linearGradientMatches = findCssFunctionCalls(propertyValue, 'linear-gradient');
+                        for (const linearGradientMatch of linearGradientMatches) {
+                            const gradientContent = linearGradientMatch.content;
+                            const gradientSegments = splitTopLevel(gradientContent, ',');
 
                             // Must have at least 2 colors
-                            const commaCount = (gradientContent.match(/,/g) || []).length;
-                            if (commaCount < 1) {
+                            if (gradientSegments.length < 2) {
                                 errors.push(`Line ${index + 1}: linear-gradient requires at least 2 colors separated by commas`);
                             }
 
                             // Special case: direction with only one color after comma
-                            if (/^(to |deg|grad|rad|turn)/i.test(gradientContent.trim())) {
-                                // Has direction, so should have at least 2 commas (direction, color1, color2)
-                                if (commaCount < 2) {
+                            if (gradientSegments.length && isGradientDirectionSegment(gradientSegments[0])) {
+                                if (gradientSegments.length < 3) {
                                     errors.push(`Line ${index + 1}: linear-gradient with direction requires at least 2 colors after the direction`);
                                 }
                             }
@@ -2845,22 +2911,20 @@
 
                             // Check for missing direction separator
                             // If starts with direction keyword (to, deg, etc.), should have comma after it
-                            if (/^(to |deg|grad|rad|turn)/i.test(gradientContent.trim())) {
-                                const firstComma = gradientContent.indexOf(',');
-                                if (firstComma === -1) {
+                            if (gradientSegments.length && isGradientDirectionSegment(gradientSegments[0])) {
+                                if (gradientSegments.length < 2) {
                                     errors.push(`Line ${index + 1}: linear-gradient with direction must have comma after direction`);
                                 }
                             }
                         }
 
-                        // Check radial-gradient - handle nested parentheses properly
-                        const radialGradientMatch = propertyValue.match(/radial-gradient\(((?:[^()]+|\([^()]*\))*)\)/i);
-                        if (radialGradientMatch) {
-                            const gradientContent = radialGradientMatch[1];
+                        const radialGradientMatches = findCssFunctionCalls(propertyValue, 'radial-gradient');
+                        for (const radialGradientMatch of radialGradientMatches) {
+                            const gradientContent = radialGradientMatch.content;
+                            const gradientSegments = splitTopLevel(gradientContent, ',');
 
                             // Must have at least 2 colors
-                            const commaCount = (gradientContent.match(/,/g) || []).length;
-                            if (commaCount < 1) {
+                            if (gradientSegments.length < 2) {
                                 errors.push(`Line ${index + 1}: radial-gradient requires at least 2 colors separated by commas`);
                             }
 
@@ -2954,10 +3018,9 @@
 
                     // Check var() usage
                     if (propertyValue.includes('var(')) {
-                        // Use regex that handles nested parentheses: ((?:[^()]+|\([^()]*\))*)
-                        const varMatches = propertyValue.matchAll(/var\(((?:[^()]+|\([^()]*\))*)\)/g);
+                        const varMatches = findCssFunctionCalls(propertyValue, 'var');
                         for (const varMatch of varMatches) {
-                            const varContent = varMatch[1].trim();
+                            const varContent = varMatch.content.trim();
 
                             // Check for empty var()
                             if (!varContent) {
@@ -2966,7 +3029,7 @@
                             }
 
                             // Split by comma to get variable name and fallback
-                            const parts = varContent.split(',').map(p => p.trim());
+                            const parts = splitTopLevel(varContent, ',');
                             const varName = parts[0];
 
                             // Variable name must start with --
@@ -3600,6 +3663,43 @@
         let replaceSkinsOnNextSync = false;
         let skinReplaceTimer = null;
         let lastInputWasDelete = false;
+        let validationTimer = null;
+        let validationRunId = 0;
+
+        function applyValidationState(validation) {
+            wrapper.classList.remove('valid', 'invalid', 'warning');
+            validationIndicator.classList.remove('valid', 'invalid', 'warning');
+
+            if (!validation.isValid) {
+                wrapper.classList.add('invalid');
+                validationIndicator.classList.add('invalid');
+                validationIndicator.querySelector('.status-text').textContent = validation.errors[0];
+            } else if (validation.hasWarnings) {
+                wrapper.classList.add('warning');
+                validationIndicator.classList.add('warning');
+                validationIndicator.querySelector('.status-text').textContent = validation.warnings[0];
+            } else {
+                wrapper.classList.add('valid');
+                validationIndicator.classList.add('valid');
+                validationIndicator.querySelector('.status-text').textContent = 'Valid CSS';
+            }
+        }
+
+        function scheduleValidation(immediate = false) {
+            const runId = ++validationRunId;
+            clearTimeout(validationTimer);
+
+            const runValidation = function() {
+                if (runId !== validationRunId) return;
+                applyValidationState(validateCSS(textarea.value));
+            };
+
+            if (immediate) {
+                runValidation();
+            } else {
+                validationTimer = setTimeout(runValidation, 120);
+            }
+        }
 
         function doSkinReplacement() {
             if (!skinId || skinId === '-1') return;
@@ -3615,7 +3715,7 @@
             }
         }
 
-        function syncEditor() {
+        function syncEditor(options = {}) {
             let code = textarea.value;
 
             if (code.length > maxLength) {
@@ -3652,24 +3752,8 @@
             });
 
             updateCharCounter(code.length);
-
-            const validation = validateCSS(code);
-            wrapper.classList.remove('valid', 'invalid', 'warning');
-            validationIndicator.classList.remove('valid', 'invalid', 'warning');
-
-            if (!validation.isValid) {
-                wrapper.classList.add('invalid');
-                validationIndicator.classList.add('invalid');
-                validationIndicator.querySelector('.status-text').textContent = validation.errors[0];
-            } else if (validation.hasWarnings) {
-                wrapper.classList.add('warning');
-                validationIndicator.classList.add('warning');
-                validationIndicator.querySelector('.status-text').textContent = validation.warnings[0];
-            } else {
-                wrapper.classList.add('valid');
-                validationIndicator.classList.add('valid');
-                validationIndicator.querySelector('.status-text').textContent = 'Valid CSS';
-            }
+            lastKnownValue = textarea.value;
+            scheduleValidation(!!options.immediateValidation);
         }
 
         function syncScroll() {
@@ -3679,6 +3763,7 @@
         }
 
         updateCharCounter(textarea.value.length);
+        scheduleValidation(true);
 
         // Primary input handler
         textarea.addEventListener('input', function(e) {
@@ -3708,7 +3793,7 @@
 
         // Also sync on change events (for programmatic changes that trigger change)
         textarea.addEventListener('change', () => {
-            syncEditor();
+            syncEditor({ immediateValidation: true });
             if (skinId === '-1' && /\.skin\d+/.test(textarea.value)) {
                 alert('You used a skin number. Save the skin first to get a number.');
             }
@@ -3721,6 +3806,7 @@
             if (!document.body.contains(textarea)) {
                 // Textarea removed from DOM, stop checking
                 clearInterval(valueCheckInterval);
+                clearTimeout(validationTimer);
                 return;
             }
             if (textarea.value !== lastKnownValue) {
