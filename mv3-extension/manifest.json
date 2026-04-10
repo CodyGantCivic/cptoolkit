@@ -25,7 +25,6 @@
       "all_frames": true,
       "js": [
         "js/detect_cp_site.js",
-        "js/content/instrument-bridge.js",
         "js/external/jquery-3.3.1.min.js",
         "js/tools/on-load/title-changer.js",
         "js/tools/on-load/keyboard-shortcuts.js",
@@ -63,12 +62,10 @@
   "options_page": "html/options.html",
   "permissions": [
     "storage",
-    "downloads",
     "contextMenus",
     "scripting",
     "alarms",
-    "webNavigation",
-    "webRequest"
+    "webNavigation"
   ],
   "host_permissions": [
     "*://*/*"

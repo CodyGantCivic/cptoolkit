@@ -1,13 +1,6 @@
 // Popup JavaScript
 
 let toolsData = {};
-let captureStatus = {
-  enabled: false,
-  eventCount: 0
-};
-const MCP_ENDPOINT_KEY = 'mcp-capture-endpoint';
-const MCP_DEFAULT_ENDPOINT = 'http://localhost:9001/collect';
-const SHOW_MCP_CAPTURE_PANEL_KEY = 'show-mcp-capture-panel';
 const GITHUB_REPO = 'cp-vlasak/cptoolkit';
 const DOWNLOAD_PAGE = 'https://cp-vlasak.github.io/cptoolkit/';
 
@@ -175,169 +168,10 @@ async function checkCivicPlusSite() {
   }
 }
 
-async function getActiveTabId() {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab || !tab.id) return null;
-  return tab.id;
-}
-
 function openCustomCssManager() {
   chrome.tabs.create({
     url: chrome.runtime.getURL('html/custom-css-deployments.html')
   });
-}
-
-function setCaptureStatusText(text) {
-  const el = document.getElementById('capture-status');
-  if (el) el.textContent = text;
-}
-
-function setCaptureButtonState(isBusy) {
-  const toggleBtn = document.getElementById('toggle-capture');
-  const exportBtn = document.getElementById('export-capture');
-  const uploadBtn = document.getElementById('upload-capture');
-  toggleBtn.disabled = isBusy;
-  exportBtn.disabled = isBusy;
-  uploadBtn.disabled = isBusy;
-}
-
-function renderCaptureStatus() {
-  const toggleBtn = document.getElementById('toggle-capture');
-  if (!toggleBtn) return;
-
-  if (captureStatus.enabled) {
-    toggleBtn.textContent = 'Stop Capture';
-    toggleBtn.classList.remove('secondary');
-  } else {
-    toggleBtn.textContent = 'Start Capture';
-    toggleBtn.classList.add('secondary');
-  }
-
-  setCaptureStatusText(
-    captureStatus.enabled
-      ? `Capture active. Events buffered: ${captureStatus.eventCount || 0}`
-      : `Capture is off. Last buffered events: ${captureStatus.eventCount || 0}`
-  );
-}
-
-async function refreshCaptureStatus() {
-  const tabId = await getActiveTabId();
-  if (!tabId) {
-    captureStatus = { enabled: false, eventCount: 0 };
-    renderCaptureStatus();
-    return;
-  }
-
-  try {
-    const result = await chrome.runtime.sendMessage({
-      action: 'cp-mcp-capture-status',
-      tabId
-    });
-
-    captureStatus = {
-      enabled: !!(result && result.enabled),
-      eventCount: result && result.eventCount ? result.eventCount : 0,
-      sessionId: result && result.sessionId ? result.sessionId : null
-    };
-    renderCaptureStatus();
-  } catch (error) {
-    console.warn('Failed to get capture status:', error);
-    setCaptureStatusText('Capture status unavailable');
-  }
-}
-
-async function loadCaptureSettings() {
-  try {
-    const settings = await chrome.storage.local.get(MCP_ENDPOINT_KEY);
-    const endpointInput = document.getElementById('mcp-endpoint');
-    endpointInput.value = settings[MCP_ENDPOINT_KEY] || MCP_DEFAULT_ENDPOINT;
-  } catch (error) {
-    console.warn('Failed to load capture settings:', error);
-  }
-}
-
-async function toggleCapture() {
-  const tabId = await getActiveTabId();
-  if (!tabId) {
-    setCaptureStatusText('No active tab for capture');
-    return;
-  }
-
-  setCaptureButtonState(true);
-  try {
-    const result = await chrome.runtime.sendMessage({
-      action: 'cp-mcp-capture-toggle',
-      tabId,
-      enabled: !captureStatus.enabled
-    });
-
-    if (!result || result.success === false) {
-      throw new Error(result && result.error ? result.error : 'Toggle failed');
-    }
-    await refreshCaptureStatus();
-  } catch (error) {
-    setCaptureStatusText(`Toggle failed: ${error.message}`);
-  } finally {
-    setCaptureButtonState(false);
-  }
-}
-
-async function exportCapture() {
-  const tabId = await getActiveTabId();
-  if (!tabId) {
-    setCaptureStatusText('No active tab for export');
-    return;
-  }
-
-  setCaptureButtonState(true);
-  setCaptureStatusText('Exporting capture...');
-  try {
-    const result = await chrome.runtime.sendMessage({
-      action: 'cp-mcp-capture-export',
-      tabId
-    });
-    if (!result || result.success === false) {
-      throw new Error(result && result.error ? result.error : 'Export failed');
-    }
-    setCaptureStatusText(`Exported ${result.eventCount || 0} events to Downloads`);
-    await refreshCaptureStatus();
-  } catch (error) {
-    setCaptureStatusText(`Export failed: ${error.message}`);
-  } finally {
-    setCaptureButtonState(false);
-  }
-}
-
-async function uploadCapture() {
-  const tabId = await getActiveTabId();
-  if (!tabId) {
-    setCaptureStatusText('No active tab for upload');
-    return;
-  }
-
-  const endpointInput = document.getElementById('mcp-endpoint');
-  const endpoint = endpointInput.value.trim() || MCP_DEFAULT_ENDPOINT;
-  await chrome.storage.local.set({ [MCP_ENDPOINT_KEY]: endpoint });
-
-  setCaptureButtonState(true);
-  setCaptureStatusText('Uploading capture...');
-  try {
-    const result = await chrome.runtime.sendMessage({
-      action: 'cp-mcp-capture-upload',
-      tabId,
-      endpoint
-    });
-    if (!result || result.success === false) {
-      throw new Error(result && result.error ? result.error : 'Upload failed');
-    }
-    const storedId = result.response && result.response.captureId ? result.response.captureId : result.captureId;
-    setCaptureStatusText(`Uploaded capture ${storedId || ''} (HTTP ${result.status})`.trim());
-    await refreshCaptureStatus();
-  } catch (error) {
-    setCaptureStatusText(`Upload failed: ${error.message}`);
-  } finally {
-    setCaptureButtonState(false);
-  }
 }
 
 // Toggle tool enabled/disabled state
@@ -378,9 +212,6 @@ async function loadToolsAndSettings() {
     
     // Generate the UI
     generateToolsUI(settings);
-
-    // Build capture panel inside the container after tools are rendered
-    buildCapturePanel();
   } catch (error) {
     console.error('Failed to load tools configuration:', error);
     document.getElementById('tools-container').innerHTML = '<p style="color: red; font-size: 12px;">Error loading tools.</p>';
@@ -479,52 +310,6 @@ function generateToolsUI(settings) {
 document.getElementById('open-options').addEventListener('click', () => {
   chrome.runtime.openOptionsPage();
 });
-
-// Build and insert capture panel into tools-container if enabled
-async function buildCapturePanel() {
-  const settings = await chrome.storage.local.get(SHOW_MCP_CAPTURE_PANEL_KEY);
-  if (settings[SHOW_MCP_CAPTURE_PANEL_KEY] === false) return;
-
-  const container = document.getElementById('tools-container');
-  if (!container) return;
-
-  const panel = document.createElement('div');
-  panel.id = 'capture-panel';
-  panel.className = 'capture-panel';
-  panel.innerHTML =
-    '<div class="capture-title">MCP Capture</div>' +
-    '<div id="capture-status" class="capture-status">Checking capture status...</div>' +
-    '<div class="capture-row">' +
-      '<button id="toggle-capture" class="capture-btn secondary">Start Capture</button>' +
-      '<button id="export-capture" class="capture-btn">Export JSON</button>' +
-    '</div>' +
-    '<div class="capture-row">' +
-      '<input id="mcp-endpoint" class="capture-input" type="text" value="' + MCP_DEFAULT_ENDPOINT + '">' +
-      '<button id="upload-capture" class="capture-btn">Send</button>' +
-    '</div>';
-
-  container.prepend(panel);
-
-  // Bind events now that elements exist
-  document.getElementById('toggle-capture').addEventListener('click', () => {
-    toggleCapture();
-  });
-  document.getElementById('export-capture').addEventListener('click', () => {
-    exportCapture();
-  });
-  document.getElementById('upload-capture').addEventListener('click', () => {
-    uploadCapture();
-  });
-  document.getElementById('mcp-endpoint').addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      uploadCapture();
-    }
-  });
-
-  loadCaptureSettings();
-  refreshCaptureStatus();
-}
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {

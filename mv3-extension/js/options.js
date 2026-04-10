@@ -2,13 +2,6 @@
 
 let toolsData = {};
 let onDemandToolsData = {};
-const MCP_CAPTURE_ENDPOINT_KEY = "mcp-capture-endpoint";
-const MCP_CAPTURE_MAX_EVENTS_KEY = "mcp-capture-max-events";
-const MCP_CAPTURE_ALLOW_REMOTE_UPLOAD_KEY = "mcp-capture-allow-remote-upload";
-const MCP_CAPTURE_INCLUDE_RESPONSE_BODIES_KEY = "mcp-capture-include-response-bodies";
-const MCP_CAPTURE_DEFAULT_ENDPOINT = "http://localhost:9001/collect";
-const MCP_CAPTURE_DEFAULT_MAX_EVENTS = 800;
-const SHOW_MCP_CAPTURE_PANEL_KEY = "show-mcp-capture-panel";
 const THEME_MANAGER_PSEUDO_MODE_KEY = "theme-manager-enhancer-pseudo-mode";
 const THEME_MANAGER_PSEUDO_MODE_DEFAULT = "legacy-fix";
 
@@ -44,10 +37,6 @@ async function initialize() {
     loadSettings();
     loadThemeManagerPseudoMode();
     loadOnDemandSettings();
-    bindCaptureSettingsEvents();
-    loadCaptureSettings();
-    bindMcpPanelVisibility();
-    loadMcpPanelVisibility();
   } catch (error) {
     console.error("Failed to load tools configuration:", error);
     document.getElementById("tools-container").innerHTML =
@@ -312,114 +301,6 @@ function saveThemeManagerPseudoMode() {
 
   select.value = settings[THEME_MANAGER_PSEUDO_MODE_KEY];
   chrome.storage.local.set(settings, () => {
-    showSavedStatus();
-  });
-}
-
-function sanitizeMaxEvents(value) {
-  let n = Number(value);
-  if (!Number.isFinite(n)) n = MCP_CAPTURE_DEFAULT_MAX_EVENTS;
-  n = Math.floor(n);
-  if (n < 100) n = 100;
-  if (n > 5000) n = 5000;
-  return n;
-}
-
-function bindCaptureSettingsEvents() {
-  const endpoint = document.getElementById("mcp-capture-endpoint-setting");
-  const maxEvents = document.getElementById("mcp-capture-max-events-setting");
-  const allowRemote = document.getElementById("mcp-capture-allow-remote-upload-setting");
-  const includeBodies = document.getElementById("mcp-capture-include-response-bodies-setting");
-
-  [endpoint, maxEvents, allowRemote, includeBodies].forEach((el) => {
-    if (!el) return;
-    el.addEventListener("change", saveCaptureSettings);
-  });
-
-  if (endpoint) {
-    endpoint.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        saveCaptureSettings();
-      }
-    });
-  }
-}
-
-function loadCaptureSettings() {
-  chrome.storage.local.get(
-    [
-      MCP_CAPTURE_ENDPOINT_KEY,
-      MCP_CAPTURE_MAX_EVENTS_KEY,
-      MCP_CAPTURE_ALLOW_REMOTE_UPLOAD_KEY,
-      MCP_CAPTURE_INCLUDE_RESPONSE_BODIES_KEY,
-    ],
-    (settings) => {
-      const endpoint = document.getElementById("mcp-capture-endpoint-setting");
-      const maxEvents = document.getElementById("mcp-capture-max-events-setting");
-      const allowRemote = document.getElementById("mcp-capture-allow-remote-upload-setting");
-      const includeBodies = document.getElementById("mcp-capture-include-response-bodies-setting");
-
-      if (endpoint) {
-        endpoint.value = settings[MCP_CAPTURE_ENDPOINT_KEY] || MCP_CAPTURE_DEFAULT_ENDPOINT;
-      }
-      if (maxEvents) {
-        maxEvents.value = sanitizeMaxEvents(settings[MCP_CAPTURE_MAX_EVENTS_KEY]);
-      }
-      if (allowRemote) {
-        allowRemote.checked = !!settings[MCP_CAPTURE_ALLOW_REMOTE_UPLOAD_KEY];
-      }
-      if (includeBodies) {
-        includeBodies.checked = !!settings[MCP_CAPTURE_INCLUDE_RESPONSE_BODIES_KEY];
-      }
-    }
-  );
-}
-
-function saveCaptureSettings() {
-  const endpoint = document.getElementById("mcp-capture-endpoint-setting");
-  const maxEvents = document.getElementById("mcp-capture-max-events-setting");
-  const allowRemote = document.getElementById("mcp-capture-allow-remote-upload-setting");
-  const includeBodies = document.getElementById("mcp-capture-include-response-bodies-setting");
-
-  if (!endpoint || !maxEvents || !allowRemote || !includeBodies) return;
-
-  const settings = {};
-  settings[MCP_CAPTURE_ENDPOINT_KEY] = endpoint.value.trim() || MCP_CAPTURE_DEFAULT_ENDPOINT;
-  settings[MCP_CAPTURE_MAX_EVENTS_KEY] = sanitizeMaxEvents(maxEvents.value);
-  settings[MCP_CAPTURE_ALLOW_REMOTE_UPLOAD_KEY] = !!allowRemote.checked;
-  settings[MCP_CAPTURE_INCLUDE_RESPONSE_BODIES_KEY] = !!includeBodies.checked;
-
-  maxEvents.value = settings[MCP_CAPTURE_MAX_EVENTS_KEY];
-
-  chrome.storage.local.set(settings, () => {
-    showSavedStatus();
-  });
-}
-
-// ==================== MCP CAPTURE PANEL VISIBILITY ====================
-
-function bindMcpPanelVisibility() {
-  var checkbox = document.getElementById("show-mcp-capture-panel-setting");
-  if (!checkbox) return;
-  checkbox.addEventListener("change", saveMcpPanelVisibility);
-}
-
-function loadMcpPanelVisibility() {
-  chrome.storage.local.get(SHOW_MCP_CAPTURE_PANEL_KEY, function (settings) {
-    var checkbox = document.getElementById("show-mcp-capture-panel-setting");
-    if (!checkbox) return;
-    // Default to true (shown) if not set
-    checkbox.checked = settings[SHOW_MCP_CAPTURE_PANEL_KEY] !== false;
-  });
-}
-
-function saveMcpPanelVisibility() {
-  var checkbox = document.getElementById("show-mcp-capture-panel-setting");
-  if (!checkbox) return;
-  var settings = {};
-  settings[SHOW_MCP_CAPTURE_PANEL_KEY] = checkbox.checked;
-  chrome.storage.local.set(settings, function () {
     showSavedStatus();
   });
 }
