@@ -2374,7 +2374,11 @@
               // button JSON and POSTs it to /GraphicLinks/GraphicLinkSave. The
               // installSaveInterceptor op monkey-patches $.ajax to capture that
               // payload and cancel the request.
-              callMain("installSaveInterceptor").then(function () {
+              // The .catch matches pre-conversion semantics: the original
+              // sendMessage callback ignored bridge errors and proceeded
+              // regardless. Suppressing the rejection lets the .then run and
+              // also avoids unhandled-rejection warnings.
+              callMain("installSaveInterceptor").catch(function () {}).then(function () {
                 // Now click "Save and Publish" to trigger the CMS to assemble and send the data
                 var saveBtn = document.querySelector(
                   'input[name="saveAndPublish"], button[name="saveAndPublish"]',
