@@ -1837,30 +1837,23 @@
           });
         }
 
-        // ── Upload a single image to Document Center via hidden iframe ──
-        // Loads the real Add page in a hidden iframe so that:
-        // - Dropzone uploads go to the correct page instance (same ViewState)
-        // - reloadPage() and saveChanges() run in the real page context
-        // This replicates exactly what a user does manually.
+        // ── Upload all images to Document Center via a single hidden iframe ──
+        // Loads the real Add page once, adds all files to Dropzone in one session,
+        // then submits the form to create all documents at once.
 
-        function uploadDocumentViaIframe(
-          svgBlob,
-          fileName,
-          iconName,
-          folderID,
-          log,
-        ) {
+        function uploadAllDocumentsViaIframe(entries, folderID, log) {
           var deferred = $.Deferred();
+          var totalFiles = entries.length;
           var ADD_URL =
             "/Admin/DocumentCenter/DocumentForModal/Add/0?folderID=" +
             folderID +
             "&renderMode=1&loadSource=4&requestingModuleID=34";
 
           // Step 1: Find max document ID BEFORE upload (for detection later)
-          log("  Finding current max document ID...");
+          log("Finding current max document ID...");
           findMaxDocumentID()
             .then(function (maxIdBefore) {
-              log("  Current max ID: " + maxIdBefore);
+              log("Current max ID: " + maxIdBefore);
 
               // Step 2: Create hidden iframe with the real Add page
               var iframe = document.createElement("iframe");
@@ -1873,7 +1866,7 @@
               iframe.onload = function () {
                 if (iframeLoadHandled) return;
                 iframeLoadHandled = true;
-                log("  Add page loaded in iframe");
+                log("Add page loaded in iframe");
 
                 // Step 3: Wait for inner copyLinkDialog iframe (contains Dropzone) to load
                 var pollCount = 0;
@@ -1888,7 +1881,6 @@
                     );
                     return;
                   }
-                  // Use executeInFrame to check if Dropzone is ready in the inner iframe
                   executeInFrame(
                     "MultipleFileUpload/SelectFiles",
                     "(" +
@@ -1919,73 +1911,93 @@
                 }
 
                 function onInnerReady() {
-                  log("  Dropzone ready, uploading file...");
+                  log("Dropzone ready, adding " + totalFiles + " files...");
 
-                  // Step 4: Convert blob to base64 and inject into Dropzone via MAIN world
-                  var reader = new FileReader();
-                  reader.onload = function () {
-                    var base64Data = reader.result.split(",")[1];
+                  // Step 4: Convert all blobs to base64
+                  var readerPromises = entries.map(function (entry) {
+                    return new Promise(function (resolve, reject) {
+                      var reader = new FileReader();
+                      reader.onload = function () {
+                        resolve(reader.result.split(",")[1]);
+                      };
+                      reader.onerror = reject;
+                      reader.readAsDataURL(entry.svgBlob);
+                    });
+                  });
 
-                    // Execute in the inner iframe (SelectFiles page) to add file to Dropzone
-                    var uploadCode =
-                      "(" +
-                      function (b64, fname) {
-                        var byteChars = atob(b64);
-                        var byteArray = new Uint8Array(byteChars.length);
-                        for (var i = 0; i < byteChars.length; i++) {
-                          byteArray[i] = byteChars.charCodeAt(i);
-                        }
-                        var file = new File([byteArray], fname, {
-                          type: "image/svg+xml",
+                  Promise.all(readerPromises)
+                    .then(function (base64Array) {
+                      // Step 5: Add each file to Dropzone (fast sequential queuing)
+                      var addChain = Promise.resolve();
+                      base64Array.forEach(function (base64Data, idx) {
+                        addChain = addChain.then(function () {
+                          var uploadCode =
+                            "(" +
+                            function (b64, fname) {
+                              var byteChars = atob(b64);
+                              var byteArray = new Uint8Array(byteChars.length);
+                              for (var i = 0; i < byteChars.length; i++) {
+                                byteArray[i] = byteChars.charCodeAt(i);
+                              }
+                              var file = new File([byteArray], fname, {
+                                type: "image/svg+xml",
+                              });
+                              var dz =
+                                document.querySelector(".dropzone").dropzone ||
+                                (typeof Dropzone !== "undefined" &&
+                                  Dropzone.instances[0]);
+                              if (!dz) return { error: "Dropzone not found" };
+                              dz.addFile(file);
+                              return { status: "added" };
+                            }.toString() +
+                            ')("' +
+                            base64Data +
+                            '","' +
+                            entries[idx].fileName.replace(/"/g, '\\"') +
+                            '")';
+
+                          return executeInFrame(
+                            "MultipleFileUpload/SelectFiles",
+                            uploadCode,
+                          ).then(function (result) {
+                            if (result && result.error)
+                              throw new Error(result.error);
+                            log("  Queued " + entries[idx].iconName);
+                          });
                         });
-
-                        var dz =
-                          document.querySelector(".dropzone").dropzone ||
-                          (typeof Dropzone !== "undefined" &&
-                            Dropzone.instances[0]);
-                        if (!dz) return { error: "Dropzone not found" };
-
-                        dz.addFile(file);
-                        return { status: "added" };
-                      }.toString() +
-                      ')("' +
-                      base64Data +
-                      '","' +
-                      fileName.replace(/"/g, '\\"') +
-                      '")';
-
-                    executeInFrame("MultipleFileUpload/SelectFiles", uploadCode)
-                      .then(function (result) {
-                        if (result && result.error)
-                          throw new Error(result.error);
-                        // Step 5: Poll for Dropzone upload completion
-                        return pollDropzoneComplete();
-                      })
-                      .then(function () {
-                        log("  File uploaded via Dropzone");
-                        // Step 6: Trigger CONTINUE (reloadPage) from inner iframe
-                        return triggerContinue();
-                      })
-                      .then(function () {
-                        log("  Form updated, filling metadata...");
-                        // Step 7: Fill metadata and submit the outer Add form
-                        return fillMetadataAndSubmit();
-                      })
-                      .then(function () {
-                        log("  Form submitted, verifying document...");
-                        // Step 8: Verify document was created
-                        return verifyNewDocument(maxIdBefore, iconName);
-                      })
-                      .then(function (docId) {
-                        cleanup();
-                        deferred.resolve(docId);
-                      })
-                      .catch(function (err) {
-                        cleanup();
-                        deferred.reject(err);
                       });
-                  };
-                  reader.readAsDataURL(svgBlob);
+                      return addChain;
+                    })
+                    .then(function () {
+                      log(
+                        "All files queued, waiting for uploads to complete...",
+                      );
+                      // Step 6: Poll for Dropzone upload completion
+                      return pollDropzoneComplete();
+                    })
+                    .then(function () {
+                      log("All files uploaded via Dropzone");
+                      // Step 7: Trigger CONTINUE (reloadPage) from inner iframe
+                      return triggerContinue();
+                    })
+                    .then(function () {
+                      log("Form updated, filling metadata...");
+                      // Step 8: Fill metadata and submit the outer Add form
+                      return fillMetadataAndSubmit();
+                    })
+                    .then(function () {
+                      log("Form submitted, verifying documents...");
+                      // Step 9: Verify all documents were created
+                      return verifyAllDocuments(maxIdBefore);
+                    })
+                    .then(function (docIds) {
+                      cleanup();
+                      deferred.resolve(docIds);
+                    })
+                    .catch(function (err) {
+                      cleanup();
+                      deferred.reject(err);
+                    });
                 }
 
                 function pollDropzoneComplete() {
@@ -2012,13 +2024,21 @@
                     var attempts = 0;
                     function check() {
                       attempts++;
-                      if (attempts > 30)
+                      if (attempts > 60)
                         return reject(new Error("Dropzone upload timed out"));
                       executeInFrame("MultipleFileUpload/SelectFiles", pollCode)
                         .then(function (result) {
-                          if (result && result.done) return resolve();
-                          if (result && result.rejected > 0)
-                            return reject(new Error("Dropzone rejected file"));
+                          if (result && result.done) {
+                            if (result.rejected > 0) {
+                              log(
+                                "  Warning: " +
+                                  result.rejected +
+                                  " file(s) rejected by Dropzone",
+                              );
+                            }
+                            log("  " + result.accepted + " file(s) accepted");
+                            return resolve();
+                          }
                           setTimeout(check, 500);
                         })
                         .catch(function () {
@@ -2030,7 +2050,6 @@
                 }
 
                 function triggerContinue() {
-                  // In the inner iframe, simulate CONTINUE which calls window.parent.reloadPage()
                   var continueCode =
                     "(" +
                     function () {
@@ -2060,7 +2079,7 @@
                           {},
                           [],
                         );
-                        return { status: "ok" };
+                        return { status: "ok", fileCount: files.length };
                       }
                       return { error: "reloadPage not found on parent" };
                     }.toString() +
@@ -2071,13 +2090,16 @@
                     continueCode,
                   ).then(function (result) {
                     if (result && result.error) throw new Error(result.error);
-                    // Poll outer iframe until the form is ready (reloadPage may trigger a postback)
+                    log(
+                      "  Continue triggered for " +
+                        (result ? result.fileCount : "?") +
+                        " files",
+                    );
                     return waitForFormReady();
                   });
                 }
 
                 function waitForFormReady() {
-                  // Poll the outer Add iframe until saveChanges exists and olfileUploadControl has file children
                   var probeCode =
                     "(" +
                     function () {
@@ -2093,7 +2115,7 @@
                     var attempts = 0;
                     function check() {
                       attempts++;
-                      if (attempts > 20)
+                      if (attempts > 30)
                         return reject(
                           new Error(
                             "Timeout waiting for Add form after reloadPage",
@@ -2134,20 +2156,17 @@
                 }
 
                 function fillMetadataAndSubmit() {
-                  // In the outer iframe (DocumentForModal/Add), fill metadata and submit.
-                  // After reloadPage(), the form is a multi-file bulk upload with slots for ALL
-                  // files in the folder (not just our upload). saveChanges() validates every slot
-                  // and alerts if any FileName is empty — which we can't fully control.
-                  // Instead, we fill our file's FileName and submit the form directly,
-                  // replicating what saveChanges does after validation passes.
-                  var escapedName = iconName
-                    .replace(/\\/g, "\\\\")
-                    .replace(/"/g, '\\"')
-                    .replace(/'/g, "\\'");
+                  // After reloadPage(), the form has slots for all uploaded files.
+                  // Fill each empty FileName/FileDescription with the corresponding icon name.
+                  var names = entries.map(function (e) {
+                    return e.iconName;
+                  });
                   var submitCode =
                     "(" +
-                    function (name) {
-                      // Fill ALL empty FileName fields to prevent any validation issues
+                    function (namesStr) {
+                      var names = JSON.parse(namesStr);
+
+                      // Fill FileName fields — each empty slot gets its corresponding name
                       var allNameInputs = document.querySelectorAll(
                         "input[id*=__FileName]",
                       );
@@ -2157,28 +2176,28 @@
                           !allNameInputs[i].value ||
                           allNameInputs[i].value.trim() === ""
                         ) {
-                          allNameInputs[i].value = name;
+                          allNameInputs[i].value =
+                            names[filled] || names[0] || "Social Icon";
                           filled++;
                         }
                       }
 
-                      // Also fill description fields
+                      // Fill description fields
                       var allDescInputs = document.querySelectorAll(
                         "input[id*=__FileDescription], textarea[id*=__FileDescription]",
                       );
+                      var descFilled = 0;
                       for (var j = 0; j < allDescInputs.length; j++) {
                         if (
                           !allDescInputs[j].value ||
                           allDescInputs[j].value.trim() === ""
                         ) {
-                          allDescInputs[j].value = name;
+                          allDescInputs[j].value =
+                            names[descFilled] || names[0] || "Social Icon";
+                          descFilled++;
                         }
                       }
 
-                      // Submit directly — replicate exactly what saveChanges does after validation:
-                      // 1. Append saveAction to form action
-                      // 2. Call ajaxPostBackStart() (required for server to accept the POST)
-                      // 3. Call aspnetForm.submit()
                       if (!document.aspnetForm) {
                         return { error: "aspnetForm not found" };
                       }
@@ -2195,9 +2214,9 @@
                       document.aspnetForm.submit();
                       return { status: "submitted", filled: filled };
                     }.toString() +
-                    ')("' +
-                    escapedName +
-                    '")';
+                    ")(" +
+                    JSON.stringify(JSON.stringify(names)) +
+                    ")";
 
                   return executeInFrame(
                     "DocumentCenter/DocumentForModal/Add",
@@ -2208,11 +2227,40 @@
                       result,
                     );
                     if (result && result.error) throw new Error(result.error);
-                    // Wait for form submit and server processing
+                    // Wait for server processing — scale with file count
                     return new Promise(function (resolve) {
-                      setTimeout(resolve, 3000);
+                      setTimeout(resolve, 3000 + totalFiles * 500);
                     });
                   });
+                }
+
+                function verifyAllDocuments(maxIdBefore) {
+                  var results = [];
+
+                  function verifyNext(i) {
+                    if (i >= totalFiles)
+                      return $.Deferred().resolve(results).promise();
+                    return verifyNewDocument(
+                      maxIdBefore + i,
+                      entries[i].iconName,
+                    ).then(function (docId) {
+                      results.push({
+                        iconName: entries[i].iconName,
+                        docID: docId,
+                        linkUrl: entries[i].linkUrl,
+                      });
+                      log(
+                        "  Verified " +
+                          entries[i].iconName +
+                          " (ID: " +
+                          docId +
+                          ")",
+                      );
+                      return verifyNext(i + 1);
+                    });
+                  }
+
+                  return verifyNext(0);
                 }
 
                 waitForInnerIframe();
@@ -2231,7 +2279,7 @@
           return deferred.promise();
         }
 
-        // ── Upload social icons sequentially ──
+        // ── Upload social icons: bulk upload, then sequential graphic link creation ──
 
         function uploadSocialIcons(icons, folderID, modal) {
           var progressDiv = modal.querySelector("#cp-socials-progress");
@@ -2257,40 +2305,11 @@
             progressLog.scrollTop = progressLog.scrollHeight;
           }
 
-          function updateProgress(current) {
-            var pct = Math.round((current / total) * 100);
-            progressBar.style.width = pct + "%";
-            progressText.textContent =
-              "Processing " + current + " of " + total + "...";
-          }
+          // Phase 1: Fetch all SVG blobs in parallel
+          log("Fetching " + total + " SVG files...");
+          progressText.textContent = "Fetching SVGs...";
 
-          function processNext(index) {
-            if (index >= icons.length) {
-              var successCount = total - errors.length;
-              progressText.textContent =
-                "Done! " + successCount + " of " + total + " icons created.";
-              progressBar.style.width = "100%";
-              progressBar.style.background =
-                errors.length > 0 ? "#cc6600" : "#4CAF50";
-              if (errors.length > 0) {
-                log(
-                  errors.length +
-                    " error(s) occurred — check above for details.",
-                  true,
-                );
-                log(
-                  "Page will NOT auto-reload so you can inspect the console. Reload manually when ready.",
-                );
-              } else {
-                log("Reloading page in 3 seconds...");
-                setTimeout(function () {
-                  location.reload();
-                }, 3000);
-              }
-              return;
-            }
-
-            var entry = icons[index];
+          var fetchPromises = icons.map(function (entry) {
             var icon = entry.icon;
             var entryColor = entry.color;
             var fileName = icon.files[entryColor];
@@ -2298,76 +2317,139 @@
               "socials/" + entryColor + "/" + fileName,
             );
 
-            updateProgress(index + 1);
-            log(
-              "(" +
-                (index + 1) +
-                "/" +
-                total +
-                ") " +
-                icon.name +
-                ": Fetching SVG...",
-            );
-
-            // Step 1: Fetch SVG blob from extension resources
-            fetch(svgUrl)
+            return fetch(svgUrl)
               .then(function (resp) {
                 if (!resp.ok)
                   throw new Error("Failed to fetch SVG: " + resp.status);
                 return resp.blob();
               })
               .then(function (svgBlob) {
-                // Step 2: Upload via hidden iframe (replicates the real browser flow)
-                log("  Uploading via Document Center...");
-                return uploadDocumentViaIframe(
-                  svgBlob,
-                  fileName,
-                  icon.name,
-                  folderID,
-                  log,
-                );
-              })
-              .then(function (docID) {
-                log("  Document created (ID: " + docID + ")");
+                return {
+                  svgBlob: svgBlob,
+                  fileName: fileName,
+                  iconName: icon.name,
+                  linkUrl: icon.linkUrl,
+                };
+              });
+          });
 
-                // Step 3: Create the graphic link
+          Promise.all(fetchPromises)
+            .then(function (entries) {
+              log("All SVGs fetched");
+              progressText.textContent =
+                "Uploading " + total + " files to Document Center...";
+              progressBar.style.width = "20%";
+
+              // Phase 2: Upload ALL files in a single iframe session
+              return uploadAllDocumentsViaIframe(entries, folderID, log);
+            })
+            .then(function (results) {
+              // results: [{iconName, docID, linkUrl}, ...]
+              log("All " + results.length + " documents created");
+              progressBar.style.width = "70%";
+
+              // Phase 3: Create graphic links one at a time
+              var glIndex = 0;
+
+              function createNextGraphicLink() {
+                if (glIndex >= results.length) {
+                  // All done
+                  var successCount = total - errors.length;
+                  progressText.textContent =
+                    "Done! " +
+                    successCount +
+                    " of " +
+                    total +
+                    " icons created.";
+                  progressBar.style.width = "100%";
+                  progressBar.style.background =
+                    errors.length > 0 ? "#cc6600" : "#4CAF50";
+                  if (errors.length > 0) {
+                    log(
+                      errors.length +
+                        " error(s) occurred — check above for details.",
+                      true,
+                    );
+                    log(
+                      "Page will NOT auto-reload so you can inspect the console. Reload manually when ready.",
+                    );
+                  } else {
+                    log("Reloading page in 3 seconds...");
+                    setTimeout(function () {
+                      location.reload();
+                    }, 3000);
+                  }
+                  return;
+                }
+
+                var item = results[glIndex];
+                var pct =
+                  70 + Math.round(((glIndex + 1) / results.length) * 30);
+                progressBar.style.width = pct + "%";
+                progressText.textContent =
+                  "Creating graphic link " +
+                  (glIndex + 1) +
+                  " of " +
+                  results.length +
+                  "...";
+
                 var graphicLinkData = {
                   styles: [],
                   buttonText: null,
-                  image: "/ImageRepository/Document?documentID=" + docID,
+                  image:
+                    "/ImageRepository/Document?documentID=" + item.docID,
                   hoverImage: "",
                   startDate: "",
                   endDate: "",
-                  linkUrl: icon.linkUrl,
+                  linkUrl: item.linkUrl,
                   openInNewWindow: false,
                   graphicLinkID: "0",
-                  documentID: parseInt(docID, 10),
+                  documentID: parseInt(item.docID, 10),
                   mouseOverDocumentID: null,
                   categoryID: categoryID,
                   shouldPublish: true,
                 };
 
-                log("  Creating graphic link -> " + icon.linkUrl);
-                return $.ajax({
+                log(
+                  "(" +
+                    (glIndex + 1) +
+                    "/" +
+                    results.length +
+                    ") " +
+                    item.iconName +
+                    ": Creating graphic link -> " +
+                    item.linkUrl,
+                );
+
+                $.ajax({
                   type: "POST",
                   url: "/GraphicLinks/GraphicLinkSave",
                   data: JSON.stringify(graphicLinkData),
                   contentType: "application/json",
-                });
-              })
-              .then(function () {
-                log("  Done!");
-                processNext(index + 1);
-              })
-              .catch(function (err) {
-                var errMsg = err.statusText || err.message || String(err);
-                log("  ERROR: " + errMsg, true);
-                errors.push(icon.name);
-                processNext(index + 1);
-              });
-          }
+                })
+                  .then(function () {
+                    log("  Done!");
+                    glIndex++;
+                    createNextGraphicLink();
+                  })
+                  .fail(function (err) {
+                    var errMsg = err.statusText || err.message || String(err);
+                    log("  ERROR: " + errMsg, true);
+                    errors.push(item.iconName);
+                    glIndex++;
+                    createNextGraphicLink();
+                  });
+              }
 
-          processNext(0);
+              createNextGraphicLink();
+            })
+            .catch(function (err) {
+              var errMsg = err.message || String(err);
+              log("UPLOAD ERROR: " + errMsg, true);
+              progressText.textContent = "Upload failed!";
+              progressBar.style.background = "#cc0000";
+              progressBar.style.width = "100%";
+            });
         }
 
         // (Dead code removed — document ID detection now uses findMaxDocumentID + verifyNewDocument)
