@@ -6,8 +6,12 @@ console.log('[CP Toolkit] Service worker initializing...');
 // Import modules
 importScripts('context-menus.js');
 importScripts('first-run.js');
+importScripts('main-ops-fancy.js');
+importScripts('frame-ops-fancy.js');
 
 console.log('[CP Toolkit] Service worker initialized');
+
+var hasOwn = Object.prototype.hasOwnProperty;
 
 var MCP_CAPTURE_KEY = 'mcp-capture-enabled';
 var MCP_DEFAULT_COLLECT_URL = 'http://localhost:9001/collect';
@@ -527,6 +531,54 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ error: err.message });
     });
     return true; // async response
+  }
+
+  // Named-op dispatch for cp-ImportFancyButton (replaces eval bridge).
+  // Op bodies are hardcoded in main-ops-fancy.js / frame-ops-fancy.js — content
+  // scripts cannot influence what code runs in MAIN world.
+  if (message && typeof message.action === 'string' && message.action.indexOf('cp-fancy-') === 0 && sender.tab) {
+    var opKey = message.action.slice('cp-fancy-'.length);
+
+    if (hasOwn.call(MAIN_OPS, opKey)) {
+      chrome.scripting.executeScript({
+        target: { tabId: sender.tab.id },
+        world: 'MAIN',
+        func: MAIN_OPS[opKey],
+        args: message.args ? [message.args] : []
+      }).then(function(results) {
+        sendResponse({ result: results[0] ? results[0].result : null });
+      }).catch(function(err) {
+        sendResponse({ error: err.message });
+      });
+      return true;
+    }
+
+    if (hasOwn.call(FRAME_OPS, opKey)) {
+      var entry = FRAME_OPS[opKey];
+      chrome.webNavigation.getAllFrames({ tabId: sender.tab.id }).then(function(frames) {
+        var frame = frames.find(function(f) { return f.url.indexOf(entry.match) > -1; });
+        if (!frame) {
+          sendResponse({ error: 'Frame not found: ' + entry.match });
+          return;
+        }
+        chrome.scripting.executeScript({
+          target: { tabId: sender.tab.id, frameIds: [frame.frameId] },
+          world: 'MAIN',
+          func: entry.func,
+          args: message.args ? [message.args] : []
+        }).then(function(results) {
+          sendResponse({ result: results[0] ? results[0].result : null });
+        }).catch(function(err) {
+          sendResponse({ error: err.message });
+        });
+      }).catch(function(err) {
+        sendResponse({ error: err.message });
+      });
+      return true;
+    }
+
+    sendResponse({ error: 'Unknown fancy op: ' + opKey });
+    return true;
   }
 
   sendResponse({ received: true });
