@@ -1602,45 +1602,13 @@
 
           // Load FolderForModal in a hidden iframe so React renders the Ant Design tree.
           // Content scripts can't access React fiber (page-world JS), so we use
-          // executeInFrame to run extraction code in the MAIN world.
+          // a frame-scoped named op to run extraction code in the MAIN world.
           var iframe = document.createElement("iframe");
           iframe.style.cssText =
             "position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;";
           iframe.src =
             "/Admin/DocumentCenter/FolderForModal/Index/0?renderMode=1&loadSource=4&requestingModuleID=34";
           document.body.appendChild(iframe);
-
-          var extractCode =
-            "(" +
-            function () {
-              var treeNodes = document.querySelectorAll(".ant-tree-treenode");
-              if (treeNodes.length === 0) return { ready: false };
-              var folders = [];
-              treeNodes.forEach(function (node) {
-                var fiberKey = Object.keys(node).find(function (k) {
-                  return (
-                    k.indexOf("__reactFiber$") === 0 ||
-                    k.indexOf("__reactInternalInstance$") === 0
-                  );
-                });
-                if (!fiberKey) return;
-                var current = node[fiberKey];
-                for (var i = 0; i < 5 && current; i++) {
-                  if (current.memoizedProps && current.memoizedProps.eventKey) {
-                    var data = current.memoizedProps.data;
-                    var title = data ? data.title : null;
-                    var id = current.memoizedProps.eventKey;
-                    if (title && title !== "Content") {
-                      folders.push({ id: id, title: title });
-                    }
-                    break;
-                  }
-                  current = current.return;
-                }
-              });
-              return { ready: true, folders: folders };
-            }.toString() +
-            ")()";
 
           var attempts = 0;
           var maxAttempts = 15;
@@ -1652,7 +1620,7 @@
                 '<div style="font-size:12px;color:#888;">Timed out loading folders. Enter the folder ID manually.</div>';
               return;
             }
-            executeInFrame("FolderForModal/Index", extractCode)
+            callMain("readFolderTree")
               .then(function (result) {
                 if (!result || !result.ready) {
                   setTimeout(pollForFolders, 1000);
@@ -1816,15 +1784,16 @@
           return checkId();
         }
 
-        // ── Execute code in a specific iframe's MAIN world via service worker ──
+        // ── Call a named SW-registered op (top-frame or frame-scoped) ──
+        // Op bodies live in main-ops-fancy.js / frame-ops-fancy.js. The SW
+        // routes by registry membership, so the caller doesn't pick a world.
 
-        function executeInFrame(urlMatch, code) {
+        function callMain(op, args) {
           return new Promise(function (resolve, reject) {
             chrome.runtime.sendMessage(
               {
-                action: "cp-execute-in-frame",
-                urlMatch: urlMatch,
-                code: code,
+                action: "cp-fancy-" + op,
+                args: args || null,
               },
               function (response) {
                 if (chrome.runtime.lastError)
@@ -1881,23 +1850,7 @@
                     );
                     return;
                   }
-                  executeInFrame(
-                    "MultipleFileUpload/SelectFiles",
-                    "(" +
-                      function () {
-                        var dz = document.querySelector(".dropzone");
-                        return {
-                          ready: !!(
-                            dz &&
-                            (dz.dropzone ||
-                              (typeof Dropzone !== "undefined" &&
-                                Dropzone.instances &&
-                                Dropzone.instances.length > 0))
-                          ),
-                        };
-                      }.toString() +
-                      ")()",
-                  )
+                  callMain("checkDropzoneReady")
                     .then(function (result) {
                       if (result && result.ready) {
                         onInnerReady();
@@ -1931,35 +1884,10 @@
                       var addChain = Promise.resolve();
                       base64Array.forEach(function (base64Data, idx) {
                         addChain = addChain.then(function () {
-                          var uploadCode =
-                            "(" +
-                            function (b64, fname) {
-                              var byteChars = atob(b64);
-                              var byteArray = new Uint8Array(byteChars.length);
-                              for (var i = 0; i < byteChars.length; i++) {
-                                byteArray[i] = byteChars.charCodeAt(i);
-                              }
-                              var file = new File([byteArray], fname, {
-                                type: "image/svg+xml",
-                              });
-                              var dz =
-                                document.querySelector(".dropzone").dropzone ||
-                                (typeof Dropzone !== "undefined" &&
-                                  Dropzone.instances[0]);
-                              if (!dz) return { error: "Dropzone not found" };
-                              dz.addFile(file);
-                              return { status: "added" };
-                            }.toString() +
-                            ')("' +
-                            base64Data +
-                            '","' +
-                            entries[idx].fileName.replace(/"/g, '\\"') +
-                            '")';
-
-                          return executeInFrame(
-                            "MultipleFileUpload/SelectFiles",
-                            uploadCode,
-                          ).then(function (result) {
+                          return callMain("addFileToDropzone", {
+                            base64: base64Data,
+                            filename: entries[idx].fileName,
+                          }).then(function (result) {
                             if (result && result.error)
                               throw new Error(result.error);
                             log("  Queued " + entries[idx].iconName);
@@ -2001,32 +1929,13 @@
                 }
 
                 function pollDropzoneComplete() {
-                  var pollCode =
-                    "(" +
-                    function () {
-                      var dz =
-                        document.querySelector(".dropzone").dropzone ||
-                        (typeof Dropzone !== "undefined" &&
-                          Dropzone.instances[0]);
-                      if (!dz) return { done: false, error: "no dropzone" };
-                      var uploading = dz.getUploadingFiles().length;
-                      var accepted = dz.getAcceptedFiles().length;
-                      var rejected = dz.getRejectedFiles().length;
-                      return {
-                        done: uploading === 0 && accepted > 0,
-                        accepted: accepted,
-                        rejected: rejected,
-                      };
-                    }.toString() +
-                    ")()";
-
                   return new Promise(function (resolve, reject) {
                     var attempts = 0;
                     function check() {
                       attempts++;
                       if (attempts > 60)
                         return reject(new Error("Dropzone upload timed out"));
-                      executeInFrame("MultipleFileUpload/SelectFiles", pollCode)
+                      callMain("pollDropzoneComplete")
                         .then(function (result) {
                           if (result && result.done) {
                             if (result.rejected > 0) {
@@ -2050,45 +1959,7 @@
                 }
 
                 function triggerContinue() {
-                  var continueCode =
-                    "(" +
-                    function () {
-                      var dz =
-                        document.querySelector(".dropzone").dropzone ||
-                        (typeof Dropzone !== "undefined" &&
-                          Dropzone.instances[0]);
-                      if (!dz)
-                        return { error: "Dropzone not found for continue" };
-                      var files = dz.getAcceptedFiles();
-                      var fileList = files.map(function (f) {
-                        return f.name;
-                      });
-                      var fileSizes = files.map(function (f) {
-                        return f.size;
-                      });
-                      var categoryId = document.getElementById("categoryId")
-                        ? document.getElementById("categoryId").value
-                        : "0";
-
-                      if (typeof window.parent.reloadPage === "function") {
-                        window.parent.reloadPage(
-                          files.length,
-                          categoryId,
-                          fileList,
-                          fileSizes,
-                          {},
-                          [],
-                        );
-                        return { status: "ok", fileCount: files.length };
-                      }
-                      return { error: "reloadPage not found on parent" };
-                    }.toString() +
-                    ")()";
-
-                  return executeInFrame(
-                    "MultipleFileUpload/SelectFiles",
-                    continueCode,
-                  ).then(function (result) {
+                  return callMain("triggerContinue").then(function (result) {
                     if (result && result.error) throw new Error(result.error);
                     log(
                       "  Continue triggered for " +
@@ -2100,17 +1971,6 @@
                 }
 
                 function waitForFormReady() {
-                  var probeCode =
-                    "(" +
-                    function () {
-                      var ol = document.getElementById("olfileUploadControl");
-                      return {
-                        hasSaveChanges: typeof saveChanges === "function",
-                        fileSlotCount: ol ? ol.children.length : 0,
-                      };
-                    }.toString() +
-                    ")()";
-
                   return new Promise(function (resolve, reject) {
                     var attempts = 0;
                     function check() {
@@ -2121,10 +1981,7 @@
                             "Timeout waiting for Add form after reloadPage",
                           ),
                         );
-                      executeInFrame(
-                        "DocumentCenter/DocumentForModal/Add",
-                        probeCode,
-                      )
+                      callMain("probeAddForm")
                         .then(function (result) {
                           console.log(
                             "[CP Toolkit](socials) Form probe attempt " +
@@ -2161,67 +2018,8 @@
                   var names = entries.map(function (e) {
                     return e.iconName;
                   });
-                  var submitCode =
-                    "(" +
-                    function (namesStr) {
-                      var names = JSON.parse(namesStr);
 
-                      // Fill FileName fields — each empty slot gets its corresponding name
-                      var allNameInputs = document.querySelectorAll(
-                        "input[id*=__FileName]",
-                      );
-                      var filled = 0;
-                      for (var i = 0; i < allNameInputs.length; i++) {
-                        if (
-                          !allNameInputs[i].value ||
-                          allNameInputs[i].value.trim() === ""
-                        ) {
-                          allNameInputs[i].value =
-                            names[filled] || names[0] || "Social Icon";
-                          filled++;
-                        }
-                      }
-
-                      // Fill description fields
-                      var allDescInputs = document.querySelectorAll(
-                        "input[id*=__FileDescription], textarea[id*=__FileDescription]",
-                      );
-                      var descFilled = 0;
-                      for (var j = 0; j < allDescInputs.length; j++) {
-                        if (
-                          !allDescInputs[j].value ||
-                          allDescInputs[j].value.trim() === ""
-                        ) {
-                          allDescInputs[j].value =
-                            names[descFilled] || names[0] || "Social Icon";
-                          descFilled++;
-                        }
-                      }
-
-                      if (!document.aspnetForm) {
-                        return { error: "aspnetForm not found" };
-                      }
-
-                      var connector =
-                        document.aspnetForm.action.indexOf("?") !== -1
-                          ? "&"
-                          : "?";
-                      document.aspnetForm.action +=
-                        connector + "saveAction=publish";
-                      if (typeof ajaxPostBackStart === "function") {
-                        ajaxPostBackStart();
-                      }
-                      document.aspnetForm.submit();
-                      return { status: "submitted", filled: filled };
-                    }.toString() +
-                    ")(" +
-                    JSON.stringify(JSON.stringify(names)) +
-                    ")";
-
-                  return executeInFrame(
-                    "DocumentCenter/DocumentForModal/Add",
-                    submitCode,
-                  ).then(function (result) {
+                  return callMain("fillAndSubmitAddForm", { names: names }).then(function (result) {
                     console.log(
                       "[CP Toolkit](socials) fillMetadata result:",
                       result,
@@ -2573,112 +2371,84 @@
 
               // Intercept the GraphicLinkSave POST via MAIN world $.ajax patch.
               // When "Save and Publish" is clicked, the CMS assembles the complete
-              // button JSON and POSTs it to /GraphicLinks/GraphicLinkSave. We
-              // monkey-patch $.ajax to capture that payload and cancel the request.
-              chrome.runtime.sendMessage(
-                {
-                  action: "cp-execute-in-main",
-                  code:
-                    "(" +
-                    function () {
-                      window.__cpToolkitCapturedSave = null;
-                      var origAjax = $.ajax;
-                      $.ajax = function (opts) {
-                        if (
-                          opts &&
-                          typeof opts.url === "string" &&
-                          opts.url.indexOf("/GraphicLinks/GraphicLinkSave") !==
-                            -1
-                        ) {
-                          // Capture the payload and block the actual save
-                          var d = opts.data;
-                          window.__cpToolkitCapturedSave =
-                            typeof d === "string" ? d : JSON.stringify(d);
-                          // Restore original $.ajax immediately
-                          $.ajax = origAjax;
-                          // Return a deferred that never resolves so the CMS
-                          // success handler (which reloads the page) doesn't fire
-                          return $.Deferred().promise();
-                        }
-                        return origAjax.apply(this, arguments);
-                      };
-                    }.toString() +
-                    ")()",
-                },
-                function () {
-                  // Now click "Save and Publish" to trigger the CMS to assemble and send the data
-                  var saveBtn = document.querySelector(
-                    'input[name="saveAndPublish"], button[name="saveAndPublish"]',
+              // button JSON and POSTs it to /GraphicLinks/GraphicLinkSave. The
+              // installSaveInterceptor op monkey-patches $.ajax to capture that
+              // payload and cancel the request.
+              callMain("installSaveInterceptor").then(function () {
+                // Now click "Save and Publish" to trigger the CMS to assemble and send the data
+                var saveBtn = document.querySelector(
+                  'input[name="saveAndPublish"], button[name="saveAndPublish"]',
+                );
+                if (!saveBtn) {
+                  // Try finding by text content
+                  var allBtns = document.querySelectorAll(
+                    "input[type='submit'], button",
                   );
-                  if (!saveBtn) {
-                    // Try finding by text content
-                    var allBtns = document.querySelectorAll(
-                      "input[type='submit'], button",
-                    );
-                    for (var i = 0; i < allBtns.length; i++) {
-                      if (
-                        allBtns[i].value &&
-                        allBtns[i].value
-                          .toUpperCase()
-                          .indexOf("SAVE AND PUBLISH") !== -1
-                      ) {
-                        saveBtn = allBtns[i];
-                        break;
-                      }
-                      if (
-                        allBtns[i].textContent &&
-                        allBtns[i].textContent
-                          .toUpperCase()
-                          .indexOf("SAVE AND PUBLISH") !== -1
-                      ) {
-                        saveBtn = allBtns[i];
-                        break;
-                      }
+                  for (var i = 0; i < allBtns.length; i++) {
+                    if (
+                      allBtns[i].value &&
+                      allBtns[i].value
+                        .toUpperCase()
+                        .indexOf("SAVE AND PUBLISH") !== -1
+                    ) {
+                      saveBtn = allBtns[i];
+                      break;
+                    }
+                    if (
+                      allBtns[i].textContent &&
+                      allBtns[i].textContent
+                        .toUpperCase()
+                        .indexOf("SAVE AND PUBLISH") !== -1
+                    ) {
+                      saveBtn = allBtns[i];
+                      break;
                     }
                   }
-                  if (!saveBtn) {
-                    alert("Could not find Save and Publish button.");
-                    return;
-                  }
-                  saveBtn.click();
+                }
+                if (!saveBtn) {
+                  alert("Could not find Save and Publish button.");
+                  return;
+                }
+                saveBtn.click();
 
-                  // Poll for the intercepted data
-                  var attempts = 0;
-                  var maxAttempts = 40;
-                  function pollForCapture() {
-                    attempts++;
-                    chrome.runtime.sendMessage(
-                      {
-                        action: "cp-execute-in-main",
-                        code: "window.__cpToolkitCapturedSave",
-                      },
-                      function (resp) {
-                        var captured = resp && resp.result;
-                        if (captured) {
-                          // Clean up
-                          chrome.runtime.sendMessage({
-                            action: "cp-execute-in-main",
-                            code: "delete window.__cpToolkitCapturedSave; null;",
-                          });
-                          showExportModal(
-                            captured,
-                            pending.id,
-                            pending.returnUrl,
-                            pending.categoryID,
-                          );
-                        } else if (attempts < maxAttempts) {
-                          setTimeout(pollForCapture, 300);
-                        } else {
-                          alert(
-                            "Timed out waiting for button data. The save may not have triggered.",
-                          );
-                        }
-                      },
-                    );
-                  }
-                  setTimeout(pollForCapture, 500);
-                },
-              );
+                // Poll for the intercepted data
+                var attempts = 0;
+                var maxAttempts = 40;
+                function pollForCapture() {
+                  attempts++;
+                  callMain("readCapturedSave")
+                    .then(function (captured) {
+                      if (captured) {
+                        // Clean up — fire-and-forget, ignore errors
+                        callMain("clearCapturedSave").catch(function () {});
+                        showExportModal(
+                          captured,
+                          pending.id,
+                          pending.returnUrl,
+                          pending.categoryID,
+                        );
+                      } else if (attempts < maxAttempts) {
+                        setTimeout(pollForCapture, 300);
+                      } else {
+                        alert(
+                          "Timed out waiting for button data. The save may not have triggered.",
+                        );
+                      }
+                    })
+                    .catch(function () {
+                      // Match pre-conversion behavior: silently retry through
+                      // bridge errors until the 40-attempt timeout.
+                      if (attempts < maxAttempts) {
+                        setTimeout(pollForCapture, 300);
+                      } else {
+                        alert(
+                          "Timed out waiting for button data. The save may not have triggered.",
+                        );
+                      }
+                    });
+                }
+                setTimeout(pollForCapture, 500);
+              });
             }, 1000);
           });
         }
