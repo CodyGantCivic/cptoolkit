@@ -47,6 +47,7 @@
 
     var normalized = [];
     for (var i = 0; i < rawRules.length; i++) {
+      if (rawRules[i] && rawRules[i].type === "js") continue;
       var rule = normalizeRule(rawRules[i], i);
       if (!rule.css.trim()) continue;
       if (!rule.matchValue) continue;

@@ -492,48 +492,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     initializeContextMenus(true);
   }
 
-  // Execute arbitrary code in a specific iframe's MAIN world.
-  // Used by tools that need to interact with page-level JS globals inside iframes
-  // (e.g., Dropzone, saveChanges) which content scripts can't access directly.
-  if (message && message.action === 'cp-execute-in-frame' && sender.tab) {
-    chrome.webNavigation.getAllFrames({ tabId: sender.tab.id }).then(function(frames) {
-      var targetFrame = frames.find(function(f) { return f.url.indexOf(message.urlMatch) > -1; });
-      if (!targetFrame) {
-        sendResponse({ error: 'Frame not found matching: ' + message.urlMatch });
-        return;
-      }
-      chrome.scripting.executeScript({
-        target: { tabId: sender.tab.id, frameIds: [targetFrame.frameId] },
-        world: 'MAIN',
-        func: function(codeStr) { return eval(codeStr); },
-        args: [message.code]
-      }).then(function(results) {
-        sendResponse({ result: results[0] ? results[0].result : null });
-      }).catch(function(err) {
-        sendResponse({ error: err.message });
-      });
-    }).catch(function(err) {
-      sendResponse({ error: err.message });
-    });
-    return true; // async response
-  }
-
-  // Execute arbitrary code in the top frame's MAIN world and return the result.
-  // Used when content scripts need access to page-level JS globals (e.g. jQuery, page functions).
-  if (message && message.action === 'cp-execute-in-main' && message.code && sender.tab) {
-    chrome.scripting.executeScript({
-      target: { tabId: sender.tab.id },
-      world: 'MAIN',
-      func: function(codeStr) { return eval(codeStr); },
-      args: [message.code]
-    }).then(function(results) {
-      sendResponse({ result: results[0] ? results[0].result : null });
-    }).catch(function(err) {
-      sendResponse({ error: err.message });
-    });
-    return true; // async response
-  }
-
   // Named-op dispatch for cp-ImportFancyButton (replaces eval bridge).
   // Op bodies are hardcoded in main-ops-fancy.js / frame-ops-fancy.js — content
   // scripts cannot influence what code runs in MAIN world.
