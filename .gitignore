@@ -6,3 +6,8 @@ _merge_backup_*/
 _cody_repo_latest/
 .vscode/
 .claude/
+AGENTS.md
+.env
+relay-server/
+.mcp.json
+.codex-tmp/
