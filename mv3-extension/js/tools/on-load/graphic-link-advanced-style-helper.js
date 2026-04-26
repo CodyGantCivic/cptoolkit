@@ -195,16 +195,27 @@
     }
     
     // ==================== INSERT BUTTON HANDLER ====================
+    // Selector-list-aware rewrite via window.CPToolkit.portable.applyForSave
+    // preserves dual selectors when the user has applied "Make Portable".
+    // Falls back to flat regex if the portable helper isn't loaded yet.
+    function portableApplyForSave(text, selector) {
+      const portable = window.CPToolkit && window.CPToolkit.portable;
+      if (portable && typeof portable.applyForSave === 'function') {
+        return portable.applyForSave(text, selector);
+      }
+      return text.replace(/\.fancyButton\d+\b/g, '.' + selector);
+    }
+
     function addInsertButtonFallback(insertBtn) {
       // Fallback for when jQuery isn't available or handlers aren't attached yet
       insertBtn.addEventListener('click', function(e) {
         const currentSelector = getCurrentFancyButtonSelector();
         // console.log(TOOLKIT_NAME + ' Insert clicked (fallback) - converting to .' + currentSelector);
-        
+
         // Update all textareas
         document.querySelectorAll('textarea.autoUpdate, textarea[id^="fancyButton"][id$="MiscStyles"]').forEach(textarea => {
           if (textarea.value) {
-            const newText = textarea.value.replace(/\.fancyButton\d+\b/g, '.' + currentSelector);
+            const newText = portableApplyForSave(textarea.value, currentSelector);
             if (newText !== textarea.value) {
               textarea.value = newText;
               textarea.dispatchEvent(new Event('change', { bubbles: true }));
@@ -250,18 +261,18 @@
                 function newHandler(e) {
                   const currentSelector = getCurrentFancyButtonSelector();
                   // console.log(TOOLKIT_NAME + ' Insert clicked (jQuery) - converting to .' + currentSelector);
-                  
+
                   // Update all textareas
                   $('textarea.autoUpdate').each(function() {
                     let text = $(this).val();
-                    text = text.replace(/\.fancyButton\d+\b/g, '.' + currentSelector);
+                    text = portableApplyForSave(text, currentSelector);
                     $(this).val(text);
                     $(this).change();
                   });
-                  
+
                   document.querySelectorAll('textarea[id^="fancyButton"][id$="MiscStyles"]').forEach(textarea => {
                     if (textarea.value) {
-                      const newText = textarea.value.replace(/\.fancyButton\d+\b/g, '.' + currentSelector);
+                      const newText = portableApplyForSave(textarea.value, currentSelector);
                       if (newText !== textarea.value) {
                         textarea.value = newText;
                         textarea.dispatchEvent(new Event('change', { bubbles: true }));

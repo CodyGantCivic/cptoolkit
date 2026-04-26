@@ -457,7 +457,8 @@
             /* ==================== PHASE 3: THEME / PSEUDO / SNIPPET TOGGLES ==================== */
             .css-validation-indicator .css-theme-toggle,
             .css-validation-indicator .css-code-toggle,
-            .css-validation-indicator .css-pseudo-toggle {
+            .css-validation-indicator .css-pseudo-toggle,
+            .css-validation-indicator .css-make-portable {
                 flex: 0 0 auto;
                 margin-left: 8px;
                 /* Override CivicPlus admin button styles */
@@ -489,19 +490,22 @@
             }
             .css-validation-indicator .css-theme-toggle:hover,
             .css-validation-indicator .css-code-toggle:hover,
-            .css-validation-indicator .css-pseudo-toggle:hover {
+            .css-validation-indicator .css-pseudo-toggle:hover,
+            .css-validation-indicator .css-make-portable:hover {
                 background: rgba(0, 0, 0, 0.05) !important;
                 border-color: #999 !important;
                 opacity: 1 !important; /* Prevent .button hover opacity changes */
             }
             .css-validation-indicator .css-theme-toggle:focus,
             .css-validation-indicator .css-code-toggle:focus,
-            .css-validation-indicator .css-pseudo-toggle:focus {
+            .css-validation-indicator .css-pseudo-toggle:focus,
+            .css-validation-indicator .css-make-portable:focus {
                 outline: 2px solid #0078d4 !important;
                 outline-offset: 2px !important;
             }
             .css-validation-indicator .css-theme-toggle svg,
-            .css-validation-indicator .css-code-toggle svg {
+            .css-validation-indicator .css-code-toggle svg,
+            .css-validation-indicator .css-make-portable svg {
                 width: 13px !important; /* Slightly smaller for compact layout */
                 height: 13px !important;
                 min-width: 13px !important;
@@ -513,6 +517,9 @@
             }
             .css-validation-indicator .css-theme-toggle svg {
                 stroke: #b8860b !important; /* Dark yellow for theme toggle (light theme) */
+            }
+            .css-validation-indicator .css-make-portable svg {
+                stroke: #af282f !important; /* CivicPlus red — signals export / outbound action */
             }
             .css-validation-indicator .css-pseudo-toggle .pseudo-label {
                 display: inline-block;
@@ -3386,6 +3393,885 @@
         return text.replace(/\.skin\d+/g, '.skin' + skinId);
     }
 
+    // ==================== PORTABLE CSS TRANSFORM ====================
+    // Rewrites advanced-styles CSS so it works for both extension users (who
+    // see the builder preview element `.fancyButton1`) and clients without
+    // the extension (who only see the live unique class `.fancyButtonN`).
+    // Produces selector lists that contain BOTH tokens so the CSS is portable.
+    //
+    // Safety properties:
+    // - Idempotent: running the transform twice on the same input is a no-op.
+    // - Brace/paren/string/comment/escape aware — safe for nested @media /
+    //   @supports, attribute selectors with quoted commas, and escape sequences.
+    // - Preflight + postflight via native `new CSSStyleSheet().replaceSync()`.
+    //   If preflight fails, the transform refuses to run. If postflight fails
+    //   on output that the input passed, the transform discards the output
+    //   and reports the parse error rather than corrupting CSS.
+    // - Rules that contain `.fancyButton1` inside functional pseudos
+    //   (:is/:not/:where/:has/:nth-*(...of )) or attribute selectors are
+    //   passed through unchanged and surfaced as skip warnings.
+    //
+    // Tokenizer emits three node kinds:
+    //   { type: 'rule',        prelude, body, raw }
+    //   { type: 'atrule',      name, prelude, body, raw, hasBody }
+    //   { type: 'passthrough', raw }
+
+    // Character classes the tokenizer treats specially.
+    const PORTABLE_GROUPING_ATRULES = new Set([
+        'media', 'supports', 'container', 'layer', 'scope', 'document'
+    ]);
+
+    // Walk a string from position `start` consuming a balanced block that
+    // starts with the character at `start` (expected `{` or `[` or `(`) and
+    // ends at its matching close brace/bracket/paren. Respects strings,
+    // comments, and escapes. Returns the index AFTER the closing character.
+    function portableConsumeBalanced(src, start) {
+        const open = src[start];
+        let close;
+        if (open === '{') close = '}';
+        else if (open === '[') close = ']';
+        else if (open === '(') close = ')';
+        else return start + 1;
+
+        let depth = 1;
+        let i = start + 1;
+        while (i < src.length) {
+            const ch = src[i];
+            if (ch === '\\') { i += 2; continue; }
+            if (ch === '/' && src[i + 1] === '*') {
+                const end = src.indexOf('*/', i + 2);
+                i = end === -1 ? src.length : end + 2;
+                continue;
+            }
+            if (ch === '"' || ch === "'") {
+                i = portableSkipString(src, i);
+                continue;
+            }
+            if (ch === open && open !== '{') {
+                // `(` and `[` can nest; `{` nesting also handled below.
+                depth++;
+            } else if (ch === '{' && open === '{') {
+                depth++;
+            } else if (ch === close) {
+                depth--;
+                if (depth === 0) return i + 1;
+            }
+            i++;
+        }
+        return src.length + 1; // unbalanced — distinguishable from balanced-at-EOF
+    }
+
+    function portableSkipString(src, start) {
+        const quote = src[start];
+        let i = start + 1;
+        while (i < src.length) {
+            const ch = src[i];
+            if (ch === '\\') { i += 2; continue; }
+            if (ch === quote) return i + 1;
+            i++;
+        }
+        return src.length;
+    }
+
+    // Tokenize top-level CSS into rule / atrule / passthrough nodes.
+    function tokenizeCss(css) {
+        const nodes = [];
+        let i = 0;
+        let passStart = 0;
+
+        function flushPass(endIdx) {
+            if (endIdx > passStart) {
+                const raw = css.slice(passStart, endIdx);
+                if (raw.length) nodes.push({ type: 'passthrough', raw });
+            }
+        }
+
+        while (i < css.length) {
+            const ch = css[i];
+
+            // Skip comments without breaking any state — they become part of
+            // the surrounding passthrough/prelude/body text.
+            if (ch === '/' && css[i + 1] === '*') {
+                const end = css.indexOf('*/', i + 2);
+                i = end === -1 ? css.length : end + 2;
+                continue;
+            }
+
+            // Skip strings at the top level (rare but possible inside @import).
+            if (ch === '"' || ch === "'") {
+                i = portableSkipString(css, i);
+                continue;
+            }
+
+            if (ch === '@') {
+                // At-rule: scan prelude until `{` or `;`.
+                flushPass(i);
+                const atStart = i;
+                i++;
+                // Read name
+                const nameStart = i;
+                while (i < css.length && /[A-Za-z0-9_\-]/.test(css[i])) i++;
+                const name = css.slice(nameStart, i).toLowerCase();
+
+                // Read prelude
+                const preludeStart = i;
+                while (i < css.length) {
+                    const c = css[i];
+                    if (c === '\\') { i += 2; continue; }
+                    if (c === '/' && css[i + 1] === '*') {
+                        const end = css.indexOf('*/', i + 2);
+                        i = end === -1 ? css.length : end + 2;
+                        continue;
+                    }
+                    if (c === '"' || c === "'") { i = portableSkipString(css, i); continue; }
+                    if (c === '(') { i = portableConsumeBalanced(css, i); continue; }
+                    if (c === '[') { i = portableConsumeBalanced(css, i); continue; }
+                    if (c === '{' || c === ';') break;
+                    i++;
+                }
+
+                const prelude = css.slice(preludeStart, i);
+                let body = '';
+                let hasBody = false;
+                let unclosedAt = false;
+                if (css[i] === '{') {
+                    const bodyStart = i + 1;
+                    const bodyEnd = portableConsumeBalanced(css, i);
+                    unclosedAt = bodyEnd > css.length;
+                    const actualEnd = unclosedAt ? css.length : bodyEnd;
+                    body = unclosedAt
+                        ? css.slice(bodyStart)
+                        : css.slice(bodyStart, bodyEnd - 1);
+                    hasBody = true;
+                    i = actualEnd;
+                } else if (css[i] === ';') {
+                    i++;
+                }
+
+                nodes.push({
+                    type: 'atrule',
+                    name,
+                    prelude: prelude,
+                    body,
+                    hasBody,
+                    unclosed: unclosedAt,
+                    raw: css.slice(atStart, i)
+                });
+                passStart = i;
+                continue;
+            }
+
+            // Top-level `}` — orphan in normal CSS but valid in CMS textarea
+            // fragments whose content starts inside an implicit outer rule
+            // body. Flush everything through the `}` as passthrough so the
+            // bare declarations don't bleed into the next rule's prelude.
+            if (ch === '}') {
+                flushPass(i + 1);
+                passStart = i + 1;
+                i++;
+                continue;
+            }
+
+            if (ch === '{') {
+                // Back-scan to find the start of this rule's prelude.
+                // The prelude runs from `passStart` up to here, minus trailing
+                // whitespace. But we must not swallow previous nodes — since
+                // we only arrive here after flushing, `passStart` is the true
+                // prelude start for this rule.
+                const preludeText = css.slice(passStart, i);
+                const preludeTrimmed = preludeText.replace(/^\s+/, '').replace(/\s+$/, '');
+                if (!preludeTrimmed.length) {
+                    // Stray `{` with no prelude — treat the whole thing as
+                    // passthrough (malformed but don't crash).
+                    i = portableConsumeBalanced(css, i);
+                    continue;
+                }
+                const bodyStart = i + 1;
+                const bodyEnd = portableConsumeBalanced(css, i);
+                const unclosed = bodyEnd > css.length;
+                const actualEnd = unclosed ? css.length : bodyEnd;
+                const body = unclosed
+                    ? css.slice(bodyStart)
+                    : css.slice(bodyStart, bodyEnd - 1);
+                const ruleRaw = css.slice(passStart, actualEnd);
+                nodes.push({
+                    type: 'rule',
+                    prelude: preludeText,
+                    body,
+                    unclosed: unclosed,
+                    raw: ruleRaw
+                });
+                i = actualEnd;
+                passStart = i;
+                continue;
+            }
+
+            // Skip parens/brackets inside selector preludes — we only break
+            // on top-level `{` and `@`.
+            if (ch === '(' || ch === '[') {
+                i = portableConsumeBalanced(css, i);
+                continue;
+            }
+
+            i++;
+        }
+
+        flushPass(i);
+        return nodes;
+    }
+
+    // Split a selector-list prelude on top-level commas, respecting strings,
+    // comments, parens, brackets, and CSS escape sequences (`\,`, `\29 `).
+    function splitSelectorList(prelude) {
+        const out = [];
+        let depthParen = 0;
+        let depthBracket = 0;
+        let buf = '';
+        let i = 0;
+        const len = prelude.length;
+        while (i < len) {
+            const ch = prelude[i];
+            if (ch === '\\') {
+                // Escape sequence — copy next char literally (handles `\,`).
+                buf += ch;
+                if (i + 1 < len) { buf += prelude[i + 1]; i += 2; continue; }
+                i++;
+                continue;
+            }
+            if (ch === '/' && prelude[i + 1] === '*') {
+                const end = prelude.indexOf('*/', i + 2);
+                const commentEnd = end === -1 ? len : end + 2;
+                buf += prelude.slice(i, commentEnd);
+                i = commentEnd;
+                continue;
+            }
+            if (ch === '"' || ch === "'") {
+                const strEnd = portableSkipString(prelude, i);
+                buf += prelude.slice(i, strEnd);
+                i = strEnd;
+                continue;
+            }
+            if (ch === '(') { depthParen++; buf += ch; i++; continue; }
+            if (ch === ')' && depthParen > 0) { depthParen--; buf += ch; i++; continue; }
+            if (ch === '[') { depthBracket++; buf += ch; i++; continue; }
+            if (ch === ']' && depthBracket > 0) { depthBracket--; buf += ch; i++; continue; }
+            if (ch === ',' && depthParen === 0 && depthBracket === 0) {
+                out.push(buf);
+                buf = '';
+                i++;
+                continue;
+            }
+            buf += ch;
+            i++;
+        }
+        out.push(buf);
+        return out.map(function(s) { return s.trim(); }).filter(function(s) { return s.length > 0; });
+    }
+
+    // Does this selector string contain `.fancyButton1` INSIDE a construct
+    // where we can't safely dual-expand (functional pseudo, attribute sel)?
+    // Uses a depth-aware walk rather than regex.
+    function selectorHasUnsafeFancyButton1(sel) {
+        let i = 0;
+        const len = sel.length;
+        while (i < len) {
+            const ch = sel[i];
+            if (ch === '\\') { i += 2; continue; }
+            if (ch === '"' || ch === "'") { i = portableSkipString(sel, i); continue; }
+
+            // Functional pseudo-class: `:name(...)` where the contents are
+            // a selector context. Detect at `:` and inspect the name.
+            if (ch === ':') {
+                // Read pseudo name
+                let j = i + 1;
+                if (sel[j] === ':') j++; // ::pseudo-element (not a concern)
+                const nameStart = j;
+                while (j < len && /[A-Za-z\-]/.test(sel[j])) j++;
+                const name = sel.slice(nameStart, j).toLowerCase();
+                if (sel[j] === '(') {
+                    const argEnd = portableConsumeBalanced(sel, j);
+                    const args = sel.slice(j + 1, argEnd - 1);
+                    const unsafePseudos = new Set(['is', 'not', 'where', 'has']);
+                    // For :nth-child / :nth-last-child the " of <selector>"
+                    // variant makes the arg a selector context.
+                    const nthOf = (name === 'nth-child' || name === 'nth-last-child')
+                        && /\bof\b/i.test(args);
+                    if ((unsafePseudos.has(name) || nthOf)
+                        && /\.fancyButton1\b/.test(args)) {
+                        return { unsafe: true, reason: ':' + name + '() contains .fancyButton1' };
+                    }
+                    i = argEnd;
+                    continue;
+                }
+                i = j;
+                continue;
+            }
+
+            // Attribute selector: `[...]`. If it references fancyButton1
+            // (e.g. `[class~="fancyButton1"]`), we can't safely expand.
+            if (ch === '[') {
+                const attrEnd = portableConsumeBalanced(sel, i);
+                const attrBody = sel.slice(i + 1, attrEnd - 1);
+                if (/fancyButton1\b/.test(attrBody)) {
+                    return { unsafe: true, reason: 'attribute selector references fancyButton1' };
+                }
+                i = attrEnd;
+                continue;
+            }
+
+            i++;
+        }
+        return { unsafe: false };
+    }
+
+    // Walk a selector and call `fn(num)` for every top-level
+    // `.fancyButton\d+` token. Skips strings, comments, attribute selectors,
+    // and functional pseudo-class arguments. Returns the rebuilt selector.
+    // `fn` returns the replacement number (as a string, no `.fancyButton` prefix);
+    // return null/undefined to leave the token unchanged.
+    function mapTopLevelFancyButtonTokens(sel, fn) {
+        let out = '';
+        let i = 0;
+        const len = sel.length;
+        while (i < len) {
+            const ch = sel[i];
+            if (ch === '\\') {
+                out += ch;
+                if (i + 1 < len) { out += sel[i + 1]; i += 2; } else { i++; }
+                continue;
+            }
+            if (ch === '"' || ch === "'") {
+                const end = portableSkipString(sel, i);
+                out += sel.slice(i, end);
+                i = end;
+                continue;
+            }
+            if (ch === '/' && sel[i + 1] === '*') {
+                const end = sel.indexOf('*/', i + 2);
+                const stop = end === -1 ? len : end + 2;
+                out += sel.slice(i, stop);
+                i = stop;
+                continue;
+            }
+            if (ch === '[' || ch === '(') {
+                const end = portableConsumeBalanced(sel, i);
+                out += sel.slice(i, end);
+                i = end;
+                continue;
+            }
+            if (ch === '.') {
+                const m = /^\.fancyButton(\d+)\b/.exec(sel.slice(i));
+                if (m) {
+                    const replaced = fn(m[1]);
+                    if (replaced == null) {
+                        out += m[0];
+                    } else {
+                        out += '.fancyButton' + replaced;
+                    }
+                    i += m[0].length;
+                    continue;
+                }
+            }
+            out += ch;
+            i++;
+        }
+        return out;
+    }
+
+    // Collect every top-level `.fancyButton\d+` number from a selector.
+    function topLevelFancyButtonNums(sel) {
+        const nums = [];
+        mapTopLevelFancyButtonTokens(sel, function(n) { nums.push(n); return null; });
+        return nums;
+    }
+
+    // Normalize every top-level .fancyButton\d+ → .fancyButton1.
+    function normalizeSelectorTokens(sel) {
+        return mapTopLevelFancyButtonTokens(sel, function() { return '1'; });
+    }
+
+    // Build the dual-selector prelude for a single rule.
+    // Returns { prelude, skipped: boolean, reason?, changed: boolean }.
+    // When the rule doesn't need any change, returns `prelude` verbatim so
+    // formatting (whitespace, comments) is preserved bit-for-bit.
+    function makeSelectorListPortable(prelude, uniqueId) {
+        const selectors = splitSelectorList(prelude);
+        if (selectors.length === 0) {
+            return { prelude, skipped: false, changed: false };
+        }
+
+        // Check for any selector with unsafe .fancyButton1 usage. If any
+        // selector in the list is unsafe, skip the entire rule — we don't
+        // want to partially rewrite a list and change cascade semantics.
+        for (const sel of selectors) {
+            const check = selectorHasUnsafeFancyButton1(sel);
+            if (check.unsafe) {
+                return { prelude, skipped: true, reason: check.reason, changed: false };
+            }
+        }
+
+        // Decide whether anything will actually change before we rebuild the
+        // prelude. Use the top-level walker so comments / attr selectors /
+        // functional-pseudo arguments don't trigger false positives.
+        const numOnly = String(uniqueId).replace(/^fancyButton/, '');
+        let willNormalize = false;
+        let hasOne = false;
+        for (const sel of selectors) {
+            for (const num of topLevelFancyButtonNums(sel)) {
+                if (num === '1') hasOne = true;
+                else willNormalize = true;
+            }
+        }
+        const willExpand = hasOne && numOnly !== '1' && numOnly !== '';
+        // A legacy selector with only .fancyButtonN (N != 1) implicitly
+        // becomes portable after normalization — we still want to emit the
+        // .fancyButton{numOnly} twin alongside the normalized .fancyButton1.
+        const willExpandAfterNormalize = willNormalize && numOnly !== '1' && numOnly !== '';
+
+        if (!willNormalize && !willExpand) {
+            // Nothing to do. Preserve original formatting.
+            return { prelude, skipped: false, changed: false };
+        }
+
+        const normalized = selectors.map(normalizeSelectorTokens);
+        const seen = new Set();
+        const deduped = [];
+        for (const sel of normalized) {
+            if (!seen.has(sel)) { seen.add(sel); deduped.push(sel); }
+        }
+
+        const expanded = [];
+        const seen2 = new Set();
+        const shouldExpand = willExpand || willExpandAfterNormalize;
+
+        for (const sel of deduped) {
+            if (shouldExpand && topLevelFancyButtonNums(sel).indexOf('1') >= 0) {
+                const twin = mapTopLevelFancyButtonTokens(sel, function(n) {
+                    return n === '1' ? numOnly : null;
+                });
+                if (!seen2.has(twin)) { seen2.add(twin); expanded.push(twin); }
+            }
+            if (!seen2.has(sel)) { seen2.add(sel); expanded.push(sel); }
+        }
+
+        const newPrelude = expanded.join(',\n');
+        return { prelude: newPrelude, skipped: false, changed: true };
+    }
+
+    // Native CSS parse gate. Returns null on success, error message on failure.
+    function portableNativeParse(css) {
+        try {
+            const sheet = new CSSStyleSheet();
+            sheet.replaceSync(css);
+            return null;
+        } catch (e) {
+            return e && e.message ? e.message : String(e);
+        }
+    }
+
+    // Detect whether `css` is a CMS textarea fragment — content that starts
+    // inside an implicit outer rule body. These fragments have an orphan `}`
+    // at the top level before any `{`. Native CSSStyleSheet always rejects
+    // them, so we skip the native preflight/postflight and rely on the
+    // tokenizer's own resilience instead.
+    function portableIsFragment(css) {
+        let i = 0;
+        const len = css.length;
+        while (i < len) {
+            const ch = css[i];
+            if (ch === '\\') { i += 2; continue; }
+            if (ch === '/' && css[i + 1] === '*') {
+                const end = css.indexOf('*/', i + 2);
+                i = end === -1 ? len : end + 2;
+                continue;
+            }
+            if (ch === '"' || ch === "'") { i = portableSkipString(css, i); continue; }
+            if (ch === '{') return false; // first brace is `{` — not a fragment
+            if (ch === '}') return true;  // orphan `}` before any `{`
+            i++;
+        }
+        return false;
+    }
+
+    // Recurse through tokenized nodes applying `transformRule` to every rule.
+    // `transformRule({prelude}) -> {prelude, skipped, reason, changed}`.
+    function walkAndTransform(css, uniqueId, transformRule, skipped) {
+        const nodes = tokenizeCss(css);
+        const parts = [];
+        for (const node of nodes) {
+            if (node.type === 'passthrough') {
+                parts.push(node.raw);
+                continue;
+            }
+            if (node.type === 'rule') {
+                const result = transformRule(node.prelude, uniqueId);
+                if (result.skipped) {
+                    skipped.push({ reason: result.reason, snippet: node.raw.trim() });
+                    parts.push(node.raw);
+                    continue;
+                }
+                if (!result.changed) {
+                    // Preserve original formatting bit-for-bit.
+                    parts.push(node.raw);
+                    continue;
+                }
+                // Preserve leading/trailing whitespace around the prelude so
+                // only the selector list changes, not the surrounding layout.
+                const leadMatch = /^(\s*)/.exec(node.prelude);
+                const trailMatch = /(\s*)$/.exec(node.prelude);
+                const lead = leadMatch ? leadMatch[1] : '';
+                const trail = trailMatch ? trailMatch[1] : ' ';
+                parts.push(lead + result.prelude + trail + '{' + node.body + (node.unclosed ? '' : '}'));
+                continue;
+            }
+            if (node.type === 'atrule') {
+                if (node.hasBody && PORTABLE_GROUPING_ATRULES.has(node.name)) {
+                    const innerCss = node.body;
+                    const transformedInner = walkAndTransform(innerCss, uniqueId, transformRule, skipped);
+                    parts.push('@' + node.name + node.prelude + '{' + transformedInner + (node.unclosed ? '' : '}'));
+                } else {
+                    parts.push(node.raw);
+                }
+                continue;
+            }
+            parts.push(node.raw);
+        }
+        return parts.join('');
+    }
+
+    // Full "Make portable" transform — dual selectors + safety gates.
+    function transformCssPortable(css, uniqueId) {
+        const before = css.length;
+        const stats = { before, after: before, delta: 0 };
+
+        if (!css || !css.trim()) {
+            return { output: css, skipped: [], stats, parseError: null, changed: false };
+        }
+
+        // CMS textareas often contain CSS fragments (content inside an
+        // implicit outer rule body). Native CSSStyleSheet rejects these, so
+        // skip the native gate and rely on the tokenizer's resilience.
+        const isFragment = portableIsFragment(css);
+
+        if (!isFragment) {
+            const preflightError = portableNativeParse(css);
+            if (preflightError) {
+                return { output: css, skipped: [], stats, parseError: preflightError, changed: false };
+            }
+        }
+
+        const skipped = [];
+        const output = walkAndTransform(css, uniqueId, makeSelectorListPortable, skipped);
+
+        if (!isFragment) {
+            const postflightError = portableNativeParse(output);
+            if (postflightError) {
+                return { output: css, skipped, stats, parseError: 'Transform produced invalid CSS: ' + postflightError, changed: false };
+            }
+        }
+
+        stats.after = output.length;
+        stats.delta = stats.after - stats.before;
+        return {
+            output,
+            skipped,
+            stats,
+            parseError: null,
+            changed: output !== css
+        };
+    }
+
+    // Selector-list-aware replacement for the Insert handlers. Preserves dual
+    // selectors when a rule is already portable; otherwise uses the legacy
+    // flat regex so save behavior is identical to pre-feature baseline.
+    function applyForSave(css, uniqueId) {
+        if (!css) return css;
+        var numOnly = String(uniqueId).replace(/^fancyButton/, '');
+        var targetTwin = '.fancyButton' + numOnly;
+
+        // Quick portable detection: does the text contain BOTH .fancyButton1
+        // AND some .fancyButtonN (N != 1)? If not, use legacy flat regex —
+        // no tokenizer, no reconstruction, zero structural changes.
+        var hasOne = /\.fancyButton1\b/.test(css);
+        var hasOther = /\.fancyButton(?!1\b)\d+\b/.test(css);
+        if (!hasOne || !hasOther) {
+            return css.replace(/\.fancyButton\d+\b/g, targetTwin);
+        }
+
+        // Portable CSS detected. Use the tokenizer to preserve .fancyButton1
+        // at the top level while normalizing other .fancyButtonN → uniqueId.
+        function transformForSave(prelude) {
+            var selectors = splitSelectorList(prelude);
+            if (selectors.length === 0) {
+                return { prelude: prelude, skipped: false, changed: false };
+            }
+
+            var hasOneLocal = false;
+            var hasOtherLocal = false;
+            var needsAnyRewrite = false;
+            for (var si = 0; si < selectors.length; si++) {
+                var nums = topLevelFancyButtonNums(selectors[si]);
+                for (var ni = 0; ni < nums.length; ni++) {
+                    if (nums[ni] === '1') hasOneLocal = true;
+                    else hasOtherLocal = true;
+                    if (nums[ni] !== numOnly) needsAnyRewrite = true;
+                }
+            }
+
+            if ((!hasOneLocal && !hasOtherLocal) || !needsAnyRewrite) {
+                return { prelude: prelude, skipped: false, changed: false };
+            }
+
+            var portableLocal = hasOneLocal && hasOtherLocal;
+            var newSels = [];
+            var seen = new Set();
+            for (var si2 = 0; si2 < selectors.length; si2++) {
+                var replaced;
+                if (portableLocal) {
+                    replaced = mapTopLevelFancyButtonTokens(selectors[si2], function(n) {
+                        return n === '1' ? '1' : numOnly;
+                    });
+                } else {
+                    replaced = selectors[si2].replace(/\.fancyButton\d+\b/g, targetTwin);
+                }
+                if (!seen.has(replaced)) { seen.add(replaced); newSels.push(replaced); }
+            }
+
+            var newPrelude = newSels.join(',\n');
+            return { prelude: newPrelude, skipped: false, changed: true };
+        }
+
+        var isFragment = portableIsFragment(css);
+        if (!isFragment && portableNativeParse(css)) {
+            return css.replace(/\.fancyButton\d+\b/g, targetTwin);
+        }
+
+        var skipped = [];
+        var output = walkAndTransform(css, uniqueId, transformForSave, skipped);
+
+        if (!isFragment && portableNativeParse(output)) {
+            return css.replace(/\.fancyButton\d+\b/g, targetTwin);
+        }
+        return output;
+    }
+
+    // ==================== MAKE PORTABLE MODAL ====================
+    // Resolve the unique fancy-button number for the current button. Prefer
+    // the graphic-link helper's API; fall back to local getFancyButtonId.
+    function portableResolveUniqueId() {
+        try {
+            const helper = window.CPToolkit && window.CPToolkit.graphicLinkHelper;
+            if (helper && typeof helper.getCurrentFancyButtonSelector === 'function') {
+                const sel = helper.getCurrentFancyButtonSelector(); // e.g. 'fancyButton608'
+                if (sel) return String(sel).replace(/^fancyButton/, '');
+            }
+        } catch (e) { /* fall through */ }
+        try {
+            const id = getFancyButtonId();
+            if (id) return String(id);
+        } catch (e) { /* fall through */ }
+        return null;
+    }
+
+    // Lightweight HTML escape for safe insertion into the modal preview panes.
+    function portableEscapeHtml(s) {
+        return String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function showMakePortableModal(textarea) {
+        if (!textarea) return;
+        // Guard against double-open (fast double-click, held Enter, etc.).
+        if (document.querySelector('[data-cp-portable-modal]')) return;
+        const sourceCss = textarea.value || '';
+        const uniqueId = portableResolveUniqueId();
+        const maxLength = parseInt(textarea.getAttribute('maxlength'), 10) || 0;
+
+        // Run the transform up-front so the modal reflects the true result.
+        let result;
+        if (!uniqueId) {
+            result = {
+                output: sourceCss,
+                skipped: [],
+                stats: { before: sourceCss.length, after: sourceCss.length, delta: 0 },
+                parseError: 'Could not detect the current fancy button on the page. Open a button first.',
+                changed: false
+            };
+        } else {
+            result = transformCssPortable(sourceCss, uniqueId);
+        }
+
+        // Display-only advisories from validateCSS (do not block Apply).
+        let advisories = [];
+        try {
+            const v = validateCSS(sourceCss);
+            if (v && Array.isArray(v.warnings)) advisories = v.warnings;
+        } catch (e) { /* non-fatal */ }
+
+        const overBudget = maxLength > 0 && result.stats.after > maxLength;
+        const noChange = !result.changed && !result.parseError;
+        const canApply = !!uniqueId && result.changed && !result.parseError && !overBudget;
+
+        const overlay = document.createElement('div');
+        overlay.setAttribute('data-cp-portable-modal', 'true');
+        overlay.style.cssText = [
+            'position: fixed',
+            'top: 0', 'left: 0', 'right: 0', 'bottom: 0',
+            'z-index: 2147483647',
+            'background: rgba(0,0,0,0.5)',
+            'display: flex',
+            'align-items: center',
+            'justify-content: center',
+            'font-family: Arial, Helvetica, sans-serif'
+        ].join(';') + ';';
+
+        const card = document.createElement('div');
+        card.setAttribute('role', 'dialog');
+        card.setAttribute('aria-modal', 'true');
+        card.setAttribute('aria-label', 'Make portable preview');
+        card.style.cssText = [
+            'background: #fff',
+            'border-radius: 8px',
+            'width: 1000px',
+            'max-width: 90vw',
+            'max-height: 90vh',
+            'display: flex',
+            'flex-direction: column',
+            'box-shadow: 0 10px 40px rgba(0,0,0,0.3)'
+        ].join(';') + ';';
+        const returnFocus = document.activeElement;
+
+        const budgetColor = overBudget ? '#af282f' : '#333';
+        const budgetLine = maxLength > 0
+            ? `Before: ${result.stats.before} / ${maxLength}  \u2192  After: ${result.stats.after} / ${maxLength}  (${result.stats.delta >= 0 ? '+' : ''}${result.stats.delta})`
+            : `Before: ${result.stats.before} chars  \u2192  After: ${result.stats.after} chars  (${result.stats.delta >= 0 ? '+' : ''}${result.stats.delta})`;
+
+        const parseErrorBlock = result.parseError ? `
+            <div style="background:#fbe9ea;border:1px solid #af282f;border-radius:4px;padding:12px;margin-bottom:16px;color:#333;font-size:13px;">
+                <strong style="color:#af282f;">Can't transform:</strong> ${portableEscapeHtml(result.parseError)}
+            </div>` : '';
+
+        const overBudgetBlock = overBudget ? `
+            <div style="background:#fbe9ea;border:1px solid #af282f;border-radius:4px;padding:12px;margin-bottom:16px;color:#333;font-size:13px;">
+                <strong style="color:#af282f;">Over character limit.</strong> The transformed CSS is ${result.stats.after - maxLength} character(s) over the ${maxLength}-char limit. Apply is disabled.
+            </div>` : '';
+
+        const skippedBlock = result.skipped && result.skipped.length ? `
+            <div style="background:#fff8e1;border:1px solid #e0c060;border-radius:4px;padding:12px;margin-bottom:16px;color:#333;font-size:13px;">
+                <strong style="color:#8a6d00;">${result.skipped.length} rule(s) skipped — manual review needed.</strong>
+                <details style="margin-top:8px;">
+                    <summary style="cursor:pointer;color:#8a6d00;">Show details</summary>
+                    <ul style="margin:8px 0 0 16px;padding:0;">
+                        ${result.skipped.map(s => `<li style="margin-bottom:6px;"><div style="font-size:12px;color:#666;">${portableEscapeHtml(s.reason || 'unsupported construct')}</div><pre style="margin:4px 0 0 0;padding:6px 8px;background:#f4f4f4;border-radius:3px;font-size:11px;white-space:pre-wrap;word-break:break-all;">${portableEscapeHtml(s.snippet || '')}</pre></li>`).join('')}
+                    </ul>
+                </details>
+            </div>` : '';
+
+        const advisoryBlock = advisories.length ? `
+            <div style="background:#f4f4f4;border:1px solid #d0d0d0;border-radius:4px;padding:10px 12px;margin-bottom:16px;color:#666;font-size:12px;">
+                <strong style="color:#555;">Validator advisories (informational):</strong>
+                <ul style="margin:6px 0 0 16px;padding:0;">
+                    ${advisories.slice(0, 5).map(w => `<li>${portableEscapeHtml(String(w))}</li>`).join('')}
+                    ${advisories.length > 5 ? `<li>\u2026and ${advisories.length - 5} more</li>` : ''}
+                </ul>
+            </div>` : '';
+
+        const noChangeBlock = noChange && !result.parseError ? `
+            <div style="background:#eef6ef;border:1px solid #8fb79a;border-radius:4px;padding:12px;margin-bottom:16px;color:#2f5e3a;font-size:13px;">
+                CSS is already portable \u2014 nothing to apply.
+            </div>` : '';
+
+        const preStyle = 'margin:0;padding:10px;background:#f8f8f8;border:1px solid #e0e0e0;border-radius:4px;font-family:Consolas,Monaco,monospace;font-size:12px;line-height:1.5;white-space:pre;overflow:auto;max-height:280px;min-height:120px;';
+
+        card.innerHTML = `
+            <div style="padding:16px 20px;border-bottom:1px solid #e0e0e0;display:flex;align-items:center;justify-content:space-between;">
+                <h3 style="margin:0;font-size:18px;font-weight:600;color:#333;">Make portable preview</h3>
+                <button class="cp-portable-close" type="button" aria-label="Close"
+                    style="background:none;border:none;font-size:24px;line-height:1;cursor:pointer;color:#666;padding:0 4px;">&times;</button>
+            </div>
+            <div style="padding:20px;overflow-y:auto;flex:1;">
+                <div style="font-size:13px;color:#333;margin-bottom:8px;">
+                    <strong>Target:</strong> ${uniqueId ? `<code style="background:#f4f4f4;padding:1px 6px;border-radius:3px;">.fancyButton${portableEscapeHtml(uniqueId)}</code>` : '<span style="color:#af282f;">No button detected</span>'}
+                </div>
+                <div style="font-size:13px;color:${budgetColor};margin-bottom:16px;">
+                    <strong>Characters:</strong> ${portableEscapeHtml(budgetLine)}
+                </div>
+                ${parseErrorBlock}
+                ${overBudgetBlock}
+                ${skippedBlock}
+                ${advisoryBlock}
+                ${noChangeBlock}
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div>
+                        <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:4px;">BEFORE</div>
+                        <pre style="${preStyle}">${portableEscapeHtml(sourceCss || '(empty)')}</pre>
+                    </div>
+                    <div>
+                        <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:4px;">AFTER</div>
+                        <pre style="${preStyle}">${portableEscapeHtml(result.output || '(empty)')}</pre>
+                    </div>
+                </div>
+            </div>
+            <div style="padding:16px 20px;border-top:1px solid #e0e0e0;display:flex;justify-content:flex-end;gap:8px;">
+                <button class="cp-portable-cancel" type="button"
+                    style="padding:10px 20px;border:none;border-radius:4px;font-size:14px;font-weight:500;line-height:1.2 !important;cursor:pointer;background:#e0e0e0;color:#333;">Cancel</button>
+                <button class="cp-portable-apply" type="button" ${canApply ? '' : 'disabled'}
+                    style="padding:10px 20px;border:none;border-radius:4px;font-size:14px;font-weight:500;line-height:1.2 !important;cursor:${canApply ? 'pointer' : 'not-allowed'};background:#af282f;color:#fff;${canApply ? '' : 'opacity:0.5;'}">Apply</button>
+            </div>
+        `;
+
+        overlay.appendChild(card);
+        document.body.appendChild(overlay);
+
+        function close() {
+            try { overlay.remove(); } catch (e) { /* ignore */ }
+            document.removeEventListener('keydown', onKey, true);
+            try { if (returnFocus && returnFocus.focus) returnFocus.focus(); } catch (e) { /* ignore */ }
+        }
+        function onKey(e) {
+            if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); }
+        }
+        document.addEventListener('keydown', onKey, true);
+
+        card.querySelector('.cp-portable-close').addEventListener('click', close);
+        card.querySelector('.cp-portable-cancel').addEventListener('click', close);
+
+        const applyBtn = card.querySelector('.cp-portable-apply');
+        applyBtn.addEventListener('click', function() {
+            if (!canApply) return;
+            textarea.value = result.output;
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+            textarea.dispatchEvent(new Event('change', { bubbles: true }));
+            close();
+        });
+
+        // Focus primary action on open.
+        setTimeout(function() {
+            try { (canApply ? applyBtn : card.querySelector('.cp-portable-cancel')).focus(); }
+            catch (e) { /* ignore */ }
+        }, 50);
+    }
+
+    // Expose on window.CPToolkit.portable for reuse by the Insert handlers
+    // in graphic-link-advanced-style-helper.js and for console diagnostics.
+    window.CPToolkit = window.CPToolkit || {};
+    window.CPToolkit.portable = {
+        tokenizeCss,
+        splitSelectorList,
+        makeSelectorListPortable,
+        transformCssPortable,
+        applyForSave,
+        showMakePortableModal,
+        // Diagnostic hook for ad-hoc console testing.
+        __test: function(css, uniqueId) {
+            return transformCssPortable(css, String(uniqueId || '1'));
+        }
+    };
+
     // ==================== FANCY BUTTON NUMBER REPLACEMENT ====================
     // Store the current button selector globally so we can access it on insert
     let currentFancyButtonSelector = null;
@@ -3528,6 +4414,26 @@
             `
             : '';
 
+        // "Make portable" button is only relevant for fancy-button CSS
+        // (graphic link advanced styles + the fancy button builder tabs).
+        const taId = textarea && textarea.id ? textarea.id : '';
+        const taClassList = textarea && textarea.classList ? textarea.classList : null;
+        const showMakePortable = (
+            (taId.indexOf('fancyButton') === 0 && taId.indexOf('MiscStyles') > 0) ||
+            (taClassList && taClassList.contains('autoUpdate'))
+        );
+        const makePortableMarkup = showMakePortable
+            ? `
+            <button class="css-make-portable" title="Make portable (dual-selector preview)" aria-label="Make portable" type="button">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                    <polyline points="15 3 21 3 21 9"/>
+                    <line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+            </button>
+            `
+            : '';
+
         // Build validation indicator with theme toggle INSIDE (no selector hint)
         validationIndicator.innerHTML = `
             <div class="css-validation-status">
@@ -3548,6 +4454,7 @@
                     <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
                 </svg>
             </button>
+            ${makePortableMarkup}
             ${pseudoToggleMarkup}
             <div class="css-snippet-wrapper" style="position: relative;">
                 <button class="css-code-toggle" title="CSS Snippets" aria-label="CSS Snippets" type="button">
@@ -3574,6 +4481,23 @@
                 cycleTheme();
             }
         });
+
+        // Wire up the "Make portable" button if present.
+        const makePortableBtn = validationIndicator.querySelector('.css-make-portable');
+        if (makePortableBtn) {
+            makePortableBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                showMakePortableModal(textarea);
+            });
+            makePortableBtn.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showMakePortableModal(textarea);
+                }
+            });
+        }
 
         // Initialize pseudo override toggle (Theme Manager only)
         const pseudoToggle = validationIndicator.querySelector('.css-pseudo-toggle');
@@ -4130,20 +5054,25 @@
                                 // Re-get the selector at click time in case it changed
                                 const currentSelector = getActualSelector();
                                 // console.log(TOOLKIT_NAME + ' Insert Fancy Button clicked - converting selectors to .' + currentSelector); // Phase 3: Reduced logging
-                                
-                                // Replace ALL .fancyButton1 (and any .fancyButtonN) with actual selector
+
+                                // Selector-list-aware rewrite preserves dual-selector "portable"
+                                // output from the Make Portable button. Falls back to flat regex
+                                // if the portable helper is unavailable.
+                                const portableApply = (window.CPToolkit && window.CPToolkit.portable && window.CPToolkit.portable.applyForSave)
+                                    ? window.CPToolkit.portable.applyForSave
+                                    : function(t, sel) { return t.replace(/\.fancyButton\d+\b/g, '.' + sel); };
+
                                 $('textarea.autoUpdate').each(function() {
                                     let text = $(this).val();
-                                    // Replace any fancyButton number with the actual selector
-                                    text = text.replace(/\.fancyButton\d+\b/g, '.' + currentSelector);
+                                    text = portableApply(text, currentSelector);
                                     $(this).val(text);
                                     $(this).change();
                                 });
-                                
+
                                 // Also update our enhanced textareas
                                 document.querySelectorAll('textarea[id^="fancyButton"][id$="MiscStyles"]').forEach(textarea => {
                                     if (textarea.value) {
-                                        const newText = textarea.value.replace(/\.fancyButton\d+\b/g, '.' + currentSelector);
+                                        const newText = portableApply(textarea.value, currentSelector);
                                         if (newText !== textarea.value) {
                                             textarea.value = newText;
                                             textarea.dispatchEvent(new Event('change', { bubbles: true }));
@@ -4193,10 +5122,14 @@
         insertBtn.addEventListener('click', function(e) {
             const actualSelector = typeof getSelectorFn === 'function' ? getSelectorFn() : getSelectorFn;
             // console.log(TOOLKIT_NAME + ' Insert Fancy Button clicked (addEventListener) - converting selectors to .' + actualSelector); // Phase 3: Reduced logging
-            
+
+            const portableApply = (window.CPToolkit && window.CPToolkit.portable && window.CPToolkit.portable.applyForSave)
+                ? window.CPToolkit.portable.applyForSave
+                : function(t, sel) { return t.replace(/\.fancyButton\d+\b/g, '.' + sel); };
+
             document.querySelectorAll('textarea[id^="fancyButton"][id$="MiscStyles"], textarea.autoUpdate').forEach(textarea => {
                 if (textarea.value) {
-                    const newText = textarea.value.replace(/\.fancyButton\d+\b/g, '.' + actualSelector);
+                    const newText = portableApply(textarea.value, actualSelector);
                     if (newText !== textarea.value) {
                         textarea.value = newText;
                         textarea.dispatchEvent(new Event('change', { bubbles: true }));
