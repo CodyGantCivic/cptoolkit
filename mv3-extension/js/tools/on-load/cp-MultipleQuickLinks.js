@@ -8,8 +8,12 @@
           var $ = window.jQuery;
 
           function appendCode() {
+            // Guard against duplicate insertion from retries/observer
+            if ($('input[name="addNewSection"]').length) return;
+
             var addNew = `<br><input type="button" style="width: 30px; float: right; margin-top: 25px;" name="addNewSection" value="+">`,
               div = $(".formline.selfClear.multiple.link div:first-of-type")[0];
+            if (!div) return;
             div.insertAdjacentHTML("beforebegin", addNew);
 
             // Add New Section
@@ -135,31 +139,59 @@
             return true; // Handled by toolkit
           }
 
-          // Hijack native buttons
+          // Hijack native buttons — use retry + observer for late-loading forms
 
-          if (
-            $(".formline.selfClear.multiple.link").length &&
-            window.location.pathname.toLowerCase() == "/admin/quicklinks.aspx" &&
-            $("input[value*='Save and Publish']").length
-          ) {
-            appendCode();
+          var qlInitialized = false;
+          var initObserver = null;
 
-            var publishBtn = $("input[value='Save and Publish']");
-            var saveBtn = $("input[value='Save']");
+          function tryInit() {
+            if (qlInitialized) return;
+            if (
+              $(".formline.selfClear.multiple.link").length &&
+              window.location.pathname.toLowerCase() === "/admin/quicklinks.aspx" &&
+              $("input[value*='Save and Publish']").length
+            ) {
+              appendCode();
+              // Only mark initialized if the button was actually inserted
+              if (!$('input[name="addNewSection"]').length) return;
+              qlInitialized = true;
+              if (initObserver) { initObserver.disconnect(); initObserver = null; }
 
-            publishBtn.on("click.cpToolkit", function(e) {
-              if (batchPost("Save and Publish")) {
-                e.preventDefault();
-                e.stopImmediatePropagation();
+              var publishBtn = $("input[value='Save and Publish']");
+              var saveBtn = $("input[value='Save']");
+
+              publishBtn.on("click.cpToolkit", function(e) {
+                if (batchPost("Save and Publish")) {
+                  e.preventDefault();
+                  e.stopImmediatePropagation();
+                }
+              });
+
+              saveBtn.on("click.cpToolkit", function(e) {
+                if (batchPost("Save")) {
+                  e.preventDefault();
+                  e.stopImmediatePropagation();
+                }
+              });
+
+              console.log("[CP Toolkit] Loaded " + thisTool);
+            }
+          }
+
+          // Try immediately and with delays for late-loading forms
+          tryInit();
+          setTimeout(tryInit, 500);
+          setTimeout(tryInit, 1000);
+          setTimeout(tryInit, 2000);
+
+          // MutationObserver fallback for very late loading
+          if (!qlInitialized && document.body) {
+            initObserver = new MutationObserver(function() {
+              if (!qlInitialized) {
+                tryInit();
               }
             });
-
-            saveBtn.on("click.cpToolkit", function(e) {
-              if (batchPost("Save")) {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-              }
-            });
+            initObserver.observe(document.body, { childList: true, subtree: true });
           }
         } catch (err) {
           console.warn("[CP Toolkit](cp-MultipleQuickLinks) error:", err);
