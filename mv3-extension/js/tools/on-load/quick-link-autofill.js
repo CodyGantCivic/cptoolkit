@@ -32,20 +32,34 @@
               }
             }
 
-            function replaceQuickLink() {
-              if ($("#enableQuickLinkAutochange").is(":checked")) {
-                var linkTextVal = $("#txtLinkText").val();
-                var replacement = findValToReplace(linkTextVal, linkReplacementText);
-                if (replacement) {
-                  if ($("#txtLink").val() !== replacement) {
-                    $("#txtLink").val(replacement);
-                    $("#quickLinkChangeWarn").text(
-                      "Notice: The link was autochanged by the CivicPlus Toolkit. You must save to actually update the URL."
-                    );
-                    console.log("[CP Toolkit](" + thisTool + ") Auto-filled URL:", replacement);
-                  }
-                }
+            function replaceQuickLinkForField($textField) {
+              if (!$("#enableQuickLinkAutochange").is(":checked")) return;
+
+              var displayText = $textField.val();
+              if (!displayText) return;
+
+              var replacement = findValToReplace(displayText, linkReplacementText);
+              if (!replacement) return;
+
+              // Find the sibling link field using DOM traversal
+              var $linkField;
+              if ($textField.attr('id') === 'txtLinkText') {
+                $linkField = $("#txtLink");
+              } else {
+                $linkField = $textField.closest('.formline').find('[name="cp-txtLink"]');
               }
+
+              if ($linkField.length && $linkField.val() !== replacement) {
+                $linkField.val(replacement);
+                $("#quickLinkChangeWarn").text(
+                  "Notice: The link was autochanged by the CivicPlus Toolkit. You must save to actually update the URL."
+                );
+                console.log("[CP Toolkit](" + thisTool + ") Auto-filled URL:", replacement);
+              }
+            }
+
+            function replaceQuickLink() {
+              replaceQuickLinkForField($("#txtLinkText"));
             }
 
             function initQuickLinkAutofill() {
@@ -96,16 +110,27 @@
                   $("#enableQuickLinkAutochange").prop("checked", true);
                 }
 
-                // Handle checkbox changes
+                // Handle checkbox changes — apply autofill to ALL current text fields
                 $("#enableQuickLinkAutochange").on("change", function() {
-                  replaceQuickLink();
+                  if ($(this).is(":checked")) {
+                    replaceQuickLinkForField($("#txtLinkText"));
+                    $("[name='cp-txtLinkText']").each(function() {
+                      replaceQuickLinkForField($(this));
+                    });
+                  }
                 });
               }
 
-              // Remove old event handlers and add new ones
-              $(document).off("change keyup paste", "#txtLinkText").on("change keyup paste", "#txtLinkText", function() {
-                replaceQuickLink();
-              });
+              // Delegated events — covers both original #txtLinkText and toolkit-added cp-txtLinkText fields
+              var delegateRoot = $(".formline.selfClear.multiple.link").first().parent();
+              if (!delegateRoot.length) delegateRoot = $(document.body);
+
+              delegateRoot.off("change.cpAutofill keyup.cpAutofill paste.cpAutofill")
+                .on("change.cpAutofill keyup.cpAutofill paste.cpAutofill",
+                  "#txtLinkText, [name='cp-txtLinkText']",
+                  function() {
+                    replaceQuickLinkForField($(this));
+                  });
 
               // Run initial check
               replaceQuickLink();
