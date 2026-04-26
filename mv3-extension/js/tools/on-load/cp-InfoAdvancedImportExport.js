@@ -336,17 +336,24 @@
         '#' + IMP_MODAL_ID + ' .panel{display:none;min-height:0;flex:1 1 auto}' +
         '#' + IMP_MODAL_ID + ' .panel.active{display:flex;flex-direction:column}' +
         '#' + IMP_MODAL_ID + ' .lib{display:flex;flex-direction:column;min-height:0;flex:1 1 auto}' +
-        '#' + IMP_MODAL_ID + ' .list{padding:4px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;overflow:auto;min-height:0;max-height:100%}' +
-        '#' + IMP_MODAL_ID + ' .row{position:relative;border:1px solid #d0d8e0;border-radius:8px;background:#fff;box-shadow:0 2px 8px rgba(14,30,45,.06)}' +
+        '#' + IMP_MODAL_ID + ' .list{padding:4px;display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:14px;overflow:auto;min-height:0;max-height:100%}' +
+        '#' + IMP_MODAL_ID + ' .row{position:relative;display:flex;flex-direction:column;border:1px solid #d0d8e0;border-radius:8px;background:#fff;box-shadow:0 2px 8px rgba(14,30,45,.06);overflow:hidden}' +
         '#' + IMP_MODAL_ID + ' .row:hover{border-color:#b8c7d5;box-shadow:0 6px 14px rgba(14,30,45,.10)}' +
-        '#' + IMP_MODAL_ID + ' .item{border:none;background:transparent;border-radius:8px;padding:48px 14px 14px;text-align:left;font-size:12px;cursor:pointer;display:flex;flex-direction:column;gap:6px;min-height:158px;width:100%}' +
+        '#' + IMP_MODAL_ID + ' .item{border:none;background:transparent;border-radius:8px;padding:40px 14px 14px;text-align:left;font-size:12px;cursor:pointer;display:flex;flex-direction:column;gap:6px;width:100%;min-width:0;overflow:hidden;box-sizing:border-box}' +
         '#' + IMP_MODAL_ID + ' .item.is-dark{background:#1f2a36}' +
         '#' + IMP_MODAL_ID + ' .item.is-dark .item-name{color:#eef5fb}' +
         '#' + IMP_MODAL_ID + ' .item.is-dark .item-meta,#' + IMP_MODAL_ID + ' .item.is-dark .item-snippet{color:#c7d6e4}' +
         '#' + IMP_MODAL_ID + ' .item:focus{outline:2px solid #af282f;outline-offset:2px}' +
-        '#' + IMP_MODAL_ID + ' .item-name{font-weight:700;color:#1f2f3f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
-        '#' + IMP_MODAL_ID + ' .item-meta{font-size:11px;color:#4a5a68;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
-        '#' + IMP_MODAL_ID + ' .item-snippet{font-size:11px;color:#6a7682;line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;min-height:44px}' +
+        '#' + IMP_MODAL_ID + ' .item-name{font-weight:700;font-size:13px;color:#1f2f3f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}' +
+        '#' + IMP_MODAL_ID + ' .item-meta{font-size:11px;color:#4a5a68;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}' +
+        '#' + IMP_MODAL_ID + ' .item-snippet{font-size:12px;color:#4a5a68;line-height:1.45;overflow:hidden}' +
+        '#' + IMP_MODAL_ID + ' .item-snippet h1,#' + IMP_MODAL_ID + ' .item-snippet .headline{font-size:15px;font-weight:700;color:#1f2f3f;margin:0 0 4px;line-height:1.3}' +
+        '#' + IMP_MODAL_ID + ' .item-snippet h2,#' + IMP_MODAL_ID + ' .item-snippet .subhead1{font-size:14px;font-weight:700;color:#2a3f54;margin:0 0 4px;line-height:1.3}' +
+        '#' + IMP_MODAL_ID + ' .item-snippet h3,#' + IMP_MODAL_ID + ' .item-snippet .subhead2{font-size:13px;font-weight:600;color:#2a3f54;margin:0 0 3px;line-height:1.35}' +
+        '#' + IMP_MODAL_ID + ' .item-snippet p{margin:0 0 4px}' +
+        '#' + IMP_MODAL_ID + ' .item-snippet a{color:#1565c0;text-decoration:underline}' +
+        '#' + IMP_MODAL_ID + ' .item-snippet .hyperlink{color:#1565c0;text-decoration:underline}' +
+        '#' + IMP_MODAL_ID + ' .item-snippet img{display:none}' +
         '#' + IMP_MODAL_ID + ' .row-actions{position:absolute;top:8px;right:8px;display:flex;gap:6px;z-index:2}' +
         '#' + IMP_MODAL_ID + ' .act{min-width:28px;height:26px;border:1px solid #ccd6e0;background:#f6f9fc;color:#415569;border-radius:4px;cursor:pointer;line-height:1;font-size:11px;font-weight:600;padding:0 8px}' +
         '#' + IMP_MODAL_ID + ' .act.preview-pill{position:absolute;top:8px;left:8px;z-index:2;min-width:0;height:24px;padding:0 12px;border:none;background:#af282f;color:#fff;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.02em;box-shadow:0 2px 8px rgba(175,40,47,.35)}' +
@@ -513,7 +520,11 @@
           '#cp-info-lib-preview-modal .r,#cp-info-lib-preview-modal .r *{box-sizing:border-box}' +
           '#cp-info-lib-preview-modal .r img{max-width:100% !important;height:auto !important;display:block}' +
           '#cp-info-lib-preview-modal .r table{max-width:100% !important}' +
-          '#cp-info-lib-preview-modal .r a{word-break:break-word}' +
+          '#cp-info-lib-preview-modal .r a{word-break:break-word;color:#1565c0;text-decoration:underline}' +
+          '#cp-info-lib-preview-modal .r h1,#cp-info-lib-preview-modal .r .headline{font-size:1.8em;font-weight:700;margin:0.6em 0 0.4em;line-height:1.25}' +
+          '#cp-info-lib-preview-modal .r h2,#cp-info-lib-preview-modal .r .subhead1{font-size:1.4em;font-weight:700;margin:0.5em 0 0.3em;line-height:1.3}' +
+          '#cp-info-lib-preview-modal .r h3,#cp-info-lib-preview-modal .r .subhead2{font-size:1.15em;font-weight:700;margin:0.4em 0 0.25em;line-height:1.35}' +
+          '#cp-info-lib-preview-modal .r .hyperlink{color:#1565c0;text-decoration:underline}' +
           '#cp-info-lib-preview-modal .e{color:#6d7882;font-size:12px;font-style:italic}' +
           '#cp-info-lib-preview-modal .f{padding:14px 18px;border-top:1px solid #e0e0e0;display:flex;justify-content:flex-end}' +
           '#cp-info-lib-preview-modal .btn{padding:8px 12px;border:none;border-radius:4px;font-size:14px;cursor:pointer;background:#e0e0e0;color:#333}</style>' +
@@ -581,7 +592,11 @@
             meta.textContent = metaParts.length ? metaParts.join(" | ") : "No link metadata";
             var snippet = document.createElement("div");
             snippet.className = "item-snippet";
-            snippet.textContent = summary.bodyText ? excerpt(summary.bodyText, 86) : "No body preview available";
+            if (summary.bodyHtml) {
+              snippet.innerHTML = sanitizePreviewHtml(summary.bodyHtml);
+            } else {
+              snippet.textContent = "No body preview available";
+            }
 
             card.appendChild(name);
             card.appendChild(meta);
