@@ -7,6 +7,21 @@
         try {
           var $ = window.jQuery;
 
+          // Call a named SW-registered op in MAIN world. Op bodies live in
+          // main-ops-ql.js — content scripts can't pick what code runs.
+          function callMain(op, args) {
+            return new Promise(function(resolve, reject) {
+              chrome.runtime.sendMessage(
+                { action: "cp-ql-" + op, args: args || null },
+                function(response) {
+                  if (chrome.runtime.lastError) return reject(new Error(chrome.runtime.lastError.message));
+                  if (response && response.error) return reject(new Error(response.error));
+                  resolve(response ? response.result : null);
+                }
+              );
+            });
+          }
+
           function appendCode() {
             // Guard against duplicate insertion from retries/observer
             if ($('input[name="addNewSection"]').length) return;
@@ -98,10 +113,7 @@
             }
 
             // Show loading overlay via MAIN world (CSP-safe)
-            chrome.runtime.sendMessage({
-              action: "cp-execute-in-main",
-              code: 'ajaxPostBackStart("Please wait... This will only take a moment.");$("#divAjaxProgress").clone().attr("id", "toolkit-block").css("display", "block").appendTo("body");ajaxPostBackEnd();'
-            });
+            callMain("showOverlay", { message: "Please wait... This will only take a moment." }).catch(function() {});
 
             // Gather original CMS row fields
             var origLink = document.getElementsByName("txtLink")[0];
@@ -130,10 +142,7 @@
               })(items[i]);
             }
             queue.then(function() {
-              chrome.runtime.sendMessage({
-                action: "cp-execute-in-main",
-                code: 'var el = document.getElementById("toolkit-block"); if (el) el.style.display = "none";'
-              });
+              callMain("hideOverlay").catch(function() {});
               $('input[value="Back"]').click();
             });
             return true; // Handled by toolkit

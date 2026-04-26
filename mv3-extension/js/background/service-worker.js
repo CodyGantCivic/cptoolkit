@@ -8,6 +8,7 @@ importScripts('context-menus.js');
 importScripts('first-run.js');
 importScripts('main-ops-fancy.js');
 importScripts('frame-ops-fancy.js');
+importScripts('main-ops-ql.js');
 
 console.log('[CP Toolkit] Service worker initialized');
 
@@ -578,6 +579,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     sendResponse({ error: 'Unknown fancy op: ' + opKey });
+    return true;
+  }
+
+  // Named-op dispatch for cp-MultipleQuickLinks (replaces eval bridge).
+  // Op bodies are hardcoded in main-ops-ql.js — content scripts cannot
+  // influence what code runs in MAIN world.
+  if (message && typeof message.action === 'string' && message.action.indexOf('cp-ql-') === 0 && sender.tab) {
+    var qlOpKey = message.action.slice('cp-ql-'.length);
+
+    if (hasOwn.call(QL_MAIN_OPS, qlOpKey)) {
+      chrome.scripting.executeScript({
+        target: { tabId: sender.tab.id },
+        world: 'MAIN',
+        func: QL_MAIN_OPS[qlOpKey],
+        args: message.args ? [message.args] : []
+      }).then(function(results) {
+        sendResponse({ result: results[0] ? results[0].result : null });
+      }).catch(function(err) {
+        sendResponse({ error: err.message });
+      });
+      return true;
+    }
+
+    sendResponse({ error: 'Unknown ql op: ' + qlOpKey });
     return true;
   }
 
