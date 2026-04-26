@@ -33,6 +33,9 @@
         const USER_SNIPPETS_KEY = 'cp-toolkit-user-snippets';
         const COPIED_SKINS_KEY = 'cp-toolkit-copied-skins';
         const SNIPPET_ORDER_KEY = 'cp-toolkit-snippet-order';
+        var ALLOWED_STORAGE_KEYS = Object.create(null);
+        ALLOWED_STORAGE_KEYS['cp-toolkit-multi-skins'] = true;
+        var hasOwn = Object.prototype.hasOwnProperty;
         let snippetsData = null;
         let userSnippetsData = null;
         let copiedSkinsData = null;
@@ -240,13 +243,21 @@
             });
         }
 
-        // ==================== GENERIC STORAGE BRIDGE ====================
+        // ==================== STORAGE BRIDGE (whitelisted) ====================
         // Allows on-demand tools (MAIN world) to get/set chrome.storage.local
         // via CustomEvents. Tools in MAIN world can't access chrome APIs directly.
+        // Only whitelisted toolkit keys are accepted — page JS on any
+        // CP-detected top-frame page (which can include client-controlled HTML
+        // widgets) could otherwise read/write arbitrary toolkit storage.
+        // To allow a new tool key, add it to ALLOWED_STORAGE_KEYS above.
 
         document.addEventListener('cp-toolkit-storage-get', function(e) {
             var detail = e.detail || {};
             if (!chrome.runtime?.id) return;
+            if (typeof detail.key !== 'string' || !hasOwn.call(ALLOWED_STORAGE_KEYS, detail.key)) {
+                console.warn('[CP Toolkit](css-snippets) storage-get rejected for non-whitelisted key:', detail.key);
+                return;
+            }
             chrome.storage.local.get(detail.key, function(result) {
                 document.dispatchEvent(new CustomEvent('cp-toolkit-storage-response', {
                     detail: { requestId: detail.requestId, data: result[detail.key] }
@@ -257,6 +268,10 @@
         document.addEventListener('cp-toolkit-storage-set', function(e) {
             var detail = e.detail || {};
             if (!chrome.runtime?.id) return;
+            if (typeof detail.key !== 'string' || !hasOwn.call(ALLOWED_STORAGE_KEYS, detail.key)) {
+                console.warn('[CP Toolkit](css-snippets) storage-set rejected for non-whitelisted key:', detail.key);
+                return;
+            }
             var obj = {};
             obj[detail.key] = detail.value;
             chrome.storage.local.set(obj, function() {
