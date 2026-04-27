@@ -9,6 +9,290 @@ importScripts('first-run.js');
 
 console.log('[CP Toolkit] Service worker initialized');
 
+function getFirstExecutionResult(results) {
+  return results && results[0] ? results[0].result : null;
+}
+
+function executeMainWorldScript(tabId, func, args) {
+  return chrome.scripting.executeScript({
+    target: { tabId: tabId },
+    world: 'MAIN',
+    func: func,
+    args: args || []
+  }).then(getFirstExecutionResult);
+}
+
+function getFancyButtonFrameUrlMatch(target) {
+  if (target === 'folder-modal') return 'FolderForModal/Index';
+  if (target === 'select-files') return 'MultipleFileUpload/SelectFiles';
+  if (target === 'document-add') return 'DocumentCenter/DocumentForModal/Add';
+  throw new Error('Unsupported fancy button frame target: ' + target);
+}
+
+function findFrameIdByUrlMatch(tabId, urlMatch) {
+  return chrome.webNavigation.getAllFrames({ tabId: tabId }).then(function(frames) {
+    var targetFrame = frames.find(function(frame) {
+      return frame.url && frame.url.indexOf(urlMatch) > -1;
+    });
+    if (!targetFrame) {
+      throw new Error('Frame not found matching: ' + urlMatch);
+    }
+    return targetFrame.frameId;
+  });
+}
+
+function executeFancyButtonFrameScript(tabId, target, func, args) {
+  var urlMatch = getFancyButtonFrameUrlMatch(target);
+  return findFrameIdByUrlMatch(tabId, urlMatch).then(function(frameId) {
+    return chrome.scripting.executeScript({
+      target: { tabId: tabId, frameIds: [frameId] },
+      world: 'MAIN',
+      func: func,
+      args: args || []
+    }).then(getFirstExecutionResult);
+  });
+}
+
+function runFancyButtonFrameOperation(tabId, target, operation, payload) {
+  if (operation === 'read-folders') {
+    return executeFancyButtonFrameScript(tabId, target, function() {
+      var treeNodes = document.querySelectorAll('.ant-tree-treenode');
+      if (treeNodes.length === 0) return { ready: false };
+
+      var folders = [];
+      for (var index = 0; index < treeNodes.length; index++) {
+        var node = treeNodes[index];
+        var keys = Object.keys(node);
+        var fiberKey = null;
+
+        for (var keyIndex = 0; keyIndex < keys.length; keyIndex++) {
+          if (keys[keyIndex].indexOf('__reactFiber$') === 0 || keys[keyIndex].indexOf('__reactInternalInstance$') === 0) {
+            fiberKey = keys[keyIndex];
+            break;
+          }
+        }
+        if (!fiberKey) continue;
+
+        var current = node[fiberKey];
+        for (var i = 0; i < 5 && current; i++) {
+          if (current.memoizedProps && current.memoizedProps.eventKey) {
+            var data = current.memoizedProps.data;
+            var title = data ? data.title : null;
+            var id = current.memoizedProps.eventKey;
+            if (title && title !== 'Content') {
+              folders.push({ id: id, title: title });
+            }
+            break;
+          }
+          current = current.return;
+        }
+      }
+
+      return { ready: true, folders: folders };
+    });
+  }
+
+  if (operation === 'check-dropzone-ready') {
+    return executeFancyButtonFrameScript(tabId, target, function() {
+      var dropzoneElement = document.querySelector('.dropzone');
+      var dropzoneInstance = dropzoneElement && dropzoneElement.dropzone
+        ? dropzoneElement.dropzone
+        : (typeof Dropzone !== 'undefined' && Dropzone.instances && Dropzone.instances[0]);
+      return { ready: !!dropzoneInstance };
+    });
+  }
+
+  if (operation === 'add-file') {
+    return executeFancyButtonFrameScript(tabId, target, function(base64Data, fileName) {
+      if (!base64Data || !fileName) {
+        return { error: 'Missing file data for upload' };
+      }
+
+      var byteChars;
+      try {
+        byteChars = atob(base64Data);
+      } catch (error) {
+        return { error: 'Invalid file data: ' + error.message };
+      }
+
+      var byteArray = new Uint8Array(byteChars.length);
+      for (var i = 0; i < byteChars.length; i++) {
+        byteArray[i] = byteChars.charCodeAt(i);
+      }
+
+      var file = new File([byteArray], fileName, {
+        type: 'image/svg+xml'
+      });
+
+      var dropzoneElement = document.querySelector('.dropzone');
+      var dropzoneInstance = dropzoneElement && dropzoneElement.dropzone
+        ? dropzoneElement.dropzone
+        : (typeof Dropzone !== 'undefined' && Dropzone.instances && Dropzone.instances[0]);
+      if (!dropzoneInstance) {
+        return { error: 'Dropzone not found' };
+      }
+
+      dropzoneInstance.addFile(file);
+      return { status: 'added' };
+    }, [payload && payload.base64Data ? payload.base64Data : '', payload && payload.fileName ? payload.fileName : '']);
+  }
+
+  if (operation === 'get-upload-status') {
+    return executeFancyButtonFrameScript(tabId, target, function() {
+      var dropzoneElement = document.querySelector('.dropzone');
+      var dropzoneInstance = dropzoneElement && dropzoneElement.dropzone
+        ? dropzoneElement.dropzone
+        : (typeof Dropzone !== 'undefined' && Dropzone.instances && Dropzone.instances[0]);
+      if (!dropzoneInstance) {
+        return { done: false, error: 'Dropzone not found' };
+      }
+
+      var uploading = dropzoneInstance.getUploadingFiles().length;
+      var accepted = dropzoneInstance.getAcceptedFiles().length;
+      var rejected = dropzoneInstance.getRejectedFiles().length;
+      return {
+        done: uploading === 0 && accepted > 0,
+        accepted: accepted,
+        rejected: rejected
+      };
+    });
+  }
+
+  if (operation === 'trigger-continue') {
+    return executeFancyButtonFrameScript(tabId, target, function() {
+      var dropzoneElement = document.querySelector('.dropzone');
+      var dropzoneInstance = dropzoneElement && dropzoneElement.dropzone
+        ? dropzoneElement.dropzone
+        : (typeof Dropzone !== 'undefined' && Dropzone.instances && Dropzone.instances[0]);
+      if (!dropzoneInstance) {
+        return { error: 'Dropzone not found for continue' };
+      }
+
+      var files = dropzoneInstance.getAcceptedFiles();
+      var fileList = files.map(function(file) { return file.name; });
+      var fileSizes = files.map(function(file) { return file.size; });
+      var categoryIdInput = document.getElementById('categoryId');
+      var categoryId = categoryIdInput ? categoryIdInput.value : '0';
+
+      if (typeof window.parent.reloadPage !== 'function') {
+        return { error: 'reloadPage not found on parent' };
+      }
+
+      window.parent.reloadPage(files.length, categoryId, fileList, fileSizes, {}, []);
+      return { status: 'ok' };
+    });
+  }
+
+  if (operation === 'probe-form') {
+    return executeFancyButtonFrameScript(tabId, target, function() {
+      var fileList = document.getElementById('olfileUploadControl');
+      return {
+        hasSaveChanges: typeof saveChanges === 'function',
+        fileSlotCount: fileList ? fileList.children.length : 0
+      };
+    });
+  }
+
+  if (operation === 'fill-metadata-and-submit') {
+    return executeFancyButtonFrameScript(tabId, target, function(name) {
+      if (!name) {
+        return { error: 'Missing document name' };
+      }
+
+      var allNameInputs = document.querySelectorAll('input[id*=__FileName]');
+      var filled = 0;
+      for (var i = 0; i < allNameInputs.length; i++) {
+        if (!allNameInputs[i].value || allNameInputs[i].value.trim() === '') {
+          allNameInputs[i].value = name;
+          filled++;
+        }
+      }
+
+      var allDescriptionInputs = document.querySelectorAll('input[id*=__FileDescription], textarea[id*=__FileDescription]');
+      for (var j = 0; j < allDescriptionInputs.length; j++) {
+        if (!allDescriptionInputs[j].value || allDescriptionInputs[j].value.trim() === '') {
+          allDescriptionInputs[j].value = name;
+        }
+      }
+
+      if (!document.aspnetForm) {
+        return { error: 'aspnetForm not found' };
+      }
+
+      var connector = document.aspnetForm.action.indexOf('?') !== -1 ? '&' : '?';
+      document.aspnetForm.action += connector + 'saveAction=publish';
+      if (typeof ajaxPostBackStart === 'function') {
+        ajaxPostBackStart();
+      }
+      document.aspnetForm.submit();
+      return { status: 'submitted', filled: filled };
+    }, [payload && payload.name ? payload.name : '']);
+  }
+
+  return Promise.reject(new Error('Unsupported fancy button frame operation: ' + operation));
+}
+
+function runFancyButtonMainOperation(tabId, operation) {
+  if (operation === 'install-export-interceptor') {
+    return executeMainWorldScript(tabId, function() {
+      var $ = window.jQuery;
+      if (!$ || typeof $.ajax !== 'function' || typeof $.Deferred !== 'function') {
+        return { error: 'jQuery.ajax unavailable in page context' };
+      }
+
+      if (typeof window.__cpToolkitRestoreCapturedSaveInterceptor === 'function') {
+        window.__cpToolkitRestoreCapturedSaveInterceptor();
+      }
+
+      window.__cpToolkitCapturedSave = null;
+      var originalAjax = $.ajax;
+      var interceptor = function(opts) {
+        if (
+          opts &&
+          typeof opts.url === 'string' &&
+          opts.url.indexOf('/GraphicLinks/GraphicLinkSave') !== -1
+        ) {
+          var data = opts.data;
+          window.__cpToolkitCapturedSave = typeof data === 'string' ? data : JSON.stringify(data);
+          if (typeof window.__cpToolkitRestoreCapturedSaveInterceptor === 'function') {
+            window.__cpToolkitRestoreCapturedSaveInterceptor();
+          }
+          return $.Deferred().promise();
+        }
+        return originalAjax.apply(this, arguments);
+      };
+
+      window.__cpToolkitRestoreCapturedSaveInterceptor = function() {
+        if ($.ajax === interceptor) {
+          $.ajax = originalAjax;
+        }
+        delete window.__cpToolkitRestoreCapturedSaveInterceptor;
+      };
+
+      $.ajax = interceptor;
+      return { installed: true };
+    });
+  }
+
+  if (operation === 'read-export-capture') {
+    return executeMainWorldScript(tabId, function() {
+      return window.__cpToolkitCapturedSave || null;
+    });
+  }
+
+  if (operation === 'clear-export-capture') {
+    return executeMainWorldScript(tabId, function() {
+      if (typeof window.__cpToolkitRestoreCapturedSaveInterceptor === 'function') {
+        window.__cpToolkitRestoreCapturedSaveInterceptor();
+      }
+      delete window.__cpToolkitCapturedSave;
+      return null;
+    });
+  }
+
+  return Promise.reject(new Error('Unsupported fancy button main operation: ' + operation));
+}
+
 // Installation event - delegate to first-run handler
 chrome.runtime.onInstalled.addListener((details) => {
   console.log('[CP Toolkit] Extension installed/updated:', details.reason);
@@ -67,45 +351,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     initializeContextMenus(true);
   }
 
-  // Execute arbitrary code in a specific iframe's MAIN world.
-  // Used by tools that need to interact with page-level JS globals inside iframes
-  // (e.g., Dropzone, saveChanges) which content scripts can't access directly.
-  if (message && message.action === 'cp-execute-in-frame' && sender.tab) {
-    chrome.webNavigation.getAllFrames({ tabId: sender.tab.id }).then(function(frames) {
-      var targetFrame = frames.find(function(f) { return f.url.indexOf(message.urlMatch) > -1; });
-      if (!targetFrame) {
-        sendResponse({ error: 'Frame not found matching: ' + message.urlMatch });
-        return;
-      }
-      chrome.scripting.executeScript({
-        target: { tabId: sender.tab.id, frameIds: [targetFrame.frameId] },
-        world: 'MAIN',
-        func: function(codeStr) { return eval(codeStr); },
-        args: [message.code]
-      }).then(function(results) {
-        sendResponse({ result: results[0] ? results[0].result : null });
-      }).catch(function(err) {
-        sendResponse({ error: err.message });
-      });
+  if (message && message.action === 'cp-fancy-button-frame-operation' && sender.tab) {
+    runFancyButtonFrameOperation(
+      sender.tab.id,
+      message.target,
+      message.operation,
+      message.payload || {}
+    ).then(function(result) {
+      sendResponse({ result: result });
     }).catch(function(err) {
       sendResponse({ error: err.message });
     });
     return true; // async response
   }
 
-  // Execute arbitrary code in the top frame's MAIN world and return the result.
-  // Used when content scripts need access to page-level JS globals (e.g. jQuery, page functions).
-  if (message && message.action === 'cp-execute-in-main' && message.code && sender.tab) {
-    chrome.scripting.executeScript({
-      target: { tabId: sender.tab.id },
-      world: 'MAIN',
-      func: function(codeStr) { return eval(codeStr); },
-      args: [message.code]
-    }).then(function(results) {
-      sendResponse({ result: results[0] ? results[0].result : null });
-    }).catch(function(err) {
-      sendResponse({ error: err.message });
-    });
+  if (message && message.action === 'cp-fancy-button-main-operation' && sender.tab) {
+    runFancyButtonMainOperation(sender.tab.id, message.operation)
+      .then(function(result) {
+        sendResponse({ result: result });
+      })
+      .catch(function(err) {
+        sendResponse({ error: err.message });
+      });
     return true; // async response
   }
 
