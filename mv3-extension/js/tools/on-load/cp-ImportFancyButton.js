@@ -2406,7 +2406,12 @@
               // When "Save and Publish" is clicked, the CMS assembles the complete
               // button JSON and POSTs it to /GraphicLinks/GraphicLinkSave. We
               // monkey-patch $.ajax to capture that payload and cancel the request.
+              // The .catch matches pre-merge semantics: the original sendMessage
+              // callback ignored bridge errors and proceeded regardless.
+              // Suppressing the rejection lets the .then run and also avoids
+              // unhandled-rejection warnings.
               executeFancyMainOperation("install-export-interceptor")
+                .catch(function () {})
                 .then(function () {
                   // Now click "Save and Publish" to trigger the CMS to assemble and send the data
                   var saveBtn = document.querySelector(
