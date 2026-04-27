@@ -194,24 +194,27 @@ function runFancyButtonFrameOperation(tabId, target, operation, payload) {
   }
 
   if (operation === 'fill-metadata-and-submit') {
-    return executeFancyButtonFrameScript(tabId, target, function(name) {
-      if (!name) {
-        return { error: 'Missing document name' };
+    return executeFancyButtonFrameScript(tabId, target, function(name, names) {
+      var hasNames = Array.isArray(names) && names.length > 0;
+      if (!name && !hasNames) {
+        return { error: 'Missing document name(s)' };
       }
 
       var allNameInputs = document.querySelectorAll('input[id*=__FileName]');
       var filled = 0;
       for (var i = 0; i < allNameInputs.length; i++) {
         if (!allNameInputs[i].value || allNameInputs[i].value.trim() === '') {
-          allNameInputs[i].value = name;
+          allNameInputs[i].value = hasNames ? (names[filled] || names[0]) : name;
           filled++;
         }
       }
 
       var allDescriptionInputs = document.querySelectorAll('input[id*=__FileDescription], textarea[id*=__FileDescription]');
+      var descFilled = 0;
       for (var j = 0; j < allDescriptionInputs.length; j++) {
         if (!allDescriptionInputs[j].value || allDescriptionInputs[j].value.trim() === '') {
-          allDescriptionInputs[j].value = name;
+          allDescriptionInputs[j].value = hasNames ? (names[descFilled] || names[0]) : name;
+          descFilled++;
         }
       }
 
@@ -226,7 +229,7 @@ function runFancyButtonFrameOperation(tabId, target, operation, payload) {
       }
       document.aspnetForm.submit();
       return { status: 'submitted', filled: filled };
-    }, [payload && payload.name ? payload.name : '']);
+    }, [payload && payload.name ? payload.name : '', payload && payload.names ? payload.names : null]);
   }
 
   return Promise.reject(new Error('Unsupported fancy button frame operation: ' + operation));
