@@ -7,6 +7,38 @@
         try {
           var $ = window.jQuery;
 
+          function ensureToolkitOverlay() {
+            var overlay = document.getElementById("cp-toolkit-quicklinks-overlay");
+            if (overlay) {
+              return overlay;
+            }
+
+            overlay = document.createElement("div");
+            overlay.id = "cp-toolkit-quicklinks-overlay";
+            overlay.style.cssText =
+              "position:fixed;inset:0;background:rgba(255,255,255,0.72);z-index:2147483647;display:none;align-items:center;justify-content:center;";
+
+            var panel = document.createElement("div");
+            panel.style.cssText =
+              "background:#ffffff;border:1px solid #d3d3d3;border-radius:6px;box-shadow:0 6px 24px rgba(0,0,0,0.18);padding:18px 22px;font:600 14px/1.4 Arial,sans-serif;color:#333;";
+            panel.textContent = "Please wait... This will only take a moment.";
+
+            overlay.appendChild(panel);
+            document.body.appendChild(overlay);
+            return overlay;
+          }
+
+          function showToolkitOverlay() {
+            ensureToolkitOverlay().style.display = "flex";
+          }
+
+          function hideToolkitOverlay() {
+            var overlay = document.getElementById("cp-toolkit-quicklinks-overlay");
+            if (overlay) {
+              overlay.style.display = "none";
+            }
+          }
+
           function appendCode() {
             var addNew = `<br><input type="button" style="width: 30px; float: right; margin-top: 25px;" name="addNewSection" value="+">`,
               div = $(".formline.selfClear.multiple.link div:first-of-type")[0];
@@ -90,14 +122,10 @@
           function batchPost(status) {
             var addedRows = $(".cp-toolkit-added");
             if (addedRows.length === 0) {
-              return false; // No extra rows — let native button handle it
+              return false; // No extra rows - let native button handle it
             }
 
-            // Show loading overlay via MAIN world (CSP-safe)
-            chrome.runtime.sendMessage({
-              action: "cp-execute-in-main",
-              code: 'ajaxPostBackStart("Please wait... This will only take a moment.");$("#divAjaxProgress").clone().attr("id", "toolkit-block").css("display", "block").appendTo("body");ajaxPostBackEnd();'
-            });
+            showToolkitOverlay();
 
             // Gather original CMS row fields
             var origLink = document.getElementsByName("txtLink")[0];
@@ -126,11 +154,10 @@
               })(items[i]);
             }
             queue.then(function() {
-              chrome.runtime.sendMessage({
-                action: "cp-execute-in-main",
-                code: 'var el = document.getElementById("toolkit-block"); if (el) el.style.display = "none";'
-              });
+              hideToolkitOverlay();
               $('input[value="Back"]').click();
+            }, function() {
+              hideToolkitOverlay();
             });
             return true; // Handled by toolkit
           }

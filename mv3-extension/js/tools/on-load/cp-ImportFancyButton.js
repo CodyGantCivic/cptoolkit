@@ -1610,38 +1610,6 @@
             "/Admin/DocumentCenter/FolderForModal/Index/0?renderMode=1&loadSource=4&requestingModuleID=34";
           document.body.appendChild(iframe);
 
-          var extractCode =
-            "(" +
-            function () {
-              var treeNodes = document.querySelectorAll(".ant-tree-treenode");
-              if (treeNodes.length === 0) return { ready: false };
-              var folders = [];
-              treeNodes.forEach(function (node) {
-                var fiberKey = Object.keys(node).find(function (k) {
-                  return (
-                    k.indexOf("__reactFiber$") === 0 ||
-                    k.indexOf("__reactInternalInstance$") === 0
-                  );
-                });
-                if (!fiberKey) return;
-                var current = node[fiberKey];
-                for (var i = 0; i < 5 && current; i++) {
-                  if (current.memoizedProps && current.memoizedProps.eventKey) {
-                    var data = current.memoizedProps.data;
-                    var title = data ? data.title : null;
-                    var id = current.memoizedProps.eventKey;
-                    if (title && title !== "Content") {
-                      folders.push({ id: id, title: title });
-                    }
-                    break;
-                  }
-                  current = current.return;
-                }
-              });
-              return { ready: true, folders: folders };
-            }.toString() +
-            ")()";
-
           var attempts = 0;
           var maxAttempts = 15;
           function pollForFolders() {
@@ -1652,7 +1620,7 @@
                 '<div style="font-size:12px;color:#888;">Timed out loading folders. Enter the folder ID manually.</div>';
               return;
             }
-            executeInFrame("FolderForModal/Index", extractCode)
+            executeFancyFrameOperation("folder-modal", "read-folders")
               .then(function (result) {
                 if (!result || !result.ready) {
                   setTimeout(pollForFolders, 1000);
@@ -1816,21 +1784,46 @@
           return checkId();
         }
 
-        // ── Execute code in a specific iframe's MAIN world via service worker ──
+        // ── Run explicit MAIN-world operations via service worker ──
 
-        function executeInFrame(urlMatch, code) {
+        function executeFancyFrameOperation(target, operation, payload) {
           return new Promise(function (resolve, reject) {
             chrome.runtime.sendMessage(
               {
-                action: "cp-execute-in-frame",
-                urlMatch: urlMatch,
-                code: code,
+                action: "cp-fancy-button-frame-operation",
+                target: target,
+                operation: operation,
+                payload: payload || {},
               },
               function (response) {
                 if (chrome.runtime.lastError)
                   return reject(new Error(chrome.runtime.lastError.message));
                 if (response && response.error)
                   return reject(new Error(response.error));
+                if (response && response.result && response.result.error) {
+                  return reject(new Error(response.result.error));
+                }
+                resolve(response ? response.result : null);
+              },
+            );
+          });
+        }
+
+        function executeFancyMainOperation(operation) {
+          return new Promise(function (resolve, reject) {
+            chrome.runtime.sendMessage(
+              {
+                action: "cp-fancy-button-main-operation",
+                operation: operation,
+              },
+              function (response) {
+                if (chrome.runtime.lastError)
+                  return reject(new Error(chrome.runtime.lastError.message));
+                if (response && response.error)
+                  return reject(new Error(response.error));
+                if (response && response.result && response.result.error) {
+                  return reject(new Error(response.result.error));
+                }
                 resolve(response ? response.result : null);
               },
             );
@@ -1888,23 +1881,9 @@
                     );
                     return;
                   }
-                  // Use executeInFrame to check if Dropzone is ready in the inner iframe
-                  executeInFrame(
-                    "MultipleFileUpload/SelectFiles",
-                    "(" +
-                      function () {
-                        var dz = document.querySelector(".dropzone");
-                        return {
-                          ready: !!(
-                            dz &&
-                            (dz.dropzone ||
-                              (typeof Dropzone !== "undefined" &&
-                                Dropzone.instances &&
-                                Dropzone.instances.length > 0))
-                          ),
-                        };
-                      }.toString() +
-                      ")()",
+                  executeFancyFrameOperation(
+                    "select-files",
+                    "check-dropzone-ready",
                   )
                     .then(function (result) {
                       if (result && result.ready) {
@@ -1926,35 +1905,14 @@
                   reader.onload = function () {
                     var base64Data = reader.result.split(",")[1];
 
-                    // Execute in the inner iframe (SelectFiles page) to add file to Dropzone
-                    var uploadCode =
-                      "(" +
-                      function (b64, fname) {
-                        var byteChars = atob(b64);
-                        var byteArray = new Uint8Array(byteChars.length);
-                        for (var i = 0; i < byteChars.length; i++) {
-                          byteArray[i] = byteChars.charCodeAt(i);
-                        }
-                        var file = new File([byteArray], fname, {
-                          type: "image/svg+xml",
-                        });
-
-                        var dz =
-                          document.querySelector(".dropzone").dropzone ||
-                          (typeof Dropzone !== "undefined" &&
-                            Dropzone.instances[0]);
-                        if (!dz) return { error: "Dropzone not found" };
-
-                        dz.addFile(file);
-                        return { status: "added" };
-                      }.toString() +
-                      ')("' +
-                      base64Data +
-                      '","' +
-                      fileName.replace(/"/g, '\\"') +
-                      '")';
-
-                    executeInFrame("MultipleFileUpload/SelectFiles", uploadCode)
+                    executeFancyFrameOperation(
+                      "select-files",
+                      "add-file",
+                      {
+                        base64Data: base64Data,
+                        fileName: fileName,
+                      },
+                    )
                       .then(function (result) {
                         if (result && result.error)
                           throw new Error(result.error);
@@ -1989,32 +1947,16 @@
                 }
 
                 function pollDropzoneComplete() {
-                  var pollCode =
-                    "(" +
-                    function () {
-                      var dz =
-                        document.querySelector(".dropzone").dropzone ||
-                        (typeof Dropzone !== "undefined" &&
-                          Dropzone.instances[0]);
-                      if (!dz) return { done: false, error: "no dropzone" };
-                      var uploading = dz.getUploadingFiles().length;
-                      var accepted = dz.getAcceptedFiles().length;
-                      var rejected = dz.getRejectedFiles().length;
-                      return {
-                        done: uploading === 0 && accepted > 0,
-                        accepted: accepted,
-                        rejected: rejected,
-                      };
-                    }.toString() +
-                    ")()";
-
                   return new Promise(function (resolve, reject) {
                     var attempts = 0;
                     function check() {
                       attempts++;
                       if (attempts > 30)
                         return reject(new Error("Dropzone upload timed out"));
-                      executeInFrame("MultipleFileUpload/SelectFiles", pollCode)
+                      executeFancyFrameOperation(
+                        "select-files",
+                        "get-upload-status",
+                      )
                         .then(function (result) {
                           if (result && result.done) return resolve();
                           if (result && result.rejected > 0)
@@ -2031,44 +1973,9 @@
 
                 function triggerContinue() {
                   // In the inner iframe, simulate CONTINUE which calls window.parent.reloadPage()
-                  var continueCode =
-                    "(" +
-                    function () {
-                      var dz =
-                        document.querySelector(".dropzone").dropzone ||
-                        (typeof Dropzone !== "undefined" &&
-                          Dropzone.instances[0]);
-                      if (!dz)
-                        return { error: "Dropzone not found for continue" };
-                      var files = dz.getAcceptedFiles();
-                      var fileList = files.map(function (f) {
-                        return f.name;
-                      });
-                      var fileSizes = files.map(function (f) {
-                        return f.size;
-                      });
-                      var categoryId = document.getElementById("categoryId")
-                        ? document.getElementById("categoryId").value
-                        : "0";
-
-                      if (typeof window.parent.reloadPage === "function") {
-                        window.parent.reloadPage(
-                          files.length,
-                          categoryId,
-                          fileList,
-                          fileSizes,
-                          {},
-                          [],
-                        );
-                        return { status: "ok" };
-                      }
-                      return { error: "reloadPage not found on parent" };
-                    }.toString() +
-                    ")()";
-
-                  return executeInFrame(
-                    "MultipleFileUpload/SelectFiles",
-                    continueCode,
+                  return executeFancyFrameOperation(
+                    "select-files",
+                    "trigger-continue",
                   ).then(function (result) {
                     if (result && result.error) throw new Error(result.error);
                     // Poll outer iframe until the form is ready (reloadPage may trigger a postback)
@@ -2078,17 +1985,6 @@
 
                 function waitForFormReady() {
                   // Poll the outer Add iframe until saveChanges exists and olfileUploadControl has file children
-                  var probeCode =
-                    "(" +
-                    function () {
-                      var ol = document.getElementById("olfileUploadControl");
-                      return {
-                        hasSaveChanges: typeof saveChanges === "function",
-                        fileSlotCount: ol ? ol.children.length : 0,
-                      };
-                    }.toString() +
-                    ")()";
-
                   return new Promise(function (resolve, reject) {
                     var attempts = 0;
                     function check() {
@@ -2099,10 +1995,7 @@
                             "Timeout waiting for Add form after reloadPage",
                           ),
                         );
-                      executeInFrame(
-                        "DocumentCenter/DocumentForModal/Add",
-                        probeCode,
-                      )
+                      executeFancyFrameOperation("document-add", "probe-form")
                         .then(function (result) {
                           console.log(
                             "[CP Toolkit](socials) Form probe attempt " +
@@ -2140,68 +2033,10 @@
                   // and alerts if any FileName is empty — which we can't fully control.
                   // Instead, we fill our file's FileName and submit the form directly,
                   // replicating what saveChanges does after validation passes.
-                  var escapedName = iconName
-                    .replace(/\\/g, "\\\\")
-                    .replace(/"/g, '\\"')
-                    .replace(/'/g, "\\'");
-                  var submitCode =
-                    "(" +
-                    function (name) {
-                      // Fill ALL empty FileName fields to prevent any validation issues
-                      var allNameInputs = document.querySelectorAll(
-                        "input[id*=__FileName]",
-                      );
-                      var filled = 0;
-                      for (var i = 0; i < allNameInputs.length; i++) {
-                        if (
-                          !allNameInputs[i].value ||
-                          allNameInputs[i].value.trim() === ""
-                        ) {
-                          allNameInputs[i].value = name;
-                          filled++;
-                        }
-                      }
-
-                      // Also fill description fields
-                      var allDescInputs = document.querySelectorAll(
-                        "input[id*=__FileDescription], textarea[id*=__FileDescription]",
-                      );
-                      for (var j = 0; j < allDescInputs.length; j++) {
-                        if (
-                          !allDescInputs[j].value ||
-                          allDescInputs[j].value.trim() === ""
-                        ) {
-                          allDescInputs[j].value = name;
-                        }
-                      }
-
-                      // Submit directly — replicate exactly what saveChanges does after validation:
-                      // 1. Append saveAction to form action
-                      // 2. Call ajaxPostBackStart() (required for server to accept the POST)
-                      // 3. Call aspnetForm.submit()
-                      if (!document.aspnetForm) {
-                        return { error: "aspnetForm not found" };
-                      }
-
-                      var connector =
-                        document.aspnetForm.action.indexOf("?") !== -1
-                          ? "&"
-                          : "?";
-                      document.aspnetForm.action +=
-                        connector + "saveAction=publish";
-                      if (typeof ajaxPostBackStart === "function") {
-                        ajaxPostBackStart();
-                      }
-                      document.aspnetForm.submit();
-                      return { status: "submitted", filled: filled };
-                    }.toString() +
-                    ')("' +
-                    escapedName +
-                    '")';
-
-                  return executeInFrame(
-                    "DocumentCenter/DocumentForModal/Add",
-                    submitCode,
+                  return executeFancyFrameOperation(
+                    "document-add",
+                    "fill-metadata-and-submit",
+                    { name: iconName },
                   ).then(function (result) {
                     console.log(
                       "[CP Toolkit](socials) fillMetadata result:",
@@ -2493,37 +2328,8 @@
               // When "Save and Publish" is clicked, the CMS assembles the complete
               // button JSON and POSTs it to /GraphicLinks/GraphicLinkSave. We
               // monkey-patch $.ajax to capture that payload and cancel the request.
-              chrome.runtime.sendMessage(
-                {
-                  action: "cp-execute-in-main",
-                  code:
-                    "(" +
-                    function () {
-                      window.__cpToolkitCapturedSave = null;
-                      var origAjax = $.ajax;
-                      $.ajax = function (opts) {
-                        if (
-                          opts &&
-                          typeof opts.url === "string" &&
-                          opts.url.indexOf("/GraphicLinks/GraphicLinkSave") !==
-                            -1
-                        ) {
-                          // Capture the payload and block the actual save
-                          var d = opts.data;
-                          window.__cpToolkitCapturedSave =
-                            typeof d === "string" ? d : JSON.stringify(d);
-                          // Restore original $.ajax immediately
-                          $.ajax = origAjax;
-                          // Return a deferred that never resolves so the CMS
-                          // success handler (which reloads the page) doesn't fire
-                          return $.Deferred().promise();
-                        }
-                        return origAjax.apply(this, arguments);
-                      };
-                    }.toString() +
-                    ")()",
-                },
-                function () {
+              executeFancyMainOperation("install-export-interceptor")
+                .then(function () {
                   // Now click "Save and Publish" to trigger the CMS to assemble and send the data
                   var saveBtn = document.querySelector(
                     'input[name="saveAndPublish"], button[name="saveAndPublish"]',
@@ -2565,19 +2371,13 @@
                   var maxAttempts = 40;
                   function pollForCapture() {
                     attempts++;
-                    chrome.runtime.sendMessage(
-                      {
-                        action: "cp-execute-in-main",
-                        code: "window.__cpToolkitCapturedSave",
-                      },
-                      function (resp) {
-                        var captured = resp && resp.result;
+                    executeFancyMainOperation("read-export-capture")
+                      .then(function (captured) {
                         if (captured) {
                           // Clean up
-                          chrome.runtime.sendMessage({
-                            action: "cp-execute-in-main",
-                            code: "delete window.__cpToolkitCapturedSave; null;",
-                          });
+                          executeFancyMainOperation(
+                            "clear-export-capture",
+                          ).catch(function () {});
                           showExportModal(
                             captured,
                             pending.id,
@@ -2591,12 +2391,22 @@
                             "Timed out waiting for button data. The save may not have triggered.",
                           );
                         }
-                      },
-                    );
+                      })
+                      .catch(function (error) {
+                        alert(
+                          "Failed to read the captured button data: " +
+                            error.message,
+                        );
+                      });
                   }
                   setTimeout(pollForCapture, 500);
-                },
-              );
+                })
+                .catch(function (error) {
+                  alert(
+                    "Could not start the Fancy Button export interceptor: " +
+                      error.message,
+                  );
+                });
             }, 1000);
           });
         }
