@@ -75,6 +75,16 @@ try {
   $tag = "v$Version"
   Write-Step "Target version: $Version ($tag)"
 
+  Write-Step "Running security guardrails..."
+  $bashCmd = Get-Command bash -ErrorAction SilentlyContinue
+  if (-not $bashCmd) {
+    throw "Git Bash is required to run security guardrails before release. Install Git for Windows."
+  }
+  & $bashCmd.Source "scripts/security-guardrails.sh"
+  if ($LASTEXITCODE -ne 0) {
+    throw "Security guardrails failed. Fix the issues above before tagging a release."
+  }
+
   Write-Step "Fetching origin/main and tags..."
   Invoke-Git @("fetch", "origin", "main", "--tags")
 

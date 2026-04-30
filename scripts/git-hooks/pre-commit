@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Opt-in pre-commit hook. Activate with:
+#   git config core.hooksPath scripts/git-hooks
+exec bash "$(git rev-parse --show-toplevel)/scripts/security-guardrails.sh"
