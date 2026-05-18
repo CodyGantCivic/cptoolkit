@@ -86,7 +86,7 @@
         <div class="tool-category">Bug Fixes</div>
         <ul class="tool-list">
           <li><strong>Widget Skin Default Override:</strong> Fixed the Manage Widget Skins modal opening twice after creating or copying a skin. The tool was explicitly reopening the modal, but the CMS save callback already does that automatically.</li>
-          <li><strong>Enforce Advanced Styles Text Limits:</strong> Fixed MiscAdvStyles maxlength from 255 to 1000 to match the actual server-side limit for widget skin advanced styles.</li>
+          <li><strong>Enforce Advanced Styles Text Limits:</strong> Caps each advanced-styles textarea at its verified server-side limit so the CMS doesn't silently drop oversized saves. Theme Manager skin advanced styles cap at 4000 characters; container, main nav, and featureColumn cap at 1000; Graphic Button Fancy Button MiscStyles cap at 1200. Mini IDE counter and truncation now reflect the save-form length (handles the .fancyButton1 → .fancyButtonN expansion on save).</li>
           <li><strong>Export Fancy Button:</strong> Fixed export not capturing advanced styles. Textarea fields (where advanced styles live) were not being collected — only inputs and selects were.</li>
           <li><strong>Mini IDE:</strong> Fixed errors when MutationObservers tried to attach before document.body existed.</li>
           <li><strong>Remember Image Picker State:</strong> Fixed the tool from interfering with hidden iframes created by other toolkit tools (folder lookup, upload flows).</li>

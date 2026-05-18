@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Security guardrails for the CP Toolkit.
-# Encodes the four checks from Finding #8 of the April 2026 security review.
+# Encodes the five checks from Findings #7 and #8 of the April 2026 security review.
 # Source of truth for *why* each check exists:
-#   .claude/documents/security-review-roadmap-2026-04-07.md
+#   .claude/docs/security/security-review-roadmap-2026-04-07.md
 #
 # Each check_* function prints a single PASS/FAIL line and (on FAIL) the
 # offending matches. The script exits non-zero if any check fails.
@@ -19,6 +19,31 @@ set -u
 # third-party assets) narrow the surface area. The cap must always equal
 # today's actual count, not just an upper bound — see check_broad_matches.
 ALLOWED_BROAD_MATCHES=3
+
+# Allowlist of remote hosts permitted to appear in mv3-extension/ JS/CSS/HTML.
+# Each entry is an EXACT host string (compared with POSIX [ "$a" = "$b" ],
+# not regex match — dots in host names are literal, not wildcards).
+# Lower the list (remove a host) when its references are vendored.
+ALLOWED_REMOTE_HOSTS=(
+  # --- Operational APIs (runtime fetches by extension) ---
+  fonts.googleapis.com       # Dynamic font import for Fancy Button preview
+                             # (cp-ImportFancyButton.js:492 + the mirrored
+                             # button-library-page.js:313). NOTE: transitively
+                             # triggers fetches from fonts.gstatic.com at
+                             # runtime; that is also a remaining external
+                             # dependency for Finding #7 documentation purposes.
+  api.github.com             # Extension update check (popup.js:64)
+
+  # --- Navigation targets (passed to chrome.tabs.create or rendered as <a href>) ---
+  cp-vlasak.github.io        # Toolkit download page (popup.js:5)
+  connect.civicplus.com      # "Powered by CivicPlus" referral link in HTML template (insertPoweredByHTML.js:32)
+
+  # --- Google Translate clipboard template class (copyGoogleTranslate.js,
+  # Setup default widget option sets.js) — strings copied to user clipboard
+  # or POSTed to CMS for execution in CMS-site runtime, NOT fetched by extension ---
+  www.gstatic.com            # Google Translate icon in clipboard CSS template
+  translate.google.com       # Google Translate JS bootstrap (protocol-relative) and CMS-rendered window.open URL
+)
 
 # ---- Setup -------------------------------------------------------------
 REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -131,15 +156,107 @@ check_no_server() {
   return "$failed"
 }
 
+# ---- Check 5: no remote third-party hosts outside the allowlist ---------
+# Scans .js/.css/.html in mv3-extension/ (excluding external/ vendored
+# libraries) for absolute and protocol-relative URLs. Any host not in
+# ALLOWED_REMOTE_HOSTS (exact string match) fails the check.
+#
+# URL forms detected:
+#   - https://host[:port]/...
+#   - http://host[:port]/...
+#   - ["'`(=]//host[:port]/...  (protocol-relative, MUST be preceded by a
+#                                URL-context delimiter so JS line comments
+#                                like //object.method do NOT match)
+#
+# Multi-label host requirement: (\.[a-zA-Z0-9-]+)+ after the first label
+# means at least one internal '.', so //translate.google.com matches but
+# //Create, //Add, // some comment do NOT. (CP2 BLOCKER 1 + CP3 BLOCKER 1.)
+#
+# Comments policy: this check does NOT filter URLs in comments. Rationale:
+#   (1) consistency with the other 4 checks (none filter comments),
+#   (2) bash multi-line comment detection is brittle,
+#   (3) commented-out remote URLs are still in the shipped artifact and
+#       one Ctrl+/ from being live — cleaning them up is good hygiene.
+#
+# Host comparison: exact string equality via POSIX [ "$a" = "$b" ], NOT
+# regex match. This avoids the dot-as-wildcard trap (e.g. fonts.googleapis.com
+# would also regex-match fontsxgoogleapisxcom). (CP1 WARNING 1.)
+#
+# XML namespace special case: www.w3.org is skipped, not allowlisted.
+# xmlns="http://www.w3.org/2000/svg" is a spec-defined identifier, not a
+# runtime fetch. Keeping it out of ALLOWED_REMOTE_HOSTS preserves the
+# allowlist as a "hosts we accept fetches to" list. (CP2 BLOCKER 2.)
+check_no_remote_assets() {
+  local matches
+  matches=$(grep -RInoE '(https?://|["'"'"'`(=]//)[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(:[0-9]+)?' \
+    --include='*.js' --include='*.css' --include='*.html' \
+    --exclude-dir=external \
+    mv3-extension/ 2>/dev/null || true)
+
+  if [ -z "$matches" ]; then
+    echo "[guardrail:no-remote-assets] PASS: no http(s)/protocol-relative URLs found in mv3-extension/"
+    return 0
+  fi
+
+  local bad_lines=""
+  while IFS= read -r line; do
+    # grep -no emits: file:line:match. Parse deterministically by splitting
+    # on the first two ':' from the left. The previous ${line##*:[0-9]*:}
+    # glob was too greedy and stripped through port colons.
+    local rest="${line#*:}"        # drop the file path
+    local url="${rest#*:}"         # drop the line number; $url is the match
+
+    # Strip leading scheme + // (or just delimiter+//) → leaves host[:port]
+    local host_with_port="${url#*//}"
+    host_with_port="${host_with_port%%/*}"   # drop path
+    host_with_port="${host_with_port%%\?*}"  # drop query (defensive)
+    host_with_port="${host_with_port%%#*}"   # drop fragment
+
+    # Drop port for allowlist comparison: today's allowlist has no port-pinned
+    # entries. If a future entry needs port-pinning, change the loop to
+    # compare against ${host_with_port} and store entries as "host:port".
+    local host="${host_with_port%%:*}"
+
+    # XML namespace special case: skip W3C namespace literals entirely.
+    # They are URN-style identifiers, never resolved as network endpoints.
+    if [ "$host" = "www.w3.org" ]; then
+      continue
+    fi
+
+    # Exact-string match against allowlist.
+    local allowed=0
+    local h
+    for h in "${ALLOWED_REMOTE_HOSTS[@]}"; do
+      if [ "$host" = "$h" ]; then
+        allowed=1
+        break
+      fi
+    done
+
+    if [ "$allowed" -eq 0 ]; then
+      bad_lines+="$line"$'\n'
+    fi
+  done <<< "$matches"
+
+  if [ -n "$bad_lines" ]; then
+    echo "[guardrail:no-remote-assets] FAIL: non-allowlisted remote host(s) in mv3-extension/"
+    printf '%s' "$bad_lines" | sed 's/^/  /'
+    return 1
+  fi
+  echo "[guardrail:no-remote-assets] PASS: all http(s)/protocol-relative hosts in mv3-extension/ are in ALLOWED_REMOTE_HOSTS"
+  return 0
+}
+
 # ---- Driver ------------------------------------------------------------
 exit_code=0
 check_no_eval_or_function || exit_code=1
 check_broad_matches       || exit_code=1
 check_storage_bridge      || exit_code=1
 check_no_server           || exit_code=1
+check_no_remote_assets    || exit_code=1
 
 if [ "$exit_code" -eq 0 ]; then
-  echo "[guardrails] All 4 checks PASS."
+  echo "[guardrails] All 5 checks PASS."
 else
   echo "[guardrails] One or more checks FAILED. See above."
 fi

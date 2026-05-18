@@ -9,7 +9,7 @@ const STORAGE_KEY = 'cp-toolkit-tools-registry';
 
 // PHASE 3: Track initialization by version to prevent duplicate menu creation
 const MENUS_VERSION_KEY = 'cp-toolkit-menus-version';
-const CURRENT_VERSION = '2.17.0'; // Must match manifest.json
+const CURRENT_VERSION = '2.17.0'; // Cache-invalidation token. Bump when on-demand-tools.json changes structurally to force menus to rebuild for existing installs.
 
 // In-memory cache for performance (will be repopulated from storage if needed)
 let loadedTools = {};
