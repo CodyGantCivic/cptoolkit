@@ -4073,6 +4073,22 @@
         return null;
     }
 
+    // Resolve the server-side cap for a CSS textarea. The shared classifier wins
+    // for known contexts because the CMS pre-sets the WRONG maxlength on some of
+    // them (e.g. skin textareas ship maxlength="1000" but the server allows 4000).
+    // Trusting the live attribute first would defeat independent enforcement when
+    // the enforce-advanced-styles-text-limits tool is disabled. For contexts the
+    // helper doesn't know, fall back to a positive live maxlength (set by the
+    // enforce tool when enabled, or a native cap). Returns null when no cap is known.
+    function resolveCap(textarea) {
+        if (!textarea) return null;
+        var helper = window.CPToolkit && window.CPToolkit.advancedStylesLimits;
+        var known = helper ? helper.get(textarea) : null;
+        if (known != null) return known;
+        var attr = parseInt(textarea.getAttribute('maxlength'), 10);
+        return (!isNaN(attr) && attr > 0) ? attr : null;
+    }
+
     // Lightweight HTML escape for safe insertion into the modal preview panes.
     function portableEscapeHtml(s) {
         return String(s)
@@ -4089,7 +4105,8 @@
         if (document.querySelector('[data-cp-portable-modal]')) return;
         const sourceCss = textarea.value || '';
         const uniqueId = portableResolveUniqueId();
-        const maxLength = parseInt(textarea.getAttribute('maxlength'), 10) || 0;
+        // 0 disables the over-budget check when no cap is known.
+        const maxLength = resolveCap(textarea) || 0;
 
         // Run the transform up-front so the modal reflects the true result.
         let result;
@@ -4438,7 +4455,7 @@
                 <span class="status-icon"></span>
                 <span class="status-text">Valid CSS</span>
             </div>
-            <div class="css-char-counter"><span class="current">0</span>/<span class="max">${parseInt(textarea.getAttribute('maxlength'), 10) || 1000}</span></div>
+            <div class="css-char-counter"><span class="current">0</span><span class="sep"></span><span class="max"></span></div>
             <button class="css-theme-toggle" title="Toggle theme (Light → Dark → No-styles)" aria-label="Toggle editor theme" type="button">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="5"/>
@@ -4571,8 +4588,10 @@
         const currentChars = charCounter.querySelector('.current');
 
         function updateCharCounter(length) {
-            // Read live so per-context updates (e.g. skin 1000 → 4000) take effect after init.
-            const liveMaxLength = parseInt(textarea.getAttribute('maxlength'), 10) || 1000;
+            // Resolve live so per-context updates (enforce tool flipping the attribute,
+            // node moved cross-context, etc.) take effect after init. Returns null when
+            // no cap is known — in that case mini-ide is intentionally hands-off.
+            const cap = resolveCap(textarea);
             // Count save-form length: mini-ide normalizes .fancyButtonN → .fancyButton1 for the
             // editor display but the server stores the denormalized form. The counter must reflect
             // what actually saves; otherwise users hit the silent server cap before the counter says so.
@@ -4583,16 +4602,23 @@
             if (fancyButtonId) {
                 length = applyForSave(textarea.value, 'fancyButton' + fancyButtonId).length;
             }
-            const maxDisplay = charCounter.querySelector('.max');
-            if (maxDisplay && parseInt(maxDisplay.textContent, 10) !== liveMaxLength) {
-                maxDisplay.textContent = liveMaxLength;
-            }
             currentChars.textContent = length;
+            const sepDisplay = charCounter.querySelector('.sep');
+            const maxDisplay = charCounter.querySelector('.max');
+            if (cap == null) {
+                if (sepDisplay && sepDisplay.textContent !== '') sepDisplay.textContent = '';
+                if (maxDisplay && maxDisplay.textContent !== '') maxDisplay.textContent = '';
+                charCounter.classList.remove('warning', 'error');
+                return;
+            }
+            if (sepDisplay && sepDisplay.textContent !== '/') sepDisplay.textContent = '/';
+            if (maxDisplay && parseInt(maxDisplay.textContent, 10) !== cap) {
+                maxDisplay.textContent = cap;
+            }
             charCounter.classList.remove('warning', 'error');
-
-            if (length >= liveMaxLength) {
+            if (length >= cap) {
                 charCounter.classList.add('error');
-            } else if (length >= liveMaxLength * 0.9) {
+            } else if (length >= cap * 0.9) {
                 charCounter.classList.add('warning');
             }
         }
@@ -4665,8 +4691,10 @@
         function syncEditor(options = {}) {
             let code = textarea.value;
 
-            // Read live so per-context updates (e.g. skin 1000 → 4000) take effect after init.
-            const liveMaxLength = parseInt(textarea.getAttribute('maxlength'), 10) || 1000;
+            // Resolve live so per-context updates take effect after init. null = no
+            // known cap; mini-ide doesn't truncate in that case (unknown textareas
+            // get a display-only counter, no enforcement).
+            const liveCap = resolveCap(textarea);
             // Truncate against save-form length: .fancyButton1 expands to .fancyButton{id} on save,
             // so display-form truncation alone would still let the server silently drop overflow.
             // applyForSave mirrors the actual save transform (covers pasted raw .fancyButtonN too,
@@ -4676,14 +4704,16 @@
                     ? applyForSave(text, 'fancyButton' + fancyButtonId).length
                     : text.length;
             }
-            let serverLen = serverLengthOf(code);
-            if (serverLen > liveMaxLength) {
-                // Bulk-truncate by overflow, then fine-tune if the cut crossed a .fancyButton1 boundary.
-                code = code.substring(0, Math.max(0, code.length - (serverLen - liveMaxLength)));
-                while (code.length > 0 && serverLengthOf(code) > liveMaxLength) {
-                    code = code.substring(0, code.length - 1);
+            if (liveCap != null) {
+                let serverLen = serverLengthOf(code);
+                if (serverLen > liveCap) {
+                    // Bulk-truncate by overflow, then fine-tune if the cut crossed a .fancyButton1 boundary.
+                    code = code.substring(0, Math.max(0, code.length - (serverLen - liveCap)));
+                    while (code.length > 0 && serverLengthOf(code) > liveCap) {
+                        code = code.substring(0, code.length - 1);
+                    }
+                    textarea.value = code;
                 }
-                textarea.value = code;
             }
 
             // Handle .skin number replacement

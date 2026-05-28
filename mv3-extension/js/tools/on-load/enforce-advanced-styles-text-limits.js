@@ -15,29 +15,35 @@
     detect_if_cp_site(function() {
       console.log("[CP Toolkit] Loaded " + thisTool);
 
-      // Idempotent setter: writes only when current attribute differs from target.
-      // Required because the CMS pre-sets maxlength="1000" on skin textareas (wrong cap)
-      // and because reused nodes across popovers need to be reclassified on rerun.
+      // Idempotent setter: writes only when the current attribute differs from
+      // target. Needed because mini-ide rewrites backdrop.innerHTML on every
+      // keystroke (high-frequency DOM churn) and because popover nodes get
+      // reused across contexts and must be reclassified on each rerun.
       function setMaxlengthIfNeeded($el, target) {
+        if (target == null) return;
         var current = parseInt($el.attr("maxlength"), 10);
         if (current !== target) $el.attr("maxlength", target);
       }
 
-      // Class-based classification verified via live DOM 2026-05-14:
-      //   widgetSkin     → skin advanced styles (4000)
-      //   containerStyle → container & featureColumn (1000)
-      //   menu           → main nav (1000)
-      //   (unrecognized) → conservative 1000
+      // Classification lives in the shared helper so mini-ide can apply the
+      // same caps when this tool is disabled. Conservative fallback to 1000
+      // when the helper returns null (unrecognized future shape under-allows
+      // rather than allowing oversave).
+      function capFor(el) {
+        var helper = window.CPToolkit && window.CPToolkit.advancedStylesLimits;
+        var cap = helper ? helper.get(el) : null;
+        return cap != null ? cap : 1000;
+      }
+
       function applyTheme() {
         $(".cpPopOver textarea.css-editor-textarea").each(function() {
-          var target = $(this).hasClass('widgetSkin') ? 4000 : 1000;
-          setMaxlengthIfNeeded($(this), target);
+          setMaxlengthIfNeeded($(this), capFor(this));
         });
       }
 
       function applyGraphicLinks() {
         $('textarea[id^="fancyButton"][id$="MiscStyles"]').each(function() {
-          setMaxlengthIfNeeded($(this), 1200);
+          setMaxlengthIfNeeded($(this), capFor(this));
         });
       }
 
