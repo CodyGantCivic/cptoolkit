@@ -35,9 +35,74 @@
         return cap != null ? cap : 1000;
       }
 
+      // Skin CSS references the skin by number (.widget.skin1). The enabled-by-
+      // default widget-skin-advanced-style-helper rewrites .skin\d+ -> .skin{liveId}
+      // on blur (reading #hdnSkinID), which GROWS the value when the live id has
+      // more digits than what was typed. Native maxlength counts literal chars and
+      // doesn't block that programmatic rewrite, so the value can blow past the cap
+      // and the server silently truncates on save. These mirror the helper's exact
+      // expansion semantics so we enforce against the real save-form length.
+      function getSkinId() {
+        var el = document.getElementById("hdnSkinID");
+        return el ? el.value : null;
+      }
+      function replaceSkinNumbers(text, skinId) {
+        if (!skinId || skinId === "-1") return text;
+        return text.replace(/\.skin\d+/g, ".skin" + skinId);
+      }
+      function serverLengthOf(text) {
+        return replaceSkinNumbers(text, getSkinId()).length;
+      }
+      // Bulk-cut by the overflow, then fine-tune one char at a time. Converges
+      // because expansion adds a bounded constant per match.
+      function trimToExpandedCap(text, cap) {
+        if (cap == null) return text;
+        var serverLen = serverLengthOf(text);
+        if (serverLen <= cap) return text;
+        var out = text.substring(0, Math.max(0, text.length - (serverLen - cap)));
+        while (out.length > 0 && serverLengthOf(out) > cap) {
+          out = out.substring(0, out.length - 1);
+        }
+        return out;
+      }
+      // Live input guard: stop the user at the EXPANDED cap without rewriting the
+      // displayed text. Attached once per textarea (the rAF observer re-runs
+      // applyTheme constantly). No-op on mini-ide-enhanced fields — mini-ide adds
+      // css-editor-textarea and runs its own save-form truncation, so this is the
+      // mini-ide-OFF enforcer only.
+      function attachSkinLengthGuard(el) {
+        if (!el || el.dataset.cpEnforceGuardAttached === "1") return;
+        el.dataset.cpEnforceGuardAttached = "1";
+        var composing = false;
+        function enforce() {
+          if (el.classList.contains("css-editor-textarea")) return;
+          if (composing) return;
+          var cap = capFor(el);
+          if (cap == null) return;
+          var before = el.value;
+          var after = trimToExpandedCap(before, cap);
+          if (after === before) return;
+          var pos = el.selectionStart;
+          el.value = after;
+          var clamped = Math.min(pos == null ? after.length : pos, after.length);
+          try { el.selectionStart = el.selectionEnd = clamped; } catch (e) {}
+          console.log("[CP Toolkit](" + thisTool +
+            ") Trimmed to expanded skin cap " + cap + " (save-form length)");
+        }
+        el.addEventListener("input", enforce);
+        el.addEventListener("compositionstart", function() { composing = true; });
+        el.addEventListener("compositionend", function() { composing = false; enforce(); });
+      }
+
       function applyTheme() {
-        $(".cpPopOver textarea.css-editor-textarea").each(function() {
+        // Match the native CSS-editor classes, which are present whether or not
+        // mini-ide is enabled. The previous selector keyed off .css-editor-textarea
+        // — a class mini-ide adds — so enforcement silently did nothing when
+        // mini-ide was disabled. capFor() reads the cap (incl. the per-id skin
+        // split) from the shared helper.
+        $("textarea.widgetSkin, textarea.containerStyle, textarea.menu").each(function() {
           setMaxlengthIfNeeded($(this), capFor(this));
+          attachSkinLengthGuard(this);
         });
       }
 
