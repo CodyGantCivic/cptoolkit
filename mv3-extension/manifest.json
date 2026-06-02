@@ -29,6 +29,7 @@
         "js/tools/on-load/title-changer.js",
         "js/tools/on-load/keyboard-shortcuts.js",
         "js/tools/on-load/auto-dismiss-help-welcome.js",
+        "js/tools/on-load/helpers/advanced-styles-limits.js",
         "js/tools/on-load/enforce-advanced-styles-text-limits.js",
         "js/tools/on-load/theme-manager-enhancer.js",
         "js/tools/on-load/theme-manager-skin-organizer.js",
