@@ -5,6 +5,20 @@
       if (settings[thisTool] !== false) {
         try {
           function checkForTimeoutAndPrevent() {
+            // Current Session Timeout dialog: a fixed-position card whose buttons
+            // carry data-session-timeout-action. The attribute is the stable hook
+            // (the dialog has no id/title class), so target the Refresh button by it.
+            var refreshBtn = document.querySelector(
+              '[data-session-timeout-action="refresh"]'
+            );
+            if (refreshBtn && refreshBtn.offsetParent !== null) {
+              refreshBtn.click();
+              console.log(
+                "[CP Toolkit](" + thisTool + ") Login timeout prevented! (data-action dialog)",
+              );
+              return;
+            }
+
             // Check for the popover modal (Session Timeout dialog)
             var $modal = $("#popoverModal");
             if (
