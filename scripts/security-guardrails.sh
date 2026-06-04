@@ -162,14 +162,23 @@ check_no_server() {
 #     Check 1's no-blind-spot stance.
 #   - Vendored libs under */external/ are excluded (--exclude-dir=external);
 #     their license/header URLs are vetted at vendor-time, not here.
-# Known gap (future hardening, no occurrences today): IPv6-literal hosts like
-# https://[::1]/ are not matched — the host class excludes brackets. Hostname-
-# based remotes (the realistic supply-chain case) are fully covered.
+#   - IPv6-literal hosts (https://[::1]/) can't be host-parsed reliably here (the
+#     :port strip would mangle the address's colons), so rather than silently
+#     miss them they are rejected outright — see the bracket guard below.
 # On FAIL: remove the reference, or add the host to the correct allowlist bucket
 # above AND document it in docs/external-dependencies.md.
 check_no_remote_assets() {
   local failed=0 host found
   local allow="$ALLOWED_REMOTE_HOSTS $ALLOWED_SNIPPET_HOSTS"
+
+  # Reject IPv6-literal remotes outright (fail-closed) — we don't parse them.
+  if grep -RqIE '(https?://|["'"'"']//)\[' \
+       --include='*.js' --include='*.css' --exclude-dir=external \
+       mv3-extension/js mv3-extension/css 2>/dev/null; then
+    echo "[guardrail:no-remote-assets] FAIL: IPv6-literal remote URL found in mv3-extension js/css; use a hostname or add explicit IPv6 handling"
+    failed=1
+  fi
+
   found=$(grep -RhoIE '(https?://|["'"'"']//)[A-Za-z0-9._~%@:.-]+' \
     --include='*.js' --include='*.css' --exclude-dir=external \
     mv3-extension/js mv3-extension/css 2>/dev/null \
