@@ -6,6 +6,7 @@ console.log('[CP Toolkit] Service worker initializing...');
 // Import modules
 importScripts('context-menus.js');
 importScripts('first-run.js');
+importScripts('version-check.js');
 
 console.log('[CP Toolkit] Service worker initialized');
 
@@ -306,12 +307,26 @@ chrome.runtime.onInstalled.addListener((details) => {
   } else {
     console.error('[CP Toolkit] First-run handler not loaded!');
   }
+
+  // Reconcile the update badge. After an update the installed version may now
+  // match the latest release, which clears the dot.
+  if (self.versionCheck) self.versionCheck.checkForUpdateBadge(true);
+});
+
+// Re-check for a new release when Chrome starts a new browser session.
+chrome.runtime.onStartup.addListener(() => {
+  if (self.versionCheck) self.versionCheck.checkForUpdateBadge(true);
 });
 
 // Prevent-timeout alarm: fires every 2 minutes to notify content scripts.
 // Uses chrome.alarms because content script setInterval gets throttled in background tabs (Chrome 88+).
 // Content scripts check for the Session Timeout modal and click "Refresh Session" if visible.
 chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === 'cp-version-check') {
+    if (self.versionCheck) self.versionCheck.checkForUpdateBadge(true);
+    return;
+  }
+
   if (alarm.name === 'cp-prevent-timeout') {
     chrome.storage.local.get('prevent-timeout', (settings) => {
       if (settings['prevent-timeout'] === false) return;
@@ -333,6 +348,16 @@ chrome.alarms.get('cp-prevent-timeout', (existing) => {
     console.log('[CP Toolkit] Created prevent-timeout alarm (every 2 min)');
   }
 });
+
+// Create the version-check alarm (every 6 hours, idempotent) and run a throttled
+// check now so the badge appears soon after the service worker spins up.
+chrome.alarms.get('cp-version-check', (existing) => {
+  if (!existing) {
+    chrome.alarms.create('cp-version-check', { periodInMinutes: 360 });
+    console.log('[CP Toolkit] Created version-check alarm (every 6 hr)');
+  }
+});
+if (self.versionCheck) self.versionCheck.checkForUpdateBadge(false);
 
 // Keep service worker alive (MV3 best practice)
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
