@@ -4,7 +4,7 @@
 /**
  * Version comparison utility
  * Returns: 1 if v1 > v2, -1 if v1 < v2, 0 if equal, NaN if invalid
- * Source: https://stackoverflow.com/a/6832721
+ * Source: StackOverflow answer 6832721
  */
 function versionCompare(v1, v2, options) {
   const lexicographical = options && options.lexicographical;
