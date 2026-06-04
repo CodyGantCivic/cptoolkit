@@ -172,7 +172,10 @@ check_no_remote_assets() {
   local allow="$ALLOWED_REMOTE_HOSTS $ALLOWED_SNIPPET_HOSTS"
 
   # Reject IPv6-literal remotes outright (fail-closed) — we don't parse them.
-  if grep -RqIE '(https?://|["'"'"']//)\[' \
+  # Match a bare `//[` so every form is caught regardless of how it's written:
+  # scheme'd (https://[), quoted ("//[, '//[), unquoted CSS url(//[), or backtick
+  # (`//[). There are no legitimate `//[` sequences in our js/css today.
+  if grep -RqIE '//\[' \
        --include='*.js' --include='*.css' --exclude-dir=external \
        mv3-extension/js mv3-extension/css 2>/dev/null; then
     echo "[guardrail:no-remote-assets] FAIL: IPv6-literal remote URL found in mv3-extension js/css; use a hostname or add explicit IPv6 handling"
