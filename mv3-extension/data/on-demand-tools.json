@@ -73,12 +73,6 @@
     "help": "Export the current theme.",
     "helpPages": "Theme Manager"
   },
-  "Generate Client PDF": {
-    "file": "Generate client pdf.js",
-    "urlPatterns": ["*://*/*"],
-    "help": "Generate a client guide to colors, fonts, and images from any CivicPlus website.",
-    "helpPages": "Everywhere"
-  },
   "Import theme": {
     "file": "Import theme.js",
     "urlPatterns": ["*://*/DesignCenter/Themes/*"],

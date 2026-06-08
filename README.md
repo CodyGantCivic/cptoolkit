@@ -73,12 +73,13 @@ If you must republish the same version tag intentionally:
   - unzip from `Archive/snapshot-v...zip` and reload unpacked extension.
 
 ## Security Guardrails
-Automated checks (closing Finding #8 of the April 2026 security review) block PRs and tag releases when known-bad patterns reappear. The single source of truth is `scripts/security-guardrails.sh`. It enforces four invariants:
+Automated checks (closing Findings #8 and #7 of the April 2026 security review) block PRs and tag releases when known-bad patterns reappear. The single source of truth is `scripts/security-guardrails.sh`. It enforces five invariants:
 
 1. No `eval(` or `Function(` constructor in `mv3-extension/js/`.
 2. The count of `*://*/*` host-match patterns in `manifest.json` matches the cap (today: 3) — the cap ratchets down as Finding #4 narrows scope.
 3. Every file that registers a `cp-toolkit-storage-{get,set}` listener includes the `ALLOWED_STORAGE_KEYS` whitelist + `hasOwn.call` guard.
 4. No HTTP server primitives (`createServer(`, `.listen(`, imports of `http/https/express/koa/fastify/node:http(s)`) and no `mv3-extension/server/` directory.
+5. No non-allowlisted remote hosts (`http(s)://` or quoted protocol-relative, userinfo-stripped) in our own JS/CSS — vendored `*/external/` libs excluded. Reconciled both ways against two buckets (`ALLOWED_REMOTE_HOSTS` for what the extension contacts, `ALLOWED_SNIPPET_HOSTS` for hosts in markup emitted to customer sites), documented host-by-host in [`docs/external-dependencies.md`](docs/external-dependencies.md).
 
 Where it runs:
 - **PRs and pushes to `main`**: `.github/workflows/security-guardrails.yml` (configure GitHub branch protection on `main` to require the `Security Guardrails / guardrails` status check; this is a one-time manual step in the GitHub UI).

@@ -4,7 +4,7 @@
 //   - mini-ide.js (in-editor counter + truncation guard, runs independently
 //     so users with the enforce tool disabled still get save-loss protection)
 //
-// Limits empirically verified on https://13.civic.place/ — type N chars, save,
+// Limits empirically verified on the internal test site (13.civic.place) — type N chars, save,
 // re-open, observe what the server stored.
 (function () {
   window.CPToolkit = window.CPToolkit || {};
