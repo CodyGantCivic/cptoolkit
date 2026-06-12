@@ -200,7 +200,10 @@
 .${CONTROL_CLASS} .manage:hover,.${CONTROL_CLASS} button.manage:hover,.${CONTROL_CLASS} .manage:focus-visible,.${CONTROL_CLASS} button.manage:focus-visible{background:#af282f!important;border-color:#af282f!important;color:#fff!important}
 .${CONTROL_CLASS} .summary{color:#4f6488;font-size:11px;font-weight:600}
 .${CONTROL_CLASS} .count{margin-left:auto;color:#5a6f93;font-size:11px;font-weight:600}
-#skinsToPreview li .cp-toolkit-skin-id-badge{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:18px;padding:0 6px;border-radius:999px;border:1px solid transparent;font-size:10px;line-height:1;font-weight:700;margin-left:6px;vertical-align:middle}
+#skinsToPreview li{display:flex;align-items:center;min-width:0}
+#skinsToPreview li > input.previewSkinID{flex:0 0 auto;margin-right:4px}
+#skinsToPreview li > .cp-toolkit-skin-id-badge{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-width:34px;height:18px;padding:0 6px;border-radius:999px;border:1px solid transparent;font-size:10px;line-height:1;font-weight:700;margin:0 6px 0 0;vertical-align:middle}
+#skinsToPreview li > label{display:inline!important;flex:1 1 auto;min-width:0;width:auto!important;max-width:none!important;margin:0!important}
 .cp-toolkit-skin-organizer-overlay{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;background:rgba(12,21,34,.42);padding:16px}
 .cp-toolkit-skin-organizer-modal{width:min(1040px,100%);max-height:calc(100vh - 32px);background:#fff;border:1px solid #d6deed;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;font:12px "Segoe UI",Arial,sans-serif;box-shadow:0 16px 44px rgba(20,34,56,.24)}
 .cp-toolkit-skin-organizer-modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #e4ebf6}
@@ -310,28 +313,45 @@
 
   function updateSkinBadge(item, skinId, category) {
     if (!item || !skinId) return;
+    var input = item.querySelector("input.previewSkinID");
     var label = item.querySelector("label");
-    if (!label && !item) return;
+    if (!input && !label) return;
 
     var badge = item.querySelector(".cp-toolkit-skin-id-badge");
     if (!badge) {
       badge = document.createElement("span");
       badge.className = "cp-toolkit-skin-id-badge";
     }
-    if (label) {
-      if (badge.parentNode !== label) {
-        label.appendChild(badge);
+    if (label && label.parentNode === item) {
+      if (badge.parentNode !== item || badge.nextSibling !== label) {
+        item.insertBefore(badge, label);
       }
-    } else if (badge.parentNode !== item) {
+    } else if (input) {
+      if (badge.parentNode !== item || badge.previousSibling !== input) {
+        item.insertBefore(badge, input.nextSibling);
+      }
+    } else if (badge.parentNode !== item || badge.nextSibling) {
       item.appendChild(badge);
     }
 
     var bg = category ? category.color : DEFAULT_UNCATEGORIZED_COLOR;
-    badge.textContent = skinId;
-    badge.style.backgroundColor = bg;
-    badge.style.borderColor = bg;
-    badge.style.color = getReadableTextColor(bg);
-    badge.setAttribute("title", category ? category.name + " (Skin " + skinId + ")" : "Uncategorized (Skin " + skinId + ")");
+    var badgeText = String(skinId);
+    var textColor = getReadableTextColor(bg);
+    var titleText = category ? category.name + " (Skin " + skinId + ")" : "Uncategorized (Skin " + skinId + ")";
+
+    if (badge.textContent !== badgeText) {
+      badge.textContent = badgeText;
+    }
+    if (badge.getAttribute("data-cp-toolkit-badge-bg") !== bg || badge.getAttribute("data-cp-toolkit-badge-color") !== textColor) {
+      badge.style.backgroundColor = bg;
+      badge.style.borderColor = bg;
+      badge.style.color = textColor;
+      badge.setAttribute("data-cp-toolkit-badge-bg", bg);
+      badge.setAttribute("data-cp-toolkit-badge-color", textColor);
+    }
+    if (badge.getAttribute("title") !== titleText) {
+      badge.setAttribute("title", titleText);
+    }
   }
 
   function getFilterSelectionSet() {
