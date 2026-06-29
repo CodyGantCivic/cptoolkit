@@ -28,7 +28,17 @@
         </button>
       </div>
       <div id="toolbar-right">
-        <input type="text" id="search-input" placeholder="Search buttons..." />
+        <div id="button-library-search-wrap">
+          <input type="text" id="search-input" placeholder="Search buttons..." />
+          <button id="btn-filter-buttons" class="toolbar-btn icon-only" title="Filter buttons">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+          </button>
+          <div id="button-library-filter-popover"></div>
+        </div>
+        <button id="btn-group-category" class="toolbar-btn" title="Group by category">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="14" y2="12"></line><line x1="4" y1="18" x2="8" y2="18"></line></svg>
+          Categories
+        </button>
         <div id="view-toggle" title="Switch view">
           <button class="view-btn active" data-view="grid">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect></svg>
@@ -71,6 +81,7 @@
     </div>
   </div>
 
+  <script src="../js/shared/fancy-button-library.js"></script>
   <script src="../js/button-library-page.js"></script>
 </body>
 </html>

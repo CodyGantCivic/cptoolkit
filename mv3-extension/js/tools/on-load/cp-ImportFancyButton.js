@@ -11,6 +11,7 @@
         var customButtonLibrary = {};
         var darkBgToggles = {};
         var socialIcons = null;
+        var buttonLibraryUtils = window.CPToolkitFancyButtonLibrary;
 
         // Resolve ext: prefixed URLs in savedImages to full chrome-extension:// URLs
         function resolveExtUrls(templates) {
@@ -696,9 +697,18 @@
               }
               .cp-library-toolbar {
                 display: flex;
-                justify-content: flex-end;
+                justify-content: space-between;
+                align-items: center;
+                flex-wrap: wrap;
                 gap: 8px;
                 margin-bottom: 12px;
+              }
+              .cp-library-actions,
+              .cp-library-filters {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-wrap: wrap;
               }
               .cp-library-toolbar button {
                 background: none;
@@ -715,22 +725,147 @@
                 color: #af282f;
               }
               button#cp-lib-view-full {
-                margin: 0 auto;
-                margin-left: 0;
+                margin-right: auto;
+              }
+              .cp-library-search-wrap {
+                position: relative;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+              }
+              #cp-template-search {
+                width: 210px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                padding: 6px 8px;
+                font-size: 12px;
+                line-height: normal !important;
+              }
+              #cp-template-filter {
+                width: 32px !important;
+                height: 30px;
+                padding: 0 !important;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              }
+              #cp-template-filter.active {
+                border-color: #af282f;
+                color: #af282f;
+                background: #fdf2f2;
+              }
+              #cp-template-filter-popover {
+                position: absolute;
+                top: calc(100% + 8px);
+                right: 0;
+                width: 240px;
+                padding: 12px;
+                background: #fff;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                box-shadow: 0 10px 28px rgba(0,0,0,0.14);
+                z-index: 2;
+                display: none;
+              }
+              #cp-template-filter-popover.open {
+                display: block;
+              }
+              .cp-filter-row {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                margin-bottom: 10px;
+              }
+              .cp-filter-row label {
+                color: #555;
+                font-size: 12px;
+                font-weight: 600;
+              }
+              .cp-filter-row select {
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                padding: 6px 8px;
+                font-size: 12px;
+              }
+              .cp-filter-reset {
+                display: flex;
+                justify-content: flex-end;
+              }
+              .cp-filter-reset button {
+                padding: 5px 10px !important;
               }
               .cp-template-section-header {
                 grid-column: 1 / -1;
+                width: 100%;
+                border: 1px solid #e0e0e0;
+                border-radius: 6px;
+                background: #fff;
+                color: #333;
+                padding: 8px 10px;
+                margin: 4px 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                cursor: pointer;
                 font-size: 13px;
                 font-weight: 600;
-                color: #666;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                padding: 8px 0 4px;
-                border-bottom: 1px solid #e0e0e0;
-                margin-bottom: 4px;
+                line-height: normal !important;
+              }
+              .cp-template-section-header:hover {
+                border-color: #ccc;
+                background: #fafafa;
+              }
+              .cp-template-section-header .cp-section-meta {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+              }
+              .cp-template-section-count {
+                background: #eee;
+                color: #555;
+                border-radius: 999px;
+                padding: 1px 7px;
+                font-size: 11px;
+                font-weight: 600;
+              }
+              .cp-template-section-chevron {
+                color: #777;
+                font-size: 12px;
+                display: inline-block;
+              }
+              .cp-template-section-header.is-collapsed .cp-template-section-chevron {
+                transform: rotate(-90deg);
               }
               .cp-template-card {
                 position: relative;
+                background: #fff;
+                border: 1px solid #e5e5e5;
+                overflow: hidden;
+              }
+              .cp-template-card-meta {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                padding: 7px 8px 0;
+                color: #333;
+                font-size: 12px;
+                font-weight: 600;
+              }
+              .cp-template-card-name {
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              }
+              .cp-template-card-pill {
+                color: #555;
+                background: #f0f0f0;
+                border-radius: 999px;
+                padding: 1px 6px;
+                font-size: 10px;
+                font-weight: 600;
+                white-space: nowrap;
               }
               .cp-template-card-btns {
                 position: absolute;
@@ -950,9 +1085,20 @@
               <div class="cp-import-content">
                 <div class="cp-import-panel active" id="cp-panel-templates">
                   <div class="cp-library-toolbar">
-                    <button id="cp-lib-view-full" title="Open the full button library page">View Full Library</button>
-                    <button id="cp-lib-import" title="Import saved buttons from a file">Import Library</button>
-                    <button id="cp-lib-export" title="Export saved buttons to a file">Export Library</button>
+                    <div class="cp-library-actions">
+                      <button id="cp-lib-view-full" title="Open the full button library page">View Full Library</button>
+                      <button id="cp-lib-import" title="Import saved buttons from a file">Import Library</button>
+                      <button id="cp-lib-export" title="Export saved buttons to a file">Export Library</button>
+                    </div>
+                    <div class="cp-library-filters">
+                      <div class="cp-library-search-wrap">
+                        <input id="cp-template-search" type="text" placeholder="Search buttons...">
+                        <button id="cp-template-filter" title="Filter buttons">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                        </button>
+                        <div id="cp-template-filter-popover"></div>
+                      </div>
+                    </div>
                   </div>
                   <div class="cp-template-grid" id="cp-template-grid">
                     <!-- Templates will be inserted here -->
@@ -1018,6 +1164,14 @@
           var submitBtn = modal.querySelector("#cp-import-submit");
           var selectedSocials = {};
           var selectedOrder = [];
+          var templateFilterState = {
+            query: "",
+            category: "",
+            sourceSite: "",
+            type: "all",
+            sortBy: "name",
+            collapsedCategories: {},
+          };
 
           tabs.forEach(function (tab) {
             tab.addEventListener("click", function () {
@@ -1055,42 +1209,49 @@
                 renderTemplateGrid();
               });
             });
+          var templateSearchInput = modal.querySelector("#cp-template-search");
+          var templateSearchTimer;
+          templateSearchInput.addEventListener("input", function () {
+            clearTimeout(templateSearchTimer);
+            templateSearchTimer = setTimeout(function () {
+              templateFilterState.query = templateSearchInput.value.trim();
+              renderTemplateGrid();
+            }, 150);
+          });
+          modal
+            .querySelector("#cp-template-filter")
+            .addEventListener("click", function (e) {
+              e.stopPropagation();
+              modal
+                .querySelector("#cp-template-filter-popover")
+                .classList.toggle("open");
+            });
+          modal.addEventListener("click", function (e) {
+            var wrap = modal.querySelector(".cp-library-search-wrap");
+            var popover = modal.querySelector("#cp-template-filter-popover");
+            if (!wrap || !popover) return;
+            if (!wrap.contains(e.target)) popover.classList.remove("open");
+          });
 
           // Populate templates
           var grid = modal.querySelector("#cp-template-grid");
           var allTemplates = {};
           var templateSource = {};
 
-          function renderTemplateGrid() {
-            grid.innerHTML = "";
-            allTemplates = {};
-            templateSource = {};
+          function escapeTemplateHtml(value) {
+            var div = document.createElement("div");
+            div.textContent = value || "";
+            return div.innerHTML;
+          }
 
-            var hasBuiltIn =
-              buttonLibrary && Object.keys(buttonLibrary).length > 0;
-            var hasCustom =
-              customButtonLibrary &&
-              Object.keys(customButtonLibrary).length > 0;
+          function buildTemplateEntries() {
+            var entries = [];
 
-            if (!hasBuiltIn && !hasCustom) {
-              grid.innerHTML =
-                '<div class="cp-no-templates">No templates available. Use the "Paste JSON" tab or Export JSON to save buttons.</div>';
-              return;
-            }
-
-            // Custom buttons section
-            if (hasCustom) {
-              var customHeader = document.createElement("div");
-              customHeader.className = "cp-template-section-header";
-              customHeader.textContent = "My Saved Buttons";
-              grid.appendChild(customHeader);
-
+            if (customButtonLibrary) {
               Object.keys(customButtonLibrary).forEach(function (key) {
-                allTemplates["custom:" + key] = customButtonLibrary[key];
-                templateSource["custom:" + key] = "custom";
-                grid.appendChild(
-                  createTemplateCard(
-                    "custom:" + key,
+                entries.push(
+                  buttonLibraryUtils.normalizeEntry(
+                    key,
                     customButtonLibrary[key],
                     true,
                   ),
@@ -1098,30 +1259,211 @@
               });
             }
 
-            // Built-in section
-            if (hasBuiltIn) {
-              if (hasCustom) {
-                var builtInHeader = document.createElement("div");
-                builtInHeader.className = "cp-template-section-header";
-                builtInHeader.textContent = "Built-in Templates";
-                grid.appendChild(builtInHeader);
-              }
-
+            if (buttonLibrary) {
               Object.keys(buttonLibrary).forEach(function (key) {
-                allTemplates["builtin:" + key] = buttonLibrary[key];
-                templateSource["builtin:" + key] = "builtin";
-                grid.appendChild(
-                  createTemplateCard(
-                    "builtin:" + key,
+                entries.push(
+                  buttonLibraryUtils.normalizeEntry(
+                    key,
                     buttonLibrary[key],
                     false,
                   ),
                 );
               });
             }
+
+            return entries;
           }
 
-          function createTemplateCard(key, template, isCustom) {
+          function renderTemplateSelectOptions(
+            select,
+            options,
+            selectedValue,
+            allLabel,
+          ) {
+            select.innerHTML = "";
+            var all = document.createElement("option");
+            all.value = "";
+            all.textContent = allLabel;
+            select.appendChild(all);
+            options.forEach(function (option) {
+              var opt = document.createElement("option");
+              opt.value = option;
+              opt.textContent = option;
+              select.appendChild(opt);
+            });
+            select.value = selectedValue || "";
+          }
+
+          function renderTemplateFilterPopover() {
+            var popover = modal.querySelector("#cp-template-filter-popover");
+            if (!popover) return;
+            var wasOpen = popover.classList.contains("open");
+            var entries = buildTemplateEntries();
+
+            popover.innerHTML =
+              '<div class="cp-filter-row">' +
+                '<label for="cp-template-type">Type</label>' +
+                '<select id="cp-template-type">' +
+                  '<option value="all">All buttons</option>' +
+                  '<option value="custom">Saved only</option>' +
+                  '<option value="builtin">Built-in only</option>' +
+                "</select>" +
+              "</div>" +
+              '<div class="cp-filter-row">' +
+                '<label for="cp-template-category">Category</label>' +
+                '<select id="cp-template-category"></select>' +
+              "</div>" +
+              '<div class="cp-filter-row">' +
+                '<label for="cp-template-source">Source site</label>' +
+                '<select id="cp-template-source"></select>' +
+              "</div>" +
+              '<div class="cp-filter-row">' +
+                '<label for="cp-template-sort">Sort</label>' +
+                '<select id="cp-template-sort">' +
+                  '<option value="name">Name A-Z</option>' +
+                  '<option value="category">Category</option>' +
+                  '<option value="type">Type</option>' +
+                  '<option value="newest">Newest saved</option>' +
+                  '<option value="updated">Recently updated</option>' +
+                "</select>" +
+              "</div>" +
+              '<div class="cp-filter-reset">' +
+                '<button id="cp-template-reset-filters" type="button">Reset</button>' +
+              "</div>";
+
+            if (wasOpen) popover.classList.add("open");
+
+            var typeSelect = popover.querySelector("#cp-template-type");
+            var categorySelect = popover.querySelector("#cp-template-category");
+            var sourceSelect = popover.querySelector("#cp-template-source");
+            var sortSelect = popover.querySelector("#cp-template-sort");
+
+            typeSelect.value = templateFilterState.type;
+            renderTemplateSelectOptions(
+              categorySelect,
+              buttonLibraryUtils.getCategoryOptions(entries),
+              templateFilterState.category,
+              "All categories",
+            );
+            renderTemplateSelectOptions(
+              sourceSelect,
+              buttonLibraryUtils.getSourceOptions(entries),
+              templateFilterState.sourceSite,
+              "All source sites",
+            );
+            sortSelect.value = templateFilterState.sortBy;
+
+            typeSelect.addEventListener("change", function () {
+              templateFilterState.type = typeSelect.value;
+              renderTemplateGrid();
+            });
+            categorySelect.addEventListener("change", function () {
+              templateFilterState.category = categorySelect.value;
+              renderTemplateGrid();
+            });
+            sourceSelect.addEventListener("change", function () {
+              templateFilterState.sourceSite = sourceSelect.value;
+              renderTemplateGrid();
+            });
+            sortSelect.addEventListener("change", function () {
+              templateFilterState.sortBy = sortSelect.value;
+              renderTemplateGrid();
+            });
+            popover
+              .querySelector("#cp-template-reset-filters")
+              .addEventListener("click", function () {
+                templateFilterState.category = "";
+                templateFilterState.sourceSite = "";
+                templateFilterState.type = "all";
+                templateFilterState.sortBy = "name";
+                templateFilterState.collapsedCategories = {};
+                renderTemplateGrid();
+              });
+          }
+
+          function renderTemplateGrid() {
+            grid.innerHTML = "";
+            allTemplates = {};
+            templateSource = {};
+            renderTemplateFilterPopover();
+
+            var entries = buttonLibraryUtils.sortEntries(
+              buttonLibraryUtils.filterEntries(
+                buildTemplateEntries(),
+                templateFilterState,
+              ),
+              templateFilterState.sortBy,
+            );
+
+            var filterBtn = modal.querySelector("#cp-template-filter");
+            if (filterBtn) {
+              filterBtn.classList.toggle(
+                "active",
+                !!templateFilterState.category ||
+                  !!templateFilterState.sourceSite ||
+                  templateFilterState.type !== "all" ||
+                  templateFilterState.sortBy !== "name",
+              );
+            }
+
+            if (entries.length === 0) {
+              grid.innerHTML =
+                '<div class="cp-no-templates">No templates found. Adjust the search or filters, or save/import a button.</div>';
+              return;
+            }
+
+            buttonLibraryUtils.groupEntriesByCategory(entries).forEach(
+              function (group) {
+                var collapsedKey = buttonLibraryUtils.getCollapsedKey(
+                  group.category,
+                );
+                var isCollapsed =
+                  !!templateFilterState.collapsedCategories[collapsedKey];
+
+                var header = document.createElement("button");
+                header.type = "button";
+                header.className =
+                  "cp-template-section-header" +
+                  (isCollapsed ? " is-collapsed" : "");
+                header.innerHTML =
+                  '<span class="cp-section-meta">' +
+                    '<span class="cp-template-section-chevron">v</span>' +
+                    '<span>' + escapeTemplateHtml(group.category) + "</span>" +
+                  "</span>" +
+                  '<span class="cp-template-section-count">' +
+                    group.entries.length +
+                  "</span>";
+                header.addEventListener("click", function () {
+                  templateFilterState.collapsedCategories[collapsedKey] =
+                    !templateFilterState.collapsedCategories[collapsedKey];
+                  renderTemplateGrid();
+                });
+                grid.appendChild(header);
+
+                if (isCollapsed) return;
+
+                group.entries.forEach(function (entry) {
+                  allTemplates[entry.fullKey] = entry.template;
+                  templateSource[entry.fullKey] = entry.type;
+                  grid.appendChild(
+                    createTemplateCard(
+                      entry.fullKey,
+                      entry.template,
+                      entry.isCustom,
+                      entry,
+                    ),
+                  );
+                });
+              },
+            );
+
+            if (selectedTemplate && !allTemplates[selectedTemplate]) {
+              selectedTemplate = null;
+              updateSubmitButton();
+            }
+          }
+
+          function createTemplateCard(key, template, isCustom, entry) {
             var card = document.createElement("div");
             card.className = "cp-template-card";
             card.dataset.templateKey = key;
@@ -1138,6 +1480,18 @@
               isDark = true;
 
             card.innerHTML =
+              '<div class="cp-template-card-meta">' +
+                '<span class="cp-template-card-name" title="' +
+                escapeTemplateHtml(displayName) +
+                '">' +
+                escapeTemplateHtml(displayName) +
+                "</span>" +
+                '<span class="cp-template-card-pill">' +
+                escapeTemplateHtml(
+                  entry ? entry.typeLabel : isCustom ? "Saved" : "Built-in",
+                ) +
+                "</span>" +
+              "</div>" +
               '<div class="cp-template-preview' +
               (isDark ? " cp-preview-dark" : "") +
               '">' +
@@ -1186,6 +1540,18 @@
                 if (isCustom) {
                   var rawKey = key.replace(/^custom:/, "");
                   customButtonLibrary[rawKey].buttonText = cpText.innerHTML;
+                  buttonLibraryUtils.setMetadata(customButtonLibrary[rawKey], {
+                    category: buttonLibraryUtils.getCategory(
+                      customButtonLibrary[rawKey],
+                      true,
+                    ),
+                    sourceSite: buttonLibraryUtils.getSourceSite(
+                      customButtonLibrary[rawKey],
+                    ),
+                    savedAt: buttonLibraryUtils.getSavedAt(
+                      customButtonLibrary[rawKey],
+                    ),
+                  });
                   chrome.storage.local.set({ "cp-customButtonLibrary": customButtonLibrary });
                 }
               } else {
@@ -1520,10 +1886,9 @@
               // Template / Paste flow (existing)
               var jsonData;
               if (activeTab === "templates" && selectedTemplate) {
-                var tpl = Object.assign({}, allTemplates[selectedTemplate]);
-                delete tpl.previewImage;
-                delete tpl.previewText;
-                delete tpl.savedImages;
+                var tpl = buttonLibraryUtils.stripLibraryMetadata(
+                  allTemplates[selectedTemplate],
+                );
                 // Ensure required API fields exist (built-in templates omit these)
                 if (!tpl.graphicLinkID) tpl.graphicLinkID = "0";
                 if (!tpl.categoryID) tpl.categoryID = "0";
@@ -1541,7 +1906,10 @@
               }
 
               try {
-                JSON.parse(jsonData);
+                var parsedJsonData = JSON.parse(jsonData);
+                jsonData = JSON.stringify(
+                  buttonLibraryUtils.stripLibraryMetadata(parsedJsonData),
+                );
               } catch (e) {
                 alert("Invalid JSON format. Please check your input.");
                 return;
@@ -2956,6 +3324,11 @@
             '<div style="padding:20px;">' +
             '<label style="display:block;font-size:13px;font-weight:500;color:#333;margin-bottom:6px;">Button Name</label>' +
             '<input id="cp-save-lib-name" type="text" placeholder="e.g. Standard Template" style="width:100%;padding:10px 12px;border:1px solid #ccc;border-radius:4px;font-size:14px;box-sizing:border-box;">' +
+            '<label style="display:block;font-size:13px;font-weight:500;color:#333;margin:14px 0 6px;">Category</label>' +
+            '<select id="cp-save-lib-category" style="width:100%;padding:10px 12px;border:1px solid #ccc;border-radius:4px;font-size:14px;box-sizing:border-box;background:#fff;"></select>' +
+            '<input id="cp-save-lib-custom-category" type="text" placeholder="New category name" style="display:none;width:100%;margin-top:8px;padding:10px 12px;border:1px solid #ccc;border-radius:4px;font-size:14px;box-sizing:border-box;">' +
+            '<label style="display:block;font-size:13px;font-weight:500;color:#333;margin:14px 0 6px;">Source Site</label>' +
+            '<input id="cp-save-lib-source" type="text" placeholder="e.g. cityname.gov" style="width:100%;padding:10px 12px;border:1px solid #ccc;border-radius:4px;font-size:14px;box-sizing:border-box;">' +
             "</div>" +
             '<div style="padding:16px 20px;border-top:1px solid #e0e0e0;display:flex;justify-content:flex-end;gap:8px;">' +
             '<button id="cp-save-lib-cancel" style="padding:10px 20px;border:none;border-radius:4px;font-size:14px;font-weight:500;cursor:pointer;background:#e0e0e0;color:#333;line-height:normal !important;">Cancel</button>' +
@@ -2965,7 +3338,45 @@
           document.body.appendChild(saveModal);
 
           var nameInput = saveModal.querySelector("#cp-save-lib-name");
+          var categorySelect = saveModal.querySelector("#cp-save-lib-category");
+          var customCategoryInput = saveModal.querySelector(
+            "#cp-save-lib-custom-category",
+          );
+          var sourceInput = saveModal.querySelector("#cp-save-lib-source");
+          var existingCategories = buttonLibraryUtils.getCategoryOptions(
+            Object.keys(customButtonLibrary || {}).map(function (key) {
+              return buttonLibraryUtils.normalizeEntry(
+                key,
+                customButtonLibrary[key],
+                true,
+              );
+            }),
+          );
+
+          if (existingCategories.length === 0) {
+            existingCategories.push(buttonLibraryUtils.DEFAULT_CATEGORY);
+          }
+          existingCategories.forEach(function (category) {
+            var opt = document.createElement("option");
+            opt.value = category;
+            opt.textContent = category;
+            categorySelect.appendChild(opt);
+          });
+          var customOpt = document.createElement("option");
+          customOpt.value = "__custom__";
+          customOpt.textContent = "Create new category...";
+          categorySelect.appendChild(customOpt);
+          sourceInput.value = window.location.hostname || "";
+
           nameInput.focus();
+
+          function syncSaveCategoryInput() {
+            customCategoryInput.style.display =
+              categorySelect.value === "__custom__" ? "block" : "none";
+            if (categorySelect.value === "__custom__") {
+              customCategoryInput.focus();
+            }
+          }
 
           function closeSaveModal() {
             saveModal.remove();
@@ -2978,11 +3389,20 @@
               nameInput.focus();
               return;
             }
+            var category =
+              categorySelect.value === "__custom__"
+                ? customCategoryInput.value.trim()
+                : categorySelect.value;
+            if (!category) {
+              customCategoryInput.style.borderColor = "#cc0000";
+              customCategoryInput.focus();
+              return;
+            }
             var saveBtn = saveModal.querySelector("#cp-save-lib-save");
             saveBtn.textContent = "Downloading images...";
             saveBtn.disabled = true;
 
-            var storageKey = name.replace(/\s+/g, "_");
+            var storageKey = buttonLibraryUtils.makeStorageKey(name);
             try {
               var parsed = JSON.parse(jsonStr);
               delete parsed.previewImage;
@@ -3000,6 +3420,12 @@
                   "cp-customButtonLibrary",
                   function (data) {
                     var lib = data["cp-customButtonLibrary"] || {};
+                    var existingButton = lib[storageKey];
+                    buttonLibraryUtils.setMetadata(parsed, {
+                      category: category,
+                      sourceSite: sourceInput.value.trim(),
+                      savedAt: buttonLibraryUtils.getSavedAt(existingButton),
+                    });
                     lib[storageKey] = parsed;
                     chrome.storage.local.set(
                       { "cp-customButtonLibrary": lib },
@@ -3032,6 +3458,8 @@
           saveModal
             .querySelector("#cp-save-lib-save")
             .addEventListener("click", doSave);
+          categorySelect.addEventListener("change", syncSaveCategoryInput);
+          syncSaveCategoryInput();
           nameInput.addEventListener("keydown", function (e) {
             if (e.key === "Enter") doSave();
           });
@@ -3048,7 +3476,7 @@
 
           var exportData = {
             type: "cp-toolkit-fancy-button-library",
-            version: 1,
+            version: 2,
             buttons: customButtonLibrary,
           };
           var prettyJSON = JSON.stringify(exportData, null, 2);
@@ -3234,7 +3662,13 @@
                 .addEventListener("click", function () {
                   // Merge into existing library
                   keys.forEach(function (k) {
-                    customButtonLibrary[k] = buttons[k];
+                    var button = buttons[k];
+                    buttonLibraryUtils.setMetadata(button, {
+                      category: buttonLibraryUtils.getCategory(button, true),
+                      sourceSite: buttonLibraryUtils.getSourceSite(button),
+                      savedAt: buttonLibraryUtils.getSavedAt(button),
+                    });
+                    customButtonLibrary[k] = button;
                   });
                   chrome.storage.local.set(
                     { "cp-customButtonLibrary": customButtonLibrary },

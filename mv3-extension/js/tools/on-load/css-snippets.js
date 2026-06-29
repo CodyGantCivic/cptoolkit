@@ -33,6 +33,8 @@
         const USER_SNIPPETS_KEY = 'cp-toolkit-user-snippets';
         const COPIED_SKINS_KEY = 'cp-toolkit-copied-skins';
         const SNIPPET_ORDER_KEY = 'cp-toolkit-snippet-order';
+        const libraryStore = window.CPToolkitSnippetLibraryStore || window.CPToolkit?.snippetLibraryStore || null;
+        const libraryView = window.CPToolkitSnippetLibraryView || window.CPToolkit?.snippetLibraryView || null;
         var ALLOWED_STORAGE_KEYS = Object.create(null);
         ALLOWED_STORAGE_KEYS['cp-toolkit-multi-skins'] = true;
         var hasOwn = Object.prototype.hasOwnProperty;
@@ -45,6 +47,13 @@
 
         // Load user snippets from chrome.storage.local
         function loadUserSnippets() {
+            if (libraryStore) {
+                return libraryStore.loadUserSnippets().then((snippets) => {
+                    userSnippetsData = snippets;
+                    return userSnippetsData;
+                });
+            }
+
             return new Promise((resolve) => {
                 if (!chrome.runtime?.id) { resolve({}); return; }
                 chrome.storage.local.get(USER_SNIPPETS_KEY, (result) => {
@@ -61,6 +70,12 @@
 
         // Save user snippets to chrome.storage.local
         function saveUserSnippets(snippets) {
+            if (libraryStore) {
+                return libraryStore.saveUserSnippets(snippets).then(() => {
+                    userSnippetsData = libraryStore.normalizeSnippetCollection(snippets || {});
+                });
+            }
+
             return new Promise((resolve, reject) => {
                 if (!chrome.runtime?.id) { resolve(); return; }
                 const data = {};
@@ -105,6 +120,10 @@
         // ==================== SNIPPET ORDER STORAGE ====================
 
         function loadSnippetOrder() {
+            if (libraryStore) {
+                return libraryStore.loadSnippetOrder();
+            }
+
             return new Promise((resolve) => {
                 if (!chrome.runtime?.id) { resolve([]); return; }
                 chrome.storage.local.get(SNIPPET_ORDER_KEY, (result) => {
@@ -118,6 +137,10 @@
         }
 
         function saveSnippetOrder(order) {
+            if (libraryStore) {
+                return libraryStore.saveSnippetOrder(order);
+            }
+
             return new Promise((resolve) => {
                 if (!chrome.runtime?.id) { resolve(); return; }
                 const data = {};
@@ -134,6 +157,13 @@
         // ==================== COPIED SKINS STORAGE ====================
 
         function loadCopiedSkins() {
+            if (libraryStore) {
+                return libraryStore.loadCopiedSkins().then((skins) => {
+                    copiedSkinsData = skins;
+                    return copiedSkinsData;
+                });
+            }
+
             return new Promise((resolve) => {
                 if (!chrome.runtime?.id) { resolve({}); return; }
                 chrome.storage.local.get(COPIED_SKINS_KEY, (result) => {
@@ -149,6 +179,12 @@
         }
 
         function saveCopiedSkins(skins) {
+            if (libraryStore) {
+                return libraryStore.saveCopiedSkins(skins).then(() => {
+                    copiedSkinsData = libraryStore.normalizeSkinCollection(skins || {});
+                });
+            }
+
             return new Promise((resolve, reject) => {
                 if (!chrome.runtime?.id) { resolve(); return; }
                 const data = {};
@@ -848,6 +884,11 @@
                     loadUserSnippets()
                 ])
                 .then(([builtInSnippets, userSnippets]) => {
+                    if (libraryStore) {
+                        builtInSnippets = libraryStore.normalizeSnippetCollection(builtInSnippets || {}, { forceUserSnippet: false });
+                        userSnippets = libraryStore.normalizeSnippetCollection(userSnippets || {});
+                    }
+
                     // Mark built-in snippets
                     for (const key of Object.keys(builtInSnippets)) {
                         builtInSnippets[key].isUserSnippet = false;
@@ -874,6 +915,24 @@
             return code.replace(/\.skin\d+/g, '.skin' + skinId);
         }
 
+        function getSnippetComponentCode(component) {
+            if (libraryStore) {
+                return libraryStore.getComponentCode(component);
+            }
+            if (typeof component === 'string') return component;
+            if (component && typeof component === 'object' && typeof component.code === 'string') return component.code;
+            return '';
+        }
+
+        function getSnippetComponentLabel(compId, component, snippet) {
+            if (libraryStore) {
+                return libraryStore.getComponentLabel(compId, component, snippet);
+            }
+            if (component && typeof component === 'object' && component.label) return component.label;
+            const comp = SKIN_COMPONENT_TYPES.find(c => c.id === parseInt(compId, 10));
+            return comp ? comp.name : `Component ${compId}`;
+        }
+
         // Format code for display with syntax highlighting
         function formatCodeForDisplay(code) {
             // Simple syntax highlighting
@@ -890,6 +949,106 @@
                 // Brackets
                 .replace(/([{}])/g, '<span class="css-bracket">$1</span>');
             return formatted;
+        }
+
+        function escapeHtml(value) {
+            var div = document.createElement('div');
+            div.textContent = value || '';
+            return div.innerHTML;
+        }
+
+        function encodeCategoryKey(value) {
+            return encodeURIComponent(value || 'Uncategorized');
+        }
+
+        function decodeCategoryKey(value) {
+            try {
+                return decodeURIComponent(value || 'Uncategorized');
+            } catch (err) {
+                return value || 'Uncategorized';
+            }
+        }
+
+        function createSidebarViewState() {
+            if (libraryView) {
+                const state = libraryView.defaultState({
+                    activeTab: 'snippets',
+                    groupByCategory: true,
+                    includeSnippets: true,
+                    includeSkins: true
+                });
+                state.tabSortBy = {
+                    snippets: 'manual',
+                    skins: 'newest'
+                };
+                return state;
+            }
+
+            return {
+                query: '',
+                category: '',
+                activeTab: 'snippets',
+                groupByCategory: true,
+                includeSnippets: true,
+                includeSkins: true,
+                sortBy: 'manual',
+                userOnly: false,
+                dynamicOnly: false,
+                multiOnly: false,
+                quickOnly: false,
+                tabSortBy: {
+                    snippets: 'manual',
+                    skins: 'newest'
+                },
+                collapsedCategories: {}
+            };
+        }
+
+        function getSidebarViewState(sidebar) {
+            if (!sidebar._snippetViewState) {
+                sidebar._snippetViewState = createSidebarViewState();
+            }
+            if (!sidebar._snippetViewState.collapsedCategories) {
+                sidebar._snippetViewState.collapsedCategories = {};
+            }
+            if (!sidebar._snippetViewState.activeTab) {
+                sidebar._snippetViewState.activeTab = 'snippets';
+            }
+            if (!sidebar._snippetViewState.tabSortBy) {
+                sidebar._snippetViewState.tabSortBy = {
+                    snippets: sidebar._snippetViewState.sortBy || 'manual',
+                    skins: 'newest'
+                };
+            }
+            return sidebar._snippetViewState;
+        }
+
+        function getSidebarSortByForTab(state, tab) {
+            const activeTab = tab === 'skins' ? 'skins' : 'snippets';
+            const tabSorts = state && state.tabSortBy ? state.tabSortBy : {};
+            if (tabSorts[activeTab]) return tabSorts[activeTab];
+            return activeTab === 'skins' ? 'newest' : 'manual';
+        }
+
+        function sidebarHasActiveFilters(sidebar) {
+            const state = getSidebarViewState(sidebar);
+            const activeTab = getSidebarActiveTab(state);
+            const sortBy = getSidebarSortByForTab(state, activeTab);
+            const sortIsActive = activeTab === 'skins'
+                ? sortBy !== 'newest'
+                : sortBy !== 'manual';
+            return !!(
+                state.query ||
+                state.category ||
+                state.groupByCategory !== true ||
+                sortIsActive ||
+                (activeTab === 'snippets' && (
+                    state.userOnly ||
+                    state.dynamicOnly ||
+                    state.multiOnly ||
+                    state.quickOnly
+                ))
+            );
         }
 
         // Get logo URL - must use chrome.runtime.getURL for extension resources
@@ -940,7 +1099,23 @@
                     </button>
                 </div>
                 <div class="snippets-sidebar-search">
-                    <input type="text" placeholder="Search snippets..." />
+                    <div class="snippets-sidebar-tabs">
+                        <button type="button" class="snippets-sidebar-tab active" data-sidebar-tab="snippets">
+                            <span>Snippets</span>
+                            <span class="snippets-sidebar-tab-count" data-sidebar-tab-count="snippets">0</span>
+                        </button>
+                        <button type="button" class="snippets-sidebar-tab" data-sidebar-tab="skins">
+                            <span>Skins</span>
+                            <span class="snippets-sidebar-tab-count" data-sidebar-tab-count="skins">0</span>
+                        </button>
+                    </div>
+                    <div class="snippets-sidebar-search-row">
+                        <input type="text" placeholder="Search snippets and skins..." />
+                        <button class="snippets-filter-btn" title="Filters">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                        </button>
+                    </div>
+                    <div class="snippets-filter-popover"></div>
                 </div>
                 <div class="snippets-sidebar-content"></div>
                 <div class="snippets-sidebar-toast"></div>
@@ -1039,6 +1214,62 @@
                     padding: 12px 20px;
                     border-bottom: 1px solid #e0e0e0;
                     flex-shrink: 0;
+                    position: relative;
+                }
+                .snippets-sidebar-tabs {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 6px;
+                    margin-bottom: 10px;
+                    padding: 3px;
+                    background: #f0f0f0;
+                    border: 1px solid #dedede;
+                    border-radius: 6px;
+                }
+                #cp-toolkit-snippets-sidebar .snippets-sidebar-tab {
+                    min-height: 32px;
+                    border: none;
+                    border-radius: 4px;
+                    background: transparent;
+                    color: #555;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 7px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+                }
+                #cp-toolkit-snippets-sidebar .snippets-sidebar-tab:hover {
+                    color: #af282f;
+                }
+                #cp-toolkit-snippets-sidebar .snippets-sidebar-tab.active {
+                    background: #fff;
+                    color: #af282f;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+                }
+                .snippets-sidebar-tab-count {
+                    min-width: 18px;
+                    height: 18px;
+                    padding: 0 6px;
+                    border-radius: 999px;
+                    background: #d7d7d7;
+                    color: #555;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 11px;
+                    line-height: 1;
+                }
+                .snippets-sidebar-tab.active .snippets-sidebar-tab-count {
+                    background: #af282f;
+                    color: #fff;
+                }
+                .snippets-sidebar-search-row {
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
                 }
                 .snippets-sidebar-search input {
                     width: 100%;
@@ -1052,12 +1283,166 @@
                     outline: none;
                     border-color: #af282f;
                 }
+                #cp-toolkit-snippets-sidebar .snippets-filter-btn {
+                    width: 38px;
+                    height: 38px;
+                    padding: 0;
+                    border: 1px solid #ccc;
+                    border-radius: 4px;
+                    background: #fff;
+                    color: #555;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    flex-shrink: 0;
+                }
+                #cp-toolkit-snippets-sidebar .snippets-filter-btn svg {
+                    width: 16px;
+                    height: 16px;
+                }
+                #cp-toolkit-snippets-sidebar .snippets-filter-btn:hover,
+                #cp-toolkit-snippets-sidebar .snippets-filter-btn.active {
+                    border-color: #af282f;
+                    color: #af282f;
+                    background: #fff6f7;
+                }
+                .snippets-filter-popover {
+                    display: none;
+                    position: absolute;
+                    top: calc(100% - 6px);
+                    left: 20px;
+                    right: 20px;
+                    z-index: 2;
+                    background: #fff;
+                    border: 1px solid #d7d7d7;
+                    border-radius: 8px;
+                    box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+                    padding: 12px;
+                }
+                .snippets-filter-popover.open {
+                    display: block;
+                }
+                .snippets-filter-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 10px 12px;
+                }
+                .snippets-filter-field {
+                    display: grid;
+                    gap: 4px;
+                    font-size: 12px;
+                    color: #555;
+                }
+                .snippets-filter-field.full {
+                    grid-column: 1 / -1;
+                }
+                .snippets-filter-field select {
+                    width: 100%;
+                    height: 30px;
+                    border: 1px solid #ccc;
+                    border-radius: 4px;
+                    background: #fff;
+                    color: #333;
+                    font-size: 12px;
+                    padding: 0 8px;
+                }
+                .snippets-filter-check {
+                    display: flex;
+                    align-items: center;
+                    gap: 7px;
+                    min-height: 24px;
+                    font-size: 12px;
+                    color: #444;
+                    cursor: pointer;
+                }
+                .snippets-filter-check input {
+                    width: auto;
+                    accent-color: #af282f;
+                }
+                .snippets-filter-reset {
+                    grid-column: 1 / -1;
+                    justify-self: end;
+                    border: 1px solid #ccc;
+                    border-radius: 4px;
+                    background: #f7f7f7;
+                    color: #444;
+                    padding: 6px 10px;
+                    font-size: 12px;
+                    cursor: pointer;
+                }
+                .snippets-filter-reset:hover {
+                    background: #efefef;
+                }
                 .snippets-sidebar-content {
                     flex: 1;
                     overflow-y: auto;
                     padding: 0;
                 }
                 .snippet-item {
+                    border-bottom: 1px solid #e0e0e0;
+                }
+                .snippet-category-folder {
+                    border-bottom: 1px solid #e0e0e0;
+                }
+                .snippet-category-folder-header {
+                    width: 100% !important;
+                    border: none;
+                    background: #f7f7f7;
+                    color: #333;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 11px 20px;
+                    cursor: pointer;
+                    font-size: 13px;
+                    font-weight: 600;
+                    text-align: left;
+                }
+                .snippet-category-folder-header:hover {
+                    background: #f0f0f0;
+                }
+                .snippet-category-folder-icon {
+                    color: #af282f;
+                    width: 16px;
+                    height: 16px;
+                    flex-shrink: 0;
+                }
+                .snippet-category-folder-name {
+                    flex: 1;
+                    min-width: 0;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+                .snippet-category-folder-count {
+                    background: #e8e8e8;
+                    color: #555;
+                    border-radius: 999px;
+                    padding: 2px 8px;
+                    font-size: 11px;
+                    font-weight: 600;
+                }
+                .snippet-category-folder-chevron {
+                    width: 14px;
+                    height: 14px;
+                    color: #777;
+                    transition: transform 0.2s;
+                }
+                .snippet-category-folder.collapsed .snippet-category-folder-chevron {
+                    transform: rotate(-90deg);
+                }
+                .snippet-category-folder.collapsed .snippet-category-folder-items {
+                    display: none;
+                }
+                .snippet-category-folder-items .snippet-item:last-child {
+                    border-bottom: none;
+                }
+                .snippets-empty-filter {
+                    padding: 28px 20px;
+                    color: #777;
+                    text-align: center;
+                    font-size: 13px;
                     border-bottom: 1px solid #e0e0e0;
                 }
                 .snippet-item-header {
@@ -1246,6 +1631,9 @@
                 .snippet-item.dynamic-selector {
                     border-left: 3px solid rgba(137, 68, 171, 0.5);
                 }
+                .snippet-item.skin-library-item {
+                    border-left: 3px solid rgba(25, 118, 210, 0.45);
+                }
                 /* Copied Skins section */
                 .snippet-skin-badge {
                     font-size: 10px;
@@ -1358,6 +1746,46 @@
                     border-color: rgba(196, 28, 39, 0.2);
                 }
                 .copied-skin-delete-btn svg {
+                    width: 14px;
+                    height: 14px;
+                }
+                .skin-library-meta {
+                    display: grid;
+                    gap: 6px;
+                    padding: 16px 20px;
+                    color: #555;
+                    font-size: 12px;
+                    line-height: 1.45;
+                }
+                .skin-library-meta-row {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                }
+                .skin-library-meta-label {
+                    min-width: 76px;
+                    color: #777;
+                    font-weight: 600;
+                }
+                #cp-toolkit-snippets-sidebar .skin-apply-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 8px 16px;
+                    background: #1976d2;
+                    color: #fff;
+                    border: none;
+                    border-radius: 4px;
+                    font-size: 13px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                }
+                #cp-toolkit-snippets-sidebar .skin-apply-btn:hover {
+                    background: #1565c0;
+                }
+                #cp-toolkit-snippets-sidebar .skin-apply-btn svg {
                     width: 14px;
                     height: 14px;
                 }
@@ -1690,129 +2118,380 @@
             setTimeout(() => toast.classList.remove('show'), 2000);
         }
 
-        // Build sidebar content - flat list, no categories
-        function buildSidebarContent(snippets, copiedSkins, snippetOrder) {
-            let html = '';
-
-            // Render copied skins section if any exist
-            copiedSkins = copiedSkins || {};
+        function getSidebarSnippetEntries(snippets, state, snippetOrder) {
+            snippets = snippets || {};
             snippetOrder = snippetOrder || [];
-            const skinEntries = Object.entries(copiedSkins);
-            if (skinEntries.length > 0) {
-                html += '<div class="copied-skins-section collapsed">';
-                html += '<div class="copied-skins-header">';
-                html += '<span>Copied Skins</span>';
-                html += '<span class="copied-skins-count">' + skinEntries.length + '</span>';
-                html += '<svg class="copied-skins-chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>';
-                html += '</div>';
 
-                for (const [key, skin] of skinEntries) {
-                    const savedDate = skin.savedAt ? new Date(skin.savedAt).toLocaleDateString() : '';
-                    const sourceInfo = skin.sourceSkinName ? 'from ' + skin.sourceSkinName + ' (ID: ' + skin.sourceSkinID + ')' : '';
-                    const componentCount = skin.components ? skin.components.length : 0;
-
-                    const sourceLink = skin.sourceUrl ? ` <a href="${skin.sourceUrl}" target="_blank" class="copied-skin-source-link" title="${skin.sourceUrl}">Source</a>` : '';
-
-                    html += `
-                        <div class="copied-skin-item" data-skin-key="${key}">
-                            <div class="copied-skin-item-header">
-                                <span class="snippet-skin-badge">Skin</span>
-                                <span class="copied-skin-name">${skin.name}</span>
-                                <span class="copied-skin-meta">${savedDate}</span>
-                                <button class="copied-skin-delete-btn" data-skin-key="${key}" title="Delete saved skin">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <polyline points="3 6 5 6 21 6"></polyline>
-                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                            <div class="copied-skin-source">${sourceInfo}${sourceInfo && componentCount ? ' \u2022 ' : ''}${componentCount} component(s)${sourceLink}</div>
-                        </div>
-                    `;
-                }
-                html += '</div>';
+            if (libraryView) {
+                return libraryView.getSnippetEntries(snippets, state, snippetOrder);
             }
 
-            // Sort snippets by saved order
-            let snippetEntries = Object.entries(snippets);
-            if (snippetOrder.length > 0) {
-                const orderMap = {};
-                snippetOrder.forEach((key, idx) => orderMap[key] = idx);
-                snippetEntries.sort((a, b) => {
-                    const aIdx = orderMap[a[0]] !== undefined ? orderMap[a[0]] : Infinity;
-                    const bIdx = orderMap[b[0]] !== undefined ? orderMap[b[0]] : Infinity;
-                    return aIdx - bIdx;
-                });
-            }
+            const query = (state.query || '').toLowerCase().trim();
+            const selectedCategory = (state.category || '').toLowerCase();
+            const orderMap = {};
+            snippetOrder.forEach((key, idx) => orderMap[key] = idx);
 
-            for (const [key, snippet] of snippetEntries) {
-                // Handle multi-component snippets - combine all component codes
-                let codeToDisplay = snippet.code || '';
+            return Object.entries(snippets).filter(([key, snippet]) => {
                 const hasComponents = snippet.components && Object.keys(snippet.components).length > 0;
+                if (state.includeSnippets === false) return false;
+                if (state.userOnly && snippet.isUserSnippet !== true) return false;
+                if (state.dynamicOnly && snippet.dynamicSelector !== true) return false;
+                if (state.multiOnly && !hasComponents) return false;
+                if (state.quickOnly && snippet.alwaysInQuickList !== true) return false;
+                if (selectedCategory && (snippet.category || 'Uncategorized').toLowerCase() !== selectedCategory) return false;
+                if (!query) return true;
+                return [key, snippet.name, snippet.category, snippet.description, snippet.code].join(' ').toLowerCase().includes(query);
+            }).sort((a, b) => {
+                if (state.sortBy === 'name') return String(a[1].name || a[0]).localeCompare(String(b[1].name || b[0]));
+                if (state.sortBy === 'category') return String(a[1].category || '').localeCompare(String(b[1].category || '')) || String(a[1].name || a[0]).localeCompare(String(b[1].name || b[0]));
+                const aIdx = orderMap[a[0]] !== undefined ? orderMap[a[0]] : Infinity;
+                const bIdx = orderMap[b[0]] !== undefined ? orderMap[b[0]] : Infinity;
+                return aIdx - bIdx || String(a[1].name || a[0]).localeCompare(String(b[1].name || b[0]));
+            });
+        }
 
-                if (hasComponents) {
-                    // Build combined code display with component headers
-                    const componentCodes = [];
-                    for (const [compId, code] of Object.entries(snippet.components)) {
-                        const comp = SKIN_COMPONENT_TYPES.find(c => c.id === parseInt(compId, 10));
-                        const compName = comp ? comp.name : `Component ${compId}`;
-                        componentCodes.push(`/* === ${compName} === */\n${code}`);
-                    }
-                    codeToDisplay = componentCodes.join('\n\n');
-                }
+        function getSidebarActiveTab(state) {
+            return state && state.activeTab === 'skins' ? 'skins' : 'snippets';
+        }
 
-                const formattedCode = formatCodeForDisplay(codeToDisplay);
-                const isUserSnippet = snippet.isUserSnippet === true;
-                const isDynamic = snippet.dynamicSelector === true;
-                const userBadge = isUserSnippet ? '<span class="snippet-user-badge" title="User Snippet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>' : '';
-                const multiCompBadge = hasComponents ? '<span class="snippet-multi-badge" title="Multi-Component"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect></svg></span>' : '';
-                const dynamicBadge = isDynamic ? '<span class="snippet-dynamic-badge" title="Dynamic Selector"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg></span>' : '';
-                const headerDeleteBtn = isUserSnippet ? `<button class="snippet-header-delete-btn" data-key="${key}" title="Delete snippet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>` : '';
-                const editDeleteBtns = isUserSnippet ? `
-                    <button class="snippet-edit-btn" data-key="${key}" title="Edit snippet">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                    </button>
-                    <button class="snippet-delete-btn" data-key="${key}" title="Delete snippet">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                        </svg>
-                    </button>
-                ` : '';
+        function getSidebarFilterStateForTab(state, tab) {
+            const scopedState = Object.assign({}, state || {});
+            scopedState.activeTab = tab;
+            scopedState.sortBy = getSidebarSortByForTab(state, tab);
 
-                // Button text and title for multi-component vs dynamic vs single
-                const insertBtnText = hasComponents ? 'Insert All' : (isDynamic ? 'Insert' : 'Copy');
-                const insertBtnTitle = hasComponents ? 'Insert code into each component section' : (isDynamic ? 'Insert into current textarea' : 'Copy to clipboard');
+            if (tab === 'skins') {
+                scopedState.includeSnippets = false;
+                scopedState.includeSkins = true;
+                scopedState.userOnly = false;
+                scopedState.dynamicOnly = false;
+                scopedState.multiOnly = false;
+                scopedState.quickOnly = false;
+            } else {
+                scopedState.includeSnippets = true;
+                scopedState.includeSkins = false;
+            }
 
-                html += `
-                    <div class="snippet-item${isUserSnippet ? ' user-snippet' : ''}${hasComponents ? ' multi-component' : ''}${isDynamic ? ' dynamic-selector' : ''}" data-snippet-key="${key}" data-has-components="${hasComponents}">
-                        <div class="snippet-item-header">
-                            <span class="snippet-drag-handle" title="Drag to reorder"><svg width="10" height="14" viewBox="0 0 10 14"><circle cx="3" cy="2" r="1.2" fill="currentColor"/><circle cx="7" cy="2" r="1.2" fill="currentColor"/><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="3" cy="12" r="1.2" fill="currentColor"/><circle cx="7" cy="12" r="1.2" fill="currentColor"/></svg></span>
-                            <span class="snippet-item-name">${snippet.name}</span>
-                            ${userBadge}
-                            ${multiCompBadge}
-                            ${dynamicBadge}
-                            <span class="snippet-item-category" title="${snippet.category || 'Other'}">${getCategoryIcon(snippet.category)}</span>
-                            ${headerDeleteBtn}
+            return scopedState;
+        }
+
+        function getSidebarSkinEntries(copiedSkins, state) {
+            copiedSkins = copiedSkins || {};
+
+            if (libraryView) {
+                return libraryView.getSkinEntries(copiedSkins, state);
+            }
+
+            const query = (state.query || '').toLowerCase().trim();
+            const selectedCategory = (state.category || '').toLowerCase();
+            if (state.includeSkins === false || state.userOnly || state.dynamicOnly || state.multiOnly || state.quickOnly) return [];
+
+            return Object.entries(copiedSkins).filter(([key, skin]) => {
+                if (selectedCategory && (skin.category || 'Uncategorized').toLowerCase() !== selectedCategory) return false;
+                if (!query) return true;
+                return [key, skin.name, skin.category, skin.sourceSite, skin.sourceUrl, skin.sourceSkinName, skin.sourceSkinID].join(' ').toLowerCase().includes(query);
+            }).sort((a, b) => {
+                const aDate = new Date(a[1].savedAt || a[1].updatedAt || 0).getTime() || 0;
+                const bDate = new Date(b[1].savedAt || b[1].updatedAt || 0).getTime() || 0;
+                return bDate - aDate;
+            });
+        }
+
+        function getSidebarCategoryGroups(entries) {
+            if (libraryView) {
+                return libraryView.groupEntriesByCategory(entries);
+            }
+
+            const groups = {};
+            entries.forEach((entry) => {
+                const label = entry[1].category || 'Uncategorized';
+                if (!groups[label]) groups[label] = [];
+                groups[label].push(entry);
+            });
+
+            return Object.keys(groups).sort().map((label) => ({
+                label,
+                entries: groups[label]
+            }));
+        }
+
+        function buildCopiedSkinItemHtml(key, skin) {
+            const savedDate = skin.savedAt ? new Date(skin.savedAt).toLocaleDateString() : '';
+            const sourceInfo = skin.sourceSkinName ? 'from ' + skin.sourceSkinName + ' (ID: ' + skin.sourceSkinID + ')' : '';
+            const componentCount = skin.components ? skin.components.length : 0;
+            const sourceLink = skin.sourceUrl
+                ? ` <a href="${escapeHtml(skin.sourceUrl)}" target="_blank" rel="noopener noreferrer" class="copied-skin-source-link" title="${escapeHtml(skin.sourceUrl)}">Source</a>`
+                : '';
+
+            return `
+                <div class="snippet-item skin-library-item" data-skin-key="${escapeHtml(key)}">
+                    <div class="snippet-item-header">
+                        <span class="snippet-skin-badge">Skin</span>
+                        <span class="snippet-item-name">${escapeHtml(skin.name || key)}</span>
+                        <span class="copied-skin-meta">${escapeHtml(savedDate)}</span>
+                        <span class="snippet-item-category" title="${escapeHtml(skin.category || 'Saved Skins')}">${getCategoryIcon(skin.category || 'Saved Skins')}</span>
+                        <button class="copied-skin-delete-btn" data-skin-key="${escapeHtml(key)}" title="Delete saved skin">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="snippet-item-content">
+                        <div class="skin-library-meta">
+                            <div class="skin-library-meta-row"><span class="skin-library-meta-label">Source</span><span>${escapeHtml(sourceInfo || 'Current site')}${sourceLink}</span></div>
+                            <div class="skin-library-meta-row"><span class="skin-library-meta-label">Saved</span><span>${escapeHtml(savedDate || 'Unknown')}</span></div>
+                            <div class="skin-library-meta-row"><span class="skin-library-meta-label">Category</span><span>${escapeHtml(skin.category || 'Saved Skins')}</span></div>
+                            <div class="skin-library-meta-row"><span class="skin-library-meta-label">Components</span><span>${componentCount} component(s)</span></div>
                         </div>
-                        <div class="snippet-item-content">
-                            <pre class="snippet-code">${formattedCode}</pre>
-                            <div class="snippet-actions">
-                                <button class="snippet-copy-btn" data-key="${key}" title="${insertBtnTitle}">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                    </svg>
-                                    ${insertBtnText}
-                                </button>
-                                ${editDeleteBtns}
-                            </div>
+                        <div class="snippet-actions">
+                            <button class="skin-apply-btn" data-skin-key="${escapeHtml(key)}" title="Apply saved skin">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                Apply Skin
+                            </button>
+                            <button class="copied-skin-delete-btn" data-skin-key="${escapeHtml(key)}" title="Delete saved skin">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
                         </div>
                     </div>
-                `;
+                </div>
+            `;
+        }
+
+        function buildSidebarSnippetItemHtml(key, snippet) {
+            // Handle multi-component snippets - combine all component codes
+            let codeToDisplay = snippet.code || '';
+            const hasComponents = snippet.components && Object.keys(snippet.components).length > 0;
+
+            if (hasComponents) {
+                // Build combined code display with component headers
+                const componentCodes = [];
+                for (const [compId, component] of Object.entries(snippet.components)) {
+                    const code = getSnippetComponentCode(component);
+                    const compName = getSnippetComponentLabel(compId, component, snippet);
+                    componentCodes.push(`/* === ${compName} === */\n${code}`);
+                }
+                codeToDisplay = componentCodes.join('\n\n');
+            }
+
+            const formattedCode = formatCodeForDisplay(codeToDisplay);
+            const isUserSnippet = snippet.isUserSnippet === true;
+            const isDynamic = snippet.dynamicSelector === true;
+            const category = snippet.category || 'Other';
+            const escapedKey = escapeHtml(key);
+            const userBadge = isUserSnippet ? '<span class="snippet-user-badge" title="User Snippet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>' : '';
+            const multiCompBadge = hasComponents ? '<span class="snippet-multi-badge" title="Multi-Component"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect></svg></span>' : '';
+            const dynamicBadge = isDynamic ? '<span class="snippet-dynamic-badge" title="Dynamic Selector"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg></span>' : '';
+            const headerDeleteBtn = isUserSnippet ? `<button class="snippet-header-delete-btn" data-key="${escapedKey}" title="Delete snippet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>` : '';
+            const editDeleteBtns = isUserSnippet ? `
+                <button class="snippet-edit-btn" data-key="${escapedKey}" title="Edit snippet">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                </button>
+                <button class="snippet-delete-btn" data-key="${escapedKey}" title="Delete snippet">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+            ` : '';
+
+            // Button text and title for multi-component vs dynamic vs single
+            const insertBtnText = hasComponents ? 'Insert All' : (isDynamic ? 'Insert' : 'Copy');
+            const insertBtnTitle = hasComponents ? 'Insert code into each component section' : (isDynamic ? 'Insert into current textarea' : 'Copy to clipboard');
+
+            return `
+                <div class="snippet-item${isUserSnippet ? ' user-snippet' : ''}${hasComponents ? ' multi-component' : ''}${isDynamic ? ' dynamic-selector' : ''}" data-snippet-key="${escapedKey}" data-has-components="${hasComponents}">
+                    <div class="snippet-item-header">
+                        <span class="snippet-drag-handle" title="Drag to reorder"><svg width="10" height="14" viewBox="0 0 10 14"><circle cx="3" cy="2" r="1.2" fill="currentColor"/><circle cx="7" cy="2" r="1.2" fill="currentColor"/><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="3" cy="12" r="1.2" fill="currentColor"/><circle cx="7" cy="12" r="1.2" fill="currentColor"/></svg></span>
+                        <span class="snippet-item-name">${escapeHtml(snippet.name || key)}</span>
+                        ${userBadge}
+                        ${multiCompBadge}
+                        ${dynamicBadge}
+                        <span class="snippet-item-category" title="${escapeHtml(category)}">${getCategoryIcon(category)}</span>
+                        ${headerDeleteBtn}
+                    </div>
+                    <div class="snippet-item-content">
+                        <pre class="snippet-code">${formattedCode}</pre>
+                        <div class="snippet-actions">
+                            <button class="snippet-copy-btn" data-key="${escapedKey}" title="${escapeHtml(insertBtnTitle)}">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                                ${insertBtnText}
+                            </button>
+                            ${editDeleteBtns}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildSidebarSnippetItemsHtml(entries) {
+            return entries.map(([key, snippet]) => buildSidebarSnippetItemHtml(key, snippet)).join('');
+        }
+
+        function buildSidebarSkinItemsHtml(entries) {
+            return entries.map(([key, skin]) => buildCopiedSkinItemHtml(key, skin)).join('');
+        }
+
+        function buildSidebarCategoryFolderHtml(group, state, kind, buildItems) {
+            const folderStateKey = `${kind || 'snippets'}:${group.label}`;
+            const collapsed = !(state.collapsedCategories && state.collapsedCategories[folderStateKey] === false);
+            return `
+                <div class="snippet-category-folder${collapsed ? ' collapsed' : ''}" data-category-key="${encodeCategoryKey(folderStateKey)}">
+                    <button class="snippet-category-folder-header" type="button">
+                        <span class="snippet-category-folder-icon">${getCategoryIcon(group.label)}</span>
+                        <span class="snippet-category-folder-name">${escapeHtml(group.label)}</span>
+                        <span class="snippet-category-folder-count">${group.entries.length}</span>
+                        <svg class="snippet-category-folder-chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                    <div class="snippet-category-folder-items">
+                        ${buildItems(group.entries)}
+                    </div>
+                </div>
+            `;
+        }
+
+        function buildSidebarFilterControls(sidebar) {
+            const state = getSidebarViewState(sidebar);
+            const activeTab = getSidebarActiveTab(state);
+            const snippets = sidebar._snippetsData || {};
+            const copiedSkins = sidebar._copiedSkinsData || {};
+            const categories = libraryView
+                ? libraryView.getCategoryOptions(activeTab === 'skins' ? {} : snippets, activeTab === 'skins' ? copiedSkins : {})
+                : Array.from(new Set((activeTab === 'skins' ? [] : Object.values(snippets).map(item => item.category || 'Uncategorized')).concat(activeTab === 'skins' ? Object.values(copiedSkins).map(item => item.category || 'Uncategorized') : []))).sort();
+            const categoryOptions = ['<option value="">All categories</option>'].concat(categories.map((category) => {
+                const selected = category === state.category ? ' selected' : '';
+                return `<option value="${escapeHtml(category)}"${selected}>${escapeHtml(category)}</option>`;
+            })).join('');
+            const checked = (value) => value ? ' checked' : '';
+            const sortBy = getSidebarSortByForTab(state, activeTab);
+            const sortOptions = activeTab === 'skins'
+                ? `
+                            <option value="newest"${sortBy === 'newest' ? ' selected' : ''}>Newest</option>
+                            <option value="name"${sortBy === 'name' ? ' selected' : ''}>Name</option>
+                            <option value="category"${sortBy === 'category' ? ' selected' : ''}>Category</option>
+                        `
+                : `
+                            <option value="manual"${sortBy === 'manual' ? ' selected' : ''}>Manual</option>
+                            <option value="name"${sortBy === 'name' ? ' selected' : ''}>Name</option>
+                            <option value="category"${sortBy === 'category' ? ' selected' : ''}>Category</option>
+                            <option value="newest"${sortBy === 'newest' ? ' selected' : ''}>Newest</option>
+                        `;
+            const snippetOnlyFilters = activeTab === 'snippets'
+                ? `
+                <label class="snippets-filter-check"><input type="checkbox" data-sidebar-filter="userOnly"${checked(state.userOnly)}> User snippets only</label>
+                <label class="snippets-filter-check"><input type="checkbox" data-sidebar-filter="dynamicOnly"${checked(state.dynamicOnly)}> Dynamic snippets only</label>
+                <label class="snippets-filter-check"><input type="checkbox" data-sidebar-filter="multiOnly"${checked(state.multiOnly)}> Multi-component only</label>
+                <label class="snippets-filter-check"><input type="checkbox" data-sidebar-filter="quickOnly"${checked(state.quickOnly)}> Quick-list snippets only</label>
+                `
+                : '';
+
+            return `
+                <div class="snippets-filter-grid">
+                    <label class="snippets-filter-field">
+                        <span>Category</span>
+                        <select data-sidebar-filter="category">${categoryOptions}</select>
+                    </label>
+                    <label class="snippets-filter-field">
+                        <span>Sort</span>
+                        <select data-sidebar-filter="sortBy">
+                            ${sortOptions}
+                        </select>
+                    </label>
+                </div>
+                <label class="snippets-filter-check"><input type="checkbox" data-sidebar-filter="groupByCategory"${checked(state.groupByCategory)}> Group into category folders</label>
+                ${snippetOnlyFilters}
+                <button type="button" class="snippets-filter-reset">Reset filters</button>
+            `;
+        }
+
+        function renderSidebarTabs(sidebar) {
+            const state = getSidebarViewState(sidebar);
+            const activeTab = getSidebarActiveTab(state);
+            const snippets = sidebar._snippetsData || {};
+            const copiedSkins = sidebar._copiedSkinsData || {};
+            const searchInput = sidebar.querySelector('.snippets-sidebar-search input');
+
+            sidebar.querySelectorAll('.snippets-sidebar-tab').forEach((button) => {
+                button.classList.toggle('active', button.getAttribute('data-sidebar-tab') === activeTab);
+            });
+
+            const snippetCount = sidebar.querySelector('[data-sidebar-tab-count="snippets"]');
+            const skinCount = sidebar.querySelector('[data-sidebar-tab-count="skins"]');
+            if (snippetCount) snippetCount.textContent = Object.keys(snippets).length;
+            if (skinCount) skinCount.textContent = Object.keys(copiedSkins).length;
+            if (searchInput) {
+                searchInput.placeholder = activeTab === 'skins' ? 'Search saved skins...' : 'Search snippets...';
+            }
+        }
+
+        function renderSidebarFilterControls(sidebar) {
+            const popover = sidebar.querySelector('.snippets-filter-popover');
+            const filterButton = sidebar.querySelector('.snippets-filter-btn');
+            if (popover) popover.innerHTML = buildSidebarFilterControls(sidebar);
+            if (filterButton) filterButton.classList.toggle('active', sidebarHasActiveFilters(sidebar));
+        }
+
+        function renderSidebar(sidebar) {
+            if (!sidebar) return;
+
+            const content = sidebar.querySelector('.snippets-sidebar-content');
+            if (!content) return;
+
+            const snippets = sidebar._snippetsData || {};
+            const copiedSkins = sidebar._copiedSkinsData || {};
+            const snippetOrder = sidebar._snippetOrder || [];
+            content.innerHTML = buildSidebarContent(snippets, copiedSkins, snippetOrder, getSidebarViewState(sidebar));
+
+            renderSidebarTabs(sidebar);
+            renderSidebarFilterControls(sidebar);
+            attachSidebarEventListeners(sidebar, snippets);
+            attachCopiedSkinEventListeners(sidebar, copiedSkins);
+        }
+
+        // Build sidebar content from shared filter/view state.
+        function buildSidebarContent(snippets, copiedSkins, snippetOrder, viewState) {
+            let html = '';
+            snippets = snippets || {};
+            copiedSkins = copiedSkins || {};
+            snippetOrder = snippetOrder || [];
+            const state = viewState || createSidebarViewState();
+            const activeTab = getSidebarActiveTab(state);
+            const scopedState = getSidebarFilterStateForTab(state, activeTab);
+            const skinEntries = activeTab === 'skins' ? getSidebarSkinEntries(copiedSkins, scopedState) : [];
+            const snippetEntries = activeTab === 'snippets' ? getSidebarSnippetEntries(snippets, scopedState, snippetOrder) : [];
+
+            if (activeTab === 'skins') {
+                if (skinEntries.length > 0) {
+                    if (state.groupByCategory) {
+                        html += getSidebarCategoryGroups(skinEntries)
+                            .map((group) => buildSidebarCategoryFolderHtml(group, state, 'skins', buildSidebarSkinItemsHtml))
+                            .join('');
+                    } else {
+                        html += buildSidebarSkinItemsHtml(skinEntries);
+                    }
+                } else {
+                    html += '<div class="snippets-empty-filter">No saved skins match these filters.</div>';
+                }
+            } else {
+                if (snippetEntries.length > 0) {
+                    if (state.groupByCategory) {
+                        html += getSidebarCategoryGroups(snippetEntries)
+                            .map((group) => buildSidebarCategoryFolderHtml(group, state, 'snippets', buildSidebarSnippetItemsHtml))
+                            .join('');
+                    } else {
+                        html += buildSidebarSnippetItemsHtml(snippetEntries);
+                    }
+                } else {
+                    html += '<div class="snippets-empty-filter">No snippets match these filters.</div>';
+                }
             }
 
             // Delete All button (only visible in edit mode)
@@ -2423,6 +3102,10 @@
                     (skin.Name || 'Unnamed Skin') + ' (' + skin.WidgetSkinID + ')' +
                     '</option>';
             }).join('');
+            const categoryOptions = SNIPPET_CATEGORIES.map(function(cat) {
+                const selected = cat.value === 'Custom' ? 'selected' : '';
+                return '<option value="' + cat.value + '" ' + selected + '>' + cat.label + '</option>';
+            }).join('');
 
             const selectSize = Math.min(validSkins.length, 12);
 
@@ -2438,6 +3121,18 @@
                         <div class="snippet-modal-field">
                             <label for="save-skin-name">Save As Name</label>
                             <input type="text" id="save-skin-name" placeholder="e.g., Client A - Default Skin" />
+                        </div>
+                        <div class="snippet-modal-field">
+                            <label for="save-skin-category">Category</label>
+                            <select id="save-skin-category">
+                                ${categoryOptions}
+                            </select>
+                            <p class="snippet-category-hint"></p>
+                        </div>
+                        <div class="snippet-modal-field snippet-custom-category-field">
+                            <label for="save-skin-custom-category">Custom Category Name</label>
+                            <input type="text" id="save-skin-custom-category" placeholder="Saved Skins" />
+                            <p class="snippet-category-note">Saved skin categories appear in library filters and sidebar folders.</p>
                         </div>
                         <div class="snippet-modal-field">
                             <label for="save-skin-select">Select Skin to Copy</label>
@@ -2466,6 +3161,27 @@
 
             const skinSelect = overlay.querySelector('#save-skin-select');
             const nameInput = overlay.querySelector('#save-skin-name');
+            const categorySelect = overlay.querySelector('#save-skin-category');
+            const customCategoryField = overlay.querySelector('.snippet-custom-category-field');
+            const customCategoryInput = overlay.querySelector('#save-skin-custom-category');
+            const categoryHint = overlay.querySelector('.snippet-category-hint');
+
+            const updateCategoryHint = function() {
+                var selected = categorySelect.value;
+                var category = SNIPPET_CATEGORIES.find(function(cat) {
+                    return cat.value === selected;
+                });
+                customCategoryField.style.display = selected === 'Custom' ? 'block' : 'none';
+                if (category && selected !== 'Custom') {
+                    categoryHint.textContent = category.description;
+                    categoryHint.style.display = 'block';
+                } else {
+                    categoryHint.style.display = 'none';
+                }
+            };
+
+            categorySelect.addEventListener('change', updateCategoryHint);
+            updateCategoryHint();
 
             // Auto-populate name when skin is selected
             skinSelect.addEventListener('change', function() {
@@ -2479,6 +3195,9 @@
             overlay.querySelector('.save-skin-confirm').addEventListener('click', async function() {
                 var selectedSkinId = skinSelect.value;
                 var saveName = nameInput.value.trim();
+                var selectedCategory = categorySelect.value;
+                var customCategory = customCategoryInput.value.trim();
+                var category = selectedCategory === 'Custom' ? (customCategory || 'Saved Skins') : selectedCategory;
 
                 if (!saveName) {
                     alert('Please enter a name for the saved skin.');
@@ -2500,6 +3219,7 @@
 
                 var skinData = {
                     name: saveName,
+                    category: category,
                     savedAt: new Date().toISOString(),
                     sourceSkinName: readResp.skinData.sourceSkinName,
                     sourceSkinID: readResp.skinData.sourceSkinID,
@@ -2689,24 +3409,28 @@
                     const userSnippets = await loadUserSnippets();
                     let count = 0;
                     let skippedDuplicates = 0;
+                    const parsedImport = libraryStore ? libraryStore.parseImportPayload(imported) : null;
 
                     // Build lookup of existing snippets for duplicate detection
                     const existingSnippets = Object.values(userSnippets);
 
                     // Import snippets
-                    const importedSnippets = {};
-                    const importedCopiedSkins = {};
+                    const importedSnippets = parsedImport ? parsedImport.snippets : {};
+                    const importedCopiedSkins = parsedImport ? parsedImport.skins : {};
 
-                    for (const [key, item] of Object.entries(imported)) {
-                        if (key.startsWith('skin-') && item.components && Array.isArray(item.components)) {
-                            // This is a copied skin entry
-                            importedCopiedSkins[key] = item;
-                        } else {
-                            importedSnippets[key] = item;
+                    if (!parsedImport) {
+                        for (const [key, item] of Object.entries(imported)) {
+                            if (key.startsWith('skin-') && item.components && Array.isArray(item.components)) {
+                                // This is a copied skin entry
+                                importedCopiedSkins[key] = item;
+                            } else {
+                                importedSnippets[key] = item;
+                            }
                         }
                     }
 
-                    for (const snippet of Object.values(importedSnippets)) {
+                    for (const importedSnippet of Object.values(importedSnippets)) {
+                        const snippet = libraryStore ? libraryStore.normalizeSnippet(importedSnippet) : importedSnippet;
                         // Support both single-code and multi-component snippets
                         const hasCode = snippet.code && snippet.code.trim();
                         const hasComponents = snippet.components && Object.keys(snippet.components).length > 0;
@@ -2732,31 +3456,11 @@
                             }
 
                             const newKey = generateSnippetKey(snippet.name);
-                            const newSnippet = {
-                                name: snippet.name,
+                            const newSnippet = Object.assign({}, snippet, {
                                 category: snippet.category || 'Imported',
                                 isUserSnippet: true
-                            };
-
-                            // Include code if present
-                            if (hasCode) {
-                                newSnippet.code = snippet.code;
-                            }
-
-                            // Include components if present (multi-component snippet)
-                            if (hasComponents) {
-                                newSnippet.components = snippet.components;
-                            }
-
-                            // Include dynamicSelector flag if present
-                            if (snippet.dynamicSelector === true) {
-                                newSnippet.dynamicSelector = true;
-                            }
-
-                            // Include alwaysShow flag if present
-                            if (snippet.alwaysShow === true) {
-                                newSnippet.alwaysShow = true;
-                            }
+                            });
+                            delete newSnippet.type;
 
                             userSnippets[newKey] = newSnippet;
                             count++;
@@ -2773,12 +3477,13 @@
                         const existingSkinValues = Object.values(existingSkins);
 
                         for (const [key, skinData] of Object.entries(importedCopiedSkins)) {
+                            const normalizedSkin = libraryStore ? libraryStore.normalizeSavedSkin(skinData, key) : skinData;
                             // Check for duplicate: same name and same source skin ID
                             const isDuplicate = existingSkinValues.some(function(existing) {
-                                return existing.name === skinData.name &&
-                                       existing.sourceSkinID === skinData.sourceSkinID &&
-                                       existing.components && skinData.components &&
-                                       existing.components.length === skinData.components.length;
+                                return existing.name === normalizedSkin.name &&
+                                       existing.sourceSkinID === normalizedSkin.sourceSkinID &&
+                                       existing.components && normalizedSkin.components &&
+                                       existing.components.length === normalizedSkin.components.length;
                             });
 
                             if (isDuplicate) {
@@ -2786,8 +3491,8 @@
                                 continue;
                             }
 
-                            const newKey = generateCopiedSkinKey(skinData.name || 'Imported Skin');
-                            existingSkins[newKey] = skinData;
+                            const newKey = generateCopiedSkinKey(normalizedSkin.name || 'Imported Skin');
+                            existingSkins[newKey] = normalizedSkin;
                             skinCount++;
                         }
 
@@ -2828,40 +3533,37 @@
                 return;
             }
 
-            // Clean up snippets for export (remove isUserSnippet flag)
-            const exportData = {};
-            for (const [key, snippet] of Object.entries(userSnippets)) {
-                const exportSnippet = {
-                    name: snippet.name,
-                    category: snippet.category
-                };
+            let exportData;
+            if (libraryStore) {
+                exportData = libraryStore.buildExportPayload(userSnippets, copiedSkins);
+            } else {
+                // Legacy flat export fallback.
+                exportData = {};
+                for (const [key, snippet] of Object.entries(userSnippets)) {
+                    const exportSnippet = {
+                        name: snippet.name,
+                        category: snippet.category
+                    };
 
-                // Include code if present
-                if (snippet.code) {
-                    exportSnippet.code = snippet.code;
+                    if (snippet.code) {
+                        exportSnippet.code = snippet.code;
+                    }
+                    if (snippet.components && Object.keys(snippet.components).length > 0) {
+                        exportSnippet.components = snippet.components;
+                    }
+                    if (snippet.dynamicSelector === true) {
+                        exportSnippet.dynamicSelector = true;
+                    }
+                    if (snippet.alwaysInQuickList === true) {
+                        exportSnippet.alwaysInQuickList = true;
+                    }
+
+                    exportData[key] = exportSnippet;
                 }
 
-                // Include components if present (multi-component snippet)
-                if (snippet.components && Object.keys(snippet.components).length > 0) {
-                    exportSnippet.components = snippet.components;
+                for (const [key, skinData] of Object.entries(copiedSkins)) {
+                    exportData[key] = skinData;
                 }
-
-                // Include dynamicSelector flag if true
-                if (snippet.dynamicSelector === true) {
-                    exportSnippet.dynamicSelector = true;
-                }
-
-                // Include alwaysShow flag if true
-                if (snippet.alwaysShow === true) {
-                    exportSnippet.alwaysShow = true;
-                }
-
-                exportData[key] = exportSnippet;
-            }
-
-            // Include copied skins (keys start with "skin-")
-            for (const [key, skinData] of Object.entries(copiedSkins)) {
-                exportData[key] = skinData;
             }
 
             const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
@@ -2869,7 +3571,7 @@
 
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'cp-toolkit-snippets.json';
+            a.download = libraryStore ? 'cp-toolkit-library-v2.json' : 'cp-toolkit-snippets.json';
             a.click();
 
             URL.revokeObjectURL(url);
@@ -2890,12 +3592,10 @@
                 loadCopiedSkins(),
                 loadSnippetOrder()
             ]);
-            const content = sidebarElement.querySelector('.snippets-sidebar-content');
-            content.innerHTML = buildSidebarContent(snippets, copiedSkins, snippetOrder);
-
-            // Re-attach event listeners
-            attachSidebarEventListeners(sidebarElement, snippets);
-            attachCopiedSkinEventListeners(sidebarElement, copiedSkins);
+            sidebarElement._snippetsData = snippets;
+            sidebarElement._copiedSkinsData = copiedSkins;
+            sidebarElement._snippetOrder = snippetOrder;
+            renderSidebar(sidebarElement);
         }
 
         // Attach event listeners to sidebar items
@@ -2907,7 +3607,7 @@
             items.forEach(item => {
                 const header = item.querySelector('.snippet-item-header');
                 header.addEventListener('click', function(e) {
-                    if (e.target.closest('.snippet-edit-btn') || e.target.closest('.snippet-delete-btn') || e.target.closest('.snippet-drag-handle') || e.target.closest('.snippet-header-delete-btn')) {
+                    if (e.target.closest('.snippet-edit-btn') || e.target.closest('.snippet-delete-btn') || e.target.closest('.copied-skin-delete-btn') || e.target.closest('.skin-apply-btn') || e.target.closest('.snippet-drag-handle') || e.target.closest('.snippet-header-delete-btn')) {
                         return;
                     }
                     e.stopPropagation();
@@ -3003,12 +3703,25 @@
             content.dataset.clickListenerAttached = 'true';
 
             content.addEventListener('click', async function(e) {
+                const folderHeader = e.target.closest('.snippet-category-folder-header');
                 const copyBtn = e.target.closest('.snippet-copy-btn');
                 const editBtn = e.target.closest('.snippet-edit-btn');
                 const deleteBtn = e.target.closest('.snippet-delete-btn');
                 const headerDeleteBtn = e.target.closest('.snippet-header-delete-btn');
                 const currentSnippets = content._snippetsRef;
                 const currentSkinId = sidebar.dataset.skinId || '000';
+
+                if (folderHeader) {
+                    e.stopPropagation();
+                    const folder = folderHeader.closest('.snippet-category-folder');
+                    if (!folder) return;
+                    const category = decodeCategoryKey(folder.getAttribute('data-category-key'));
+                    const state = getSidebarViewState(sidebar);
+                    const shouldCollapse = !folder.classList.contains('collapsed');
+                    state.collapsedCategories[category] = shouldCollapse;
+                    folder.classList.toggle('collapsed', shouldCollapse);
+                    return;
+                }
 
                 if (copyBtn) {
                     e.stopPropagation();
@@ -3131,17 +3844,19 @@
             content.dataset.skinClickListenerAttached = 'true';
 
             content.addEventListener('click', async function(e) {
-                // Toggle collapse on header click
-                var header = e.target.closest('.copied-skins-header');
-                if (header) {
-                    var section = header.closest('.copied-skins-section');
-                    if (section) section.classList.toggle('collapsed');
+                var applyBtn = e.target.closest('.skin-apply-btn');
+                var deleteBtn = e.target.closest('.copied-skin-delete-btn');
+                var currentSkins = content._copiedSkinsRef;
+
+                if (applyBtn) {
+                    e.stopPropagation();
+                    var applySkinKey = applyBtn.getAttribute('data-skin-key');
+                    var applySkin = currentSkins[applySkinKey];
+                    if (applySkin) {
+                        showApplySkinModal(applySkinKey, applySkin);
+                    }
                     return;
                 }
-
-                var deleteBtn = e.target.closest('.copied-skin-delete-btn');
-                var skinItem = e.target.closest('.copied-skin-item');
-                var currentSkins = content._copiedSkinsRef;
 
                 if (deleteBtn) {
                     e.stopPropagation();
@@ -3154,18 +3869,38 @@
                     }
                     return;
                 }
-
-                if (skinItem) {
-                    // Don't open apply modal when clicking the source link
-                    if (e.target.closest('.copied-skin-source-link')) return;
-                    e.stopPropagation();
-                    var skinKey = skinItem.getAttribute('data-skin-key');
-                    var skin = currentSkins[skinKey];
-                    if (skin) {
-                        showApplySkinModal(skinKey, skin);
-                    }
-                }
             });
+        }
+
+        function updateSidebarFilterState(sidebar, control) {
+            const field = control.getAttribute('data-sidebar-filter');
+            if (!field) return false;
+
+            const state = getSidebarViewState(sidebar);
+            if (field === 'sortBy') {
+                const activeTab = getSidebarActiveTab(state);
+                state.tabSortBy = state.tabSortBy || {};
+                state.tabSortBy[activeTab] = control.value;
+                state.sortBy = control.value;
+            } else {
+                state[field] = control.type === 'checkbox' ? control.checked : control.value;
+            }
+
+            if (field === 'groupByCategory' || field === 'category') {
+                state.collapsedCategories = {};
+            }
+
+            renderSidebar(sidebar);
+            return true;
+        }
+
+        function resetSidebarFilters(sidebar) {
+            const activeTab = getSidebarActiveTab(getSidebarViewState(sidebar));
+            sidebar._snippetViewState = createSidebarViewState();
+            sidebar._snippetViewState.activeTab = activeTab;
+            const searchInput = sidebar.querySelector('.snippets-sidebar-search input');
+            if (searchInput) searchInput.value = '';
+            renderSidebar(sidebar);
         }
 
         // Close the sidebar and clean up
@@ -3185,6 +3920,12 @@
             // Clear search
             const searchInput = sidebarElement.querySelector('.snippets-sidebar-search input');
             if (searchInput) searchInput.value = '';
+            const filterPopover = sidebarElement.querySelector('.snippets-filter-popover');
+            if (filterPopover) filterPopover.classList.remove('open');
+            const filterButton = sidebarElement.querySelector('.snippets-filter-btn');
+            if (filterButton) filterButton.classList.remove('active');
+            const state = getSidebarViewState(sidebarElement);
+            state.query = '';
         }
 
         // Open the sidebar
@@ -3200,49 +3941,62 @@
                 const snippets = results[0];
                 const copiedSkins = results[1];
                 const snippetOrder = results[2];
-                const content = sidebar.querySelector('.snippets-sidebar-content');
-                content.innerHTML = buildSidebarContent(snippets, copiedSkins, snippetOrder);
-
+                sidebar._snippetsData = snippets;
+                sidebar._copiedSkinsData = copiedSkins;
+                sidebar._snippetOrder = snippetOrder;
+                renderSidebar(sidebar);
                 const searchInput = sidebar.querySelector('.snippets-sidebar-search input');
-
-                // Attach item event listeners
-                attachSidebarEventListeners(sidebar, snippets);
-                attachCopiedSkinEventListeners(sidebar, copiedSkins);
+                if (searchInput) {
+                    searchInput.value = getSidebarViewState(sidebar).query || '';
+                }
 
                 // Only add action button listeners once
                 if (!listenersAttached) {
-                    // Search filtering
-                    searchInput.addEventListener('input', function(e) {
-                        const query = e.target.value.toLowerCase().trim();
+                    // Shared library filtering
+                    if (searchInput) {
+                        searchInput.addEventListener('input', function(e) {
+                            const state = getSidebarViewState(sidebar);
+                            state.query = e.target.value;
+                            renderSidebar(sidebar);
+                        });
+                    }
 
-                        // Filter snippet items
-                        const items = content.querySelectorAll('.snippet-item');
-                        items.forEach(item => {
-                            const name = item.querySelector('.snippet-item-name').textContent.toLowerCase();
-                            const category = item.querySelector('.snippet-item-category').textContent.toLowerCase();
-                            const matches = query === '' || name.includes(query) || category.includes(query);
-                            item.style.display = matches ? '' : 'none';
+                    const filterBtn = sidebar.querySelector('.snippets-filter-btn');
+                    const filterPopover = sidebar.querySelector('.snippets-filter-popover');
+                    if (filterBtn && filterPopover) {
+                        filterBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            filterPopover.classList.toggle('open');
                         });
 
-                        // Filter copied skin items
-                        const skinItems = content.querySelectorAll('.copied-skin-item');
-                        let anySkinVisible = false;
-                        skinItems.forEach(function(item) {
-                            const name = item.querySelector('.copied-skin-name').textContent.toLowerCase();
-                            const matches = query === '' || name.includes(query) || 'skin'.includes(query);
-                            item.style.display = matches ? '' : 'none';
-                            if (matches) anySkinVisible = true;
+                        filterPopover.addEventListener('change', function(e) {
+                            const control = e.target.closest('[data-sidebar-filter]');
+                            if (control) updateSidebarFilterState(sidebar, control);
                         });
 
-                        // Show/hide copied skins section header
-                        const skinSection = content.querySelector('.copied-skins-section');
-                        if (skinSection) {
-                            const sectionHeader = skinSection.querySelector('.copied-skins-header');
-                            if (sectionHeader) {
-                                sectionHeader.style.display = (query === '' || anySkinVisible) ? '' : 'none';
-                            }
-                        }
+                        filterPopover.addEventListener('click', function(e) {
+                            const resetBtn = e.target.closest('.snippets-filter-reset');
+                            if (!resetBtn) return;
+                            e.preventDefault();
+                            resetSidebarFilters(sidebar);
+                        });
+                    }
 
+                    sidebar.querySelectorAll('.snippets-sidebar-tab').forEach((tabButton) => {
+                        tabButton.addEventListener('click', function() {
+                            const nextTab = tabButton.getAttribute('data-sidebar-tab') === 'skins' ? 'skins' : 'snippets';
+                            const state = getSidebarViewState(sidebar);
+                            if (state.activeTab === nextTab) return;
+
+                            state.activeTab = nextTab;
+                            state.category = '';
+                            state.collapsedCategories = state.collapsedCategories || {};
+
+                            const popover = sidebar.querySelector('.snippets-filter-popover');
+                            if (popover) popover.classList.remove('open');
+                            renderSidebar(sidebar);
+                        });
                     });
 
                     // Action buttons
@@ -3290,7 +4044,7 @@
 
                 // Open sidebar
                 setTimeout(() => sidebar.classList.add('open'), 10);
-                searchInput.focus();
+                if (searchInput) searchInput.focus();
             });
         }
 
@@ -3453,7 +4207,7 @@
                 // Fall back to inserting first available component only
                 const firstCompId = componentIds[0];
                 if (firstCompId && components[firstCompId]) {
-                    let processedCode = processSidebarSnippet(components[firstCompId], skinId);
+                    let processedCode = processSidebarSnippet(getSnippetComponentCode(components[firstCompId]), skinId);
                     if (dynamicSelector) {
                         processedCode = processQuickSnippet(processedCode, currentTextarea);
                     }
@@ -3466,7 +4220,7 @@
             let lastInsertedCompId = null;
 
             for (const compId of componentIds) {
-                const code = components[compId];
+                const code = getSnippetComponentCode(components[compId]);
                 if (!code) continue;
 
                 // Process skin IDs first

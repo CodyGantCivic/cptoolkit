@@ -9,6 +9,7 @@ const categories = {
   "CSS & Design Tools": [
     "mini-ide",
     "custom-css-deployer",
+    "option-set-importer",
     "widget-skin-advanced-style-helper",
     "graphic-link-advanced-style-helper",
     "widget-skin-default-override",
@@ -174,6 +175,14 @@ function openCustomCssManager() {
   });
 }
 
+function isWidgetManagerUrl(url) {
+  try {
+    return /\/DesignCenter\/Widgets(?:\/|$)/i.test(new URL(url || '').pathname);
+  } catch (e) {
+    return false;
+  }
+}
+
 // Toggle tool enabled/disabled state
 async function toggleTool(toolId) {
   const settings = await chrome.storage.local.get(toolId);
@@ -210,8 +219,10 @@ async function loadToolsAndSettings() {
     // Load current settings
     const settings = await chrome.storage.local.get(null);
     
+    const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
     // Generate the UI
-    generateToolsUI(settings);
+    generateToolsUI(settings, activeTab);
   } catch (error) {
     console.error('Failed to load tools configuration:', error);
     document.getElementById('tools-container').innerHTML = '<p style="color: red; font-size: 12px;">Error loading tools.</p>';
@@ -219,7 +230,7 @@ async function loadToolsAndSettings() {
 }
 
 // Generate the tools UI dynamically
-function generateToolsUI(settings) {
+function generateToolsUI(settings, activeTab) {
   const container = document.getElementById('tools-container');
   container.innerHTML = '';
   
@@ -291,6 +302,28 @@ function generateToolsUI(settings) {
           window.close();
         });
         toolDiv.appendChild(manageBtn);
+      }
+
+      if (toolId === 'option-set-importer') {
+        const optionSetBtn = document.createElement('button');
+        const canOpen = isEnabled && activeTab && activeTab.id && isWidgetManagerUrl(activeTab.url);
+        optionSetBtn.className = 'tool-snippets-btn';
+        optionSetBtn.title = canOpen
+          ? 'Open Option Set Importer'
+          : (isEnabled ? 'Open Widget Manager to use Option Set Importer' : 'Enable Option Set Importer first');
+        optionSetBtn.disabled = !canOpen;
+        optionSetBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"></path><path d="M4 12h10"></path><path d="M4 18h7"></path><path d="M18 15v6"></path><path d="M15 18h6"></path></svg>';
+        optionSetBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          if (!canOpen) return;
+          try {
+            await chrome.tabs.sendMessage(activeTab.id, { action: 'openOptionSetImporter' });
+            window.close();
+          } catch (err) {
+            // Content scripts only run on CivicPlus sites and enabled tools.
+          }
+        });
+        toolDiv.appendChild(optionSetBtn);
       }
 
       toolDiv.appendChild(statusSpan);

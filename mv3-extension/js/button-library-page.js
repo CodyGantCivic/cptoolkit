@@ -4,13 +4,22 @@
 
   var CUSTOM_KEY = "cp-customButtonLibrary";
   var BUILTIN_URL = "data/fancy-button-library.json";
+  var library = window.CPToolkitFancyButtonLibrary;
 
   // State
   var builtinLibrary = {};
   var customLibrary = {};
   var darkBgToggles = {};
   var currentView = "grid";
-  var searchQuery = "";
+  var filterState = {
+    query: "",
+    category: "",
+    sourceSite: "",
+    type: "all",
+    sortBy: "name",
+    groupByCategory: false,
+    collapsedCategories: {}
+  };
   var previewCounter = 0;
 
   // ==================== PREVIEW BUILDER ====================
@@ -334,20 +343,51 @@
   }
 
   function formatName(key) {
-    return key.replace(/_/g, " ");
+    return library.formatName(key);
   }
 
-  function matchesSearch(key, template) {
-    if (!searchQuery) return true;
-    var q = searchQuery.toLowerCase();
-    var name = formatName(key).toLowerCase();
-    var btnText = (template.buttonText || "").toLowerCase();
-    return name.indexOf(q) !== -1 || btnText.indexOf(q) !== -1;
+  function buildEntries() {
+    var entries = [];
+
+    Object.keys(customLibrary).forEach(function(key) {
+      entries.push(library.normalizeEntry(key, customLibrary[key], true));
+    });
+
+    Object.keys(builtinLibrary).forEach(function(key) {
+      entries.push(library.normalizeEntry(key, builtinLibrary[key], false));
+    });
+
+    return entries;
+  }
+
+  function getVisibleEntries() {
+    return library.sortEntries(
+      library.filterEntries(buildEntries(), filterState),
+      filterState.sortBy
+    );
+  }
+
+  function saveCustomLibrary(callback) {
+    chrome.storage.local.set({ "cp-customButtonLibrary": customLibrary }, callback);
+  }
+
+  function updateFilterButtonState() {
+    var btn = document.getElementById("btn-filter-buttons");
+    if (!btn) return;
+    var hasFilters =
+      !!filterState.category ||
+      !!filterState.sourceSite ||
+      filterState.type !== "all" ||
+      filterState.sortBy !== "name";
+    btn.classList.toggle("active", hasFilters);
   }
 
   // ==================== CARD BUILDER ====================
 
-  function buildCard(key, template, isCustom) {
+  function buildCard(entry) {
+    var key = entry.key;
+    var template = entry.template;
+    var isCustom = entry.isCustom;
     var card = document.createElement("div");
     card.className = "cp-template-card";
     card.setAttribute("data-key", key);
@@ -395,7 +435,12 @@
         // Persist if custom
         if (isCustom) {
           customLibrary[key].buttonText = cpText.innerHTML;
-          chrome.storage.local.set({ "cp-customButtonLibrary": customLibrary });
+          library.setMetadata(customLibrary[key], {
+            category: library.getCategory(customLibrary[key], true),
+            sourceSite: library.getSourceSite(customLibrary[key]),
+            savedAt: library.getSavedAt(customLibrary[key])
+          });
+          saveCustomLibrary();
         }
       } else {
         // Enter edit mode
@@ -413,16 +458,42 @@
     var info = document.createElement("div");
     info.className = "cp-template-card-info";
 
+    var meta = document.createElement("div");
+    meta.className = "cp-template-card-meta";
+
+    var metaTop = document.createElement("div");
+    metaTop.className = "cp-template-card-meta-top";
+
     var name = document.createElement("span");
     name.className = "cp-template-card-name";
-    name.textContent = formatName(key);
-    name.title = formatName(key);
-    info.appendChild(name);
+    name.textContent = entry.name;
+    name.title = entry.name;
+    metaTop.appendChild(name);
 
     var badge = document.createElement("span");
     badge.className = "cp-template-card-type " + (isCustom ? "custom" : "builtin");
-    badge.textContent = isCustom ? "Saved" : "Built-in";
-    info.appendChild(badge);
+    badge.textContent = entry.typeLabel;
+    metaTop.appendChild(badge);
+
+    meta.appendChild(metaTop);
+
+    var metaPills = document.createElement("div");
+    metaPills.className = "cp-template-card-pills";
+
+    var categoryPill = document.createElement("span");
+    categoryPill.className = "cp-template-card-pill";
+    categoryPill.textContent = entry.category;
+    metaPills.appendChild(categoryPill);
+
+    if (entry.sourceSite) {
+      var sourcePill = document.createElement("span");
+      sourcePill.className = "cp-template-card-pill source";
+      sourcePill.textContent = entry.sourceSite;
+      metaPills.appendChild(sourcePill);
+    }
+
+    meta.appendChild(metaPills);
+    info.appendChild(meta);
 
     // Actions
     var actions = document.createElement("div");
@@ -455,6 +526,16 @@
     actions.appendChild(copyBtn);
 
     if (isCustom) {
+      var detailsBtn = document.createElement("button");
+      detailsBtn.className = "btn-details";
+      detailsBtn.textContent = "Details";
+      detailsBtn.title = "Edit category and source details";
+      detailsBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        openDetailsModal(key);
+      });
+      actions.appendChild(detailsBtn);
+
       var deleteBtn = document.createElement("button");
       deleteBtn.className = "btn-delete";
       deleteBtn.textContent = "Delete";
@@ -463,12 +544,7 @@
         e.stopPropagation();
         if (confirm('Delete "' + formatName(key) + '"?')) {
           delete customLibrary[key];
-          chrome.storage.local.set(
-            { "cp-customButtonLibrary": customLibrary },
-            function () {
-              renderButtons();
-            }
-          );
+          saveCustomLibrary(renderButtons);
         }
       });
       actions.appendChild(deleteBtn);
@@ -482,68 +558,92 @@
 
   // ==================== RENDER ====================
 
+  function createSectionHeader(title, count, collapsible) {
+    var header = document.createElement(collapsible ? "button" : "div");
+    header.className = "section-header" + (collapsible ? " collapsible" : "");
+    header.innerHTML =
+      (collapsible ? '<span class="section-chevron"></span>' : "") +
+      "<h2>" + escapeHtml(title) + "</h2>" +
+      '<span class="section-count">' + count + "</span>";
+    return header;
+  }
+
+  function renderEntrySection(grid, title, entries, options) {
+    if (!entries.length) return;
+
+    var opts = options || {};
+    var section = document.createElement("div");
+    section.className = "section-group";
+
+    var header = createSectionHeader(title, entries.length, !!opts.collapsible);
+    section.appendChild(header);
+
+    var isCollapsed = false;
+    if (opts.collapsible) {
+      var collapsedKey = library.getCollapsedKey(title);
+      isCollapsed = !!filterState.collapsedCategories[collapsedKey];
+      section.classList.toggle("is-collapsed", isCollapsed);
+      header.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
+      header.addEventListener("click", function() {
+        filterState.collapsedCategories[collapsedKey] =
+          !filterState.collapsedCategories[collapsedKey];
+        renderButtons();
+      });
+    }
+
+    var cards = document.createElement("div");
+    cards.className = "section-cards";
+
+    if (!isCollapsed) {
+      entries.forEach(function(entry) {
+        cards.appendChild(buildCard(entry));
+      });
+    }
+
+    section.appendChild(cards);
+    grid.appendChild(section);
+  }
+
   function renderButtons() {
     var grid = document.getElementById("buttons-grid");
     var emptyState = document.getElementById("buttons-empty");
     grid.innerHTML = "";
 
-    var customKeys = Object.keys(customLibrary).filter(function (k) {
-      return matchesSearch(k, customLibrary[k]);
-    });
-    var builtinKeys = Object.keys(builtinLibrary).filter(function (k) {
-      return matchesSearch(k, builtinLibrary[k]);
-    });
+    var entries = getVisibleEntries();
+    renderFilterPopover();
+    updateFilterButtonState();
+    document
+      .getElementById("btn-group-category")
+      .classList.toggle("active", filterState.groupByCategory);
 
-    if (customKeys.length === 0 && builtinKeys.length === 0) {
+    if (entries.length === 0) {
       emptyState.style.display = "block";
       grid.className = "";
       return;
     }
     emptyState.style.display = "none";
-    grid.className = currentView === "grid" ? "view-grid" : "view-list";
+    grid.className =
+      (currentView === "grid" ? "view-grid" : "view-list") +
+      (filterState.groupByCategory ? " grouped-by-category" : "");
 
-    // Custom / Saved buttons section
-    if (customKeys.length > 0) {
-      var customSection = document.createElement("div");
-      customSection.className = "section-group";
-
-      var customHeader = document.createElement("div");
-      customHeader.className = "section-header";
-      customHeader.innerHTML =
-        "<h2>My Saved Buttons</h2>" +
-        '<span class="section-count">' + customKeys.length + "</span>";
-      customSection.appendChild(customHeader);
-
-      var customCards = document.createElement("div");
-      customCards.className = "section-cards";
-      customKeys.forEach(function (key) {
-        customCards.appendChild(buildCard(key, customLibrary[key], true));
+    if (filterState.groupByCategory) {
+      library.groupEntriesByCategory(entries).forEach(function(group) {
+        renderEntrySection(grid, group.category, group.entries, {
+          collapsible: true
+        });
       });
-      customSection.appendChild(customCards);
-      grid.appendChild(customSection);
+    } else {
+      renderEntrySection(
+        grid,
+        "My Saved Buttons",
+        entries.filter(function(entry) { return entry.isCustom; })
+      );
+      renderEntrySection(
+        grid,
+        "Built-in Templates",
+        entries.filter(function(entry) { return !entry.isCustom; })
+      );
     }
-
-    // Built-in templates section
-    if (builtinKeys.length > 0) {
-      var builtinSection = document.createElement("div");
-      builtinSection.className = "section-group";
-
-      var builtinHeader = document.createElement("div");
-      builtinHeader.className = "section-header";
-      builtinHeader.innerHTML =
-        "<h2>Built-in Templates</h2>" +
-        '<span class="section-count">' + builtinKeys.length + "</span>";
-      builtinSection.appendChild(builtinHeader);
-
-      var builtinCards = document.createElement("div");
-      builtinCards.className = "section-cards";
-      builtinKeys.forEach(function (key) {
-        builtinCards.appendChild(buildCard(key, builtinLibrary[key], false));
-      });
-      builtinSection.appendChild(builtinCards);
-      grid.appendChild(builtinSection);
-    }
-
     scalePreviewsToFit();
   }
 
@@ -566,6 +666,216 @@
           inner.style.transformOrigin = "center center";
         }
       });
+    });
+  }
+
+  function renderSelectOptions(select, options, selectedValue, allLabel) {
+    select.innerHTML = "";
+
+    var all = document.createElement("option");
+    all.value = "";
+    all.textContent = allLabel;
+    select.appendChild(all);
+
+    options.forEach(function(option) {
+      var opt = document.createElement("option");
+      opt.value = option;
+      opt.textContent = option;
+      if (option === selectedValue) opt.selected = true;
+      select.appendChild(opt);
+    });
+
+    if (selectedValue) select.value = selectedValue;
+  }
+
+  function renderFilterPopover() {
+    var popover = document.getElementById("button-library-filter-popover");
+    if (!popover) return;
+
+    var wasOpen = popover.classList.contains("open");
+    var entries = buildEntries();
+    var categories = library.getCategoryOptions(entries);
+    var sources = library.getSourceOptions(entries);
+
+    popover.innerHTML =
+      '<div class="filter-popover-row">' +
+        '<label for="filter-button-type">Type</label>' +
+        '<select id="filter-button-type">' +
+          '<option value="all">All buttons</option>' +
+          '<option value="custom">Saved only</option>' +
+          '<option value="builtin">Built-in only</option>' +
+        '</select>' +
+      "</div>" +
+      '<div class="filter-popover-row">' +
+        '<label for="filter-button-category">Category</label>' +
+        '<select id="filter-button-category"></select>' +
+      "</div>" +
+      '<div class="filter-popover-row">' +
+        '<label for="filter-button-source">Source site</label>' +
+        '<select id="filter-button-source"></select>' +
+      "</div>" +
+      '<div class="filter-popover-row">' +
+        '<label for="filter-button-sort">Sort</label>' +
+        '<select id="filter-button-sort">' +
+          '<option value="name">Name A-Z</option>' +
+          '<option value="category">Category</option>' +
+          '<option value="type">Type</option>' +
+          '<option value="newest">Newest saved</option>' +
+          '<option value="updated">Recently updated</option>' +
+        '</select>' +
+      "</div>" +
+      '<label class="filter-popover-check">' +
+        '<input id="filter-button-group" type="checkbox">' +
+        "<span>Group by category</span>" +
+      "</label>" +
+      '<div class="filter-popover-actions">' +
+        '<button id="filter-button-reset" type="button">Reset</button>' +
+      "</div>";
+
+    if (wasOpen) popover.classList.add("open");
+
+    var typeSelect = popover.querySelector("#filter-button-type");
+    var categorySelect = popover.querySelector("#filter-button-category");
+    var sourceSelect = popover.querySelector("#filter-button-source");
+    var sortSelect = popover.querySelector("#filter-button-sort");
+    var groupCheck = popover.querySelector("#filter-button-group");
+
+    typeSelect.value = filterState.type;
+    renderSelectOptions(categorySelect, categories, filterState.category, "All categories");
+    renderSelectOptions(sourceSelect, sources, filterState.sourceSite, "All source sites");
+    sortSelect.value = filterState.sortBy;
+    groupCheck.checked = !!filterState.groupByCategory;
+
+    typeSelect.addEventListener("change", function() {
+      filterState.type = typeSelect.value;
+      renderButtons();
+    });
+    categorySelect.addEventListener("change", function() {
+      filterState.category = categorySelect.value;
+      renderButtons();
+    });
+    sourceSelect.addEventListener("change", function() {
+      filterState.sourceSite = sourceSelect.value;
+      renderButtons();
+    });
+    sortSelect.addEventListener("change", function() {
+      filterState.sortBy = sortSelect.value;
+      renderButtons();
+    });
+    groupCheck.addEventListener("change", function() {
+      filterState.groupByCategory = groupCheck.checked;
+      renderButtons();
+    });
+    popover.querySelector("#filter-button-reset").addEventListener("click", function() {
+      filterState.category = "";
+      filterState.sourceSite = "";
+      filterState.type = "all";
+      filterState.sortBy = "name";
+      filterState.groupByCategory = false;
+      filterState.collapsedCategories = {};
+      renderButtons();
+    });
+  }
+
+  function openDetailsModal(key) {
+    var template = customLibrary[key];
+    if (!template) return;
+
+    var existing = document.getElementById("button-details-modal-overlay");
+    if (existing) existing.remove();
+
+    var entries = buildEntries().filter(function(entry) {
+      return entry.isCustom;
+    });
+    var categories = library.getCategoryOptions(entries);
+    var currentCategory = library.getCategory(template, true);
+    if (categories.indexOf(currentCategory) === -1) categories.push(currentCategory);
+    if (categories.length === 0) categories.push(library.DEFAULT_CATEGORY);
+    categories = library.getCategoryOptions(categories.map(function(category) {
+      return { category: category };
+    }));
+
+    var overlay = document.createElement("div");
+    overlay.id = "button-details-modal-overlay";
+    overlay.innerHTML =
+      '<div id="button-details-modal">' +
+        '<div id="button-details-modal-header">' +
+          '<h3>Edit Button Details</h3>' +
+          '<button id="button-details-close" type="button">&times;</button>' +
+        "</div>" +
+        '<div id="button-details-modal-body">' +
+          '<label for="button-details-category">Category</label>' +
+          '<select id="button-details-category"></select>' +
+          '<input id="button-details-custom-category" type="text" placeholder="New category name">' +
+          '<label for="button-details-source">Source site</label>' +
+          '<input id="button-details-source" type="text" placeholder="e.g. cityname.gov">' +
+        "</div>" +
+        '<div id="button-details-modal-footer">' +
+          '<button id="button-details-cancel" class="modal-btn secondary" type="button">Cancel</button>' +
+          '<button id="button-details-save" class="modal-btn primary" type="button">Save</button>' +
+        "</div>" +
+      "</div>";
+
+    document.body.appendChild(overlay);
+
+    var categorySelect = overlay.querySelector("#button-details-category");
+    var customCategory = overlay.querySelector("#button-details-custom-category");
+    var sourceInput = overlay.querySelector("#button-details-source");
+
+    categories.forEach(function(category) {
+      var opt = document.createElement("option");
+      opt.value = category;
+      opt.textContent = category;
+      categorySelect.appendChild(opt);
+    });
+    var customOpt = document.createElement("option");
+    customOpt.value = "__custom__";
+    customOpt.textContent = "Create new category...";
+    categorySelect.appendChild(customOpt);
+
+    categorySelect.value = currentCategory;
+    sourceInput.value = library.getSourceSite(template);
+
+    function syncCustomInput() {
+      customCategory.style.display =
+        categorySelect.value === "__custom__" ? "block" : "none";
+      if (categorySelect.value === "__custom__") customCategory.focus();
+    }
+
+    function closeDetails() {
+      overlay.remove();
+    }
+
+    function saveDetails() {
+      var category =
+        categorySelect.value === "__custom__"
+          ? customCategory.value.trim()
+          : categorySelect.value;
+      if (!category) {
+        customCategory.style.borderColor = "#c62828";
+        customCategory.focus();
+        return;
+      }
+
+      library.setMetadata(template, {
+        category: category,
+        sourceSite: sourceInput.value.trim(),
+        savedAt: library.getSavedAt(template)
+      });
+      customLibrary[key] = template;
+      saveCustomLibrary(function() {
+        closeDetails();
+        renderButtons();
+      });
+    }
+
+    syncCustomInput();
+    categorySelect.addEventListener("change", syncCustomInput);
+    overlay.querySelector("#button-details-close").addEventListener("click", closeDetails);
+    overlay.querySelector("#button-details-cancel").addEventListener("click", closeDetails);
+    overlay.querySelector("#button-details-save").addEventListener("click", saveDetails);
+    overlay.addEventListener("click", function(e) {
+      if (e.target === overlay) closeDetails();
     });
   }
 
@@ -620,13 +930,10 @@
       newDelete.addEventListener("click", function () {
         if (confirm('Delete "' + formatName(key) + '"?')) {
           delete customLibrary[key];
-          chrome.storage.local.set(
-            { "cp-customButtonLibrary": customLibrary },
-            function () {
-              closeJsonModal();
-              renderButtons();
-            }
-          );
+          saveCustomLibrary(function () {
+            closeJsonModal();
+            renderButtons();
+          });
         }
       });
     }
@@ -695,14 +1002,15 @@
 
         if (confirm(msg)) {
           keys.forEach(function (k) {
-            customLibrary[k] = buttons[k];
+            var button = buttons[k];
+            library.setMetadata(button, {
+              category: library.getCategory(button, true),
+              sourceSite: library.getSourceSite(button),
+              savedAt: library.getSavedAt(button)
+            });
+            customLibrary[k] = button;
           });
-          chrome.storage.local.set(
-            { "cp-customButtonLibrary": customLibrary },
-            function () {
-              renderButtons();
-            }
-          );
+          saveCustomLibrary(renderButtons);
         }
       };
       reader.readAsText(file);
@@ -722,7 +1030,7 @@
 
     var exportData = {
       type: "cp-toolkit-fancy-button-library",
-      version: 1,
+      version: 2,
       buttons: customLibrary,
     };
     var json = JSON.stringify(exportData, null, 2);
@@ -799,10 +1107,35 @@
     searchInput.addEventListener("input", function () {
       clearTimeout(searchTimer);
       searchTimer = setTimeout(function () {
-        searchQuery = searchInput.value.trim();
+        filterState.query = searchInput.value.trim();
         renderButtons();
       }, 200);
     });
+
+    document
+      .getElementById("btn-filter-buttons")
+      .addEventListener("click", function(e) {
+        e.stopPropagation();
+        document
+          .getElementById("button-library-filter-popover")
+          .classList.toggle("open");
+      });
+
+    document
+      .getElementById("btn-group-category")
+      .addEventListener("click", function() {
+        filterState.groupByCategory = !filterState.groupByCategory;
+        renderButtons();
+      });
+
+    document.addEventListener("click", function(e) {
+      var wrap = document.getElementById("button-library-search-wrap");
+      var popover = document.getElementById("button-library-filter-popover");
+      if (!wrap || !popover) return;
+      if (!wrap.contains(e.target)) popover.classList.remove("open");
+    });
+
+    renderFilterPopover();
   }
 
   // ==================== INIT ====================
