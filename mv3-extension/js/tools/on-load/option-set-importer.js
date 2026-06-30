@@ -56,6 +56,26 @@
       "buttonHoverImageClear",
       "buttonImageClear"
     ];
+    var IMAGE_SAVE_FIELDS = [
+      "HeaderImage",
+      "HeaderHoverImage",
+      "FooterImage",
+      "ViewAllLinkImage",
+      "NotifyMeLinkImage",
+      "RssImage",
+      "PublicSubmitImage",
+      "ButtonImage",
+      "ButtonHoverImage"
+    ];
+    var imageSaveFieldLookup = {};
+
+    for (var imageFieldIndex = 1; imageFieldIndex <= 16; imageFieldIndex++) {
+      IMAGE_SAVE_FIELDS.push("Feed" + imageFieldIndex + "Image");
+    }
+
+    IMAGE_SAVE_FIELDS.forEach(function(field) {
+      imageSaveFieldLookup[field.toLowerCase()] = true;
+    });
 
     function isWidgetManagerPage() {
       return /\/designcenter\/widgets(?:\/|$)/i.test(window.location.pathname);
@@ -177,6 +197,26 @@
       return inner.split("CPStringSplitter").filter(function(part) {
         return part.indexOf("-CPSplitter-") !== -1;
       }).length;
+    }
+
+    function clearPortableImageFields(saveJson) {
+      var normalized = normalizeSaveJson(saveJson);
+      var inner = getSaveJsonInner(normalized);
+      if (!inner) return normalized;
+
+      var changed = false;
+      var sanitized = inner.split("CPStringSplitter").map(function(part) {
+        var splitterIndex = part.indexOf("-CPSplitter-");
+        if (splitterIndex === -1) return part;
+
+        var fieldName = part.slice(0, splitterIndex);
+        if (!imageSaveFieldLookup[fieldName.toLowerCase()]) return part;
+
+        changed = true;
+        return fieldName + "-CPSplitter-";
+      }).join("CPStringSplitter");
+
+      return changed ? JSON.stringify({ saveJson: sanitized }) : normalized;
     }
 
     function normalizeOptionSetRecord(record, fallbackKey) {
@@ -447,18 +487,19 @@
       var moduleWidgetID = String(record.moduleWidgetID || "");
       var defaultOptionSetID = getDefaultOptionSetID(moduleWidgetID) || record.defaultOptionSetID;
       var skinID = getCurrentSkinID() || record.sourceSkinID || "";
+      var saveJson = clearPortableImageFields(record.saveJson);
       var data = {
         defaultOptionSetID: defaultOptionSetID,
         pageID: "",
         moduleWidgetID: moduleWidgetID,
         optionSetName: optionSetName,
         skinID: skinID,
-        saveJson: normalizeSaveJson(record.saveJson),
+        saveJson: saveJson,
         optionSetID: optionSetID
       };
 
       CLEAR_FIELDS.forEach(function(field) {
-        data[field] = "";
+        data[field] = "true";
       });
 
       await postForm("/DesignCenter/Widgets/Save", data);
