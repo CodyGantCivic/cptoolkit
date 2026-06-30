@@ -69,6 +69,11 @@
       return String(value || "").replace(/\s+/g, " ").trim();
     }
 
+    function normalizeNumericID(value) {
+      var text = String(value == null ? "" : value).trim();
+      return /^\d+$/.test(text) ? text : "";
+    }
+
     function normalizeComparableName(value) {
       return normalizeText(value).replace(/\s*\(Default\)\s*$/i, "").toLowerCase();
     }
@@ -177,7 +182,7 @@
     function normalizeOptionSetRecord(record, fallbackKey) {
       var source = isPlainObject(record) ? record : {};
       var name = normalizeText(source.name || source.optionSetName || fallbackKey) || "Option Set";
-      var moduleWidgetID = String(source.moduleWidgetID || "");
+      var moduleWidgetID = normalizeNumericID(source.moduleWidgetID);
       var widgetName = normalizeText(source.widgetName) || (moduleWidgetID ? "Widget " + moduleWidgetID : "Widget");
       var now = new Date().toISOString();
 
@@ -188,12 +193,12 @@
         moduleWidgetID: moduleWidgetID,
         widgetName: widgetName,
         category: normalizeText(source.category) || widgetName,
-        defaultOptionSetID: source.defaultOptionSetID == null ? "" : String(source.defaultOptionSetID),
+        defaultOptionSetID: normalizeNumericID(source.defaultOptionSetID),
         saveJson: normalizeSaveJson(source.saveJson),
         sourceSite: normalizeText(source.sourceSite || source.site || window.location.hostname),
         sourceUrl: String(source.sourceUrl || ""),
-        sourceOptionSetID: source.sourceOptionSetID == null ? "" : String(source.sourceOptionSetID),
-        sourceSkinID: source.sourceSkinID == null ? "" : String(source.sourceSkinID),
+        sourceOptionSetID: normalizeNumericID(source.sourceOptionSetID),
+        sourceSkinID: normalizeNumericID(source.sourceSkinID),
         notes: normalizeText(source.notes),
         savedAt: source.savedAt || source.createdAt || now,
         updatedAt: source.updatedAt || ""

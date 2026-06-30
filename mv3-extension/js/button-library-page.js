@@ -293,7 +293,9 @@
     // Rewrite .text references to .cpText (CMS inner element)
     css = css.replace(/\.text(?=[^S\w-])/g, ".cpText");
 
-    var buttonText = template.previewText || template.buttonText || "Button";
+    var buttonText = library.sanitizeButtonTextHtml(
+      template.previewText || template.buttonText || "Button"
+    );
 
     // Collect custom fonts and load via Google Fonts
     var SYSTEM_FONTS = ["arial", "helvetica", "verdana", "georgia", "times new roman", "courier new", "trebuchet ms", "tahoma", "sans-serif", "serif", "monospace"];
@@ -301,9 +303,9 @@
     function collectFont(prefix) {
       var ff = v(prefix + "FontFamily");
       if (ff && SYSTEM_FONTS.indexOf(ff.toLowerCase()) === -1) {
-        var weight = v(prefix + "FontVariant") || v(prefix + "FontWeight") || "400";
-        if (weight === "normal") weight = "400";
-        else if (weight === "bold") weight = "700";
+        var weight = library.sanitizeFontWeight(
+          v(prefix + "FontVariant") || v(prefix + "FontWeight") || "400"
+        );
         fontsNeeded[ff] = fontsNeeded[ff] || {};
         fontsNeeded[ff][weight] = true;
       }
@@ -329,7 +331,7 @@
       '<span><span><span class="cpText">' +
       buttonText +
       "</span></span></span></a></div>" +
-      "<style>" + css + "</style>";
+      "<style>" + library.sanitizeStyleText(css) + "</style>";
 
     return html;
   }
@@ -431,10 +433,12 @@
         editToggle.classList.remove("active");
         cpText.contentEditable = "false";
         // Update the template's buttonText
-        template.buttonText = cpText.innerHTML;
+        var cleanText = library.sanitizeButtonTextHtml(cpText.innerHTML);
+        cpText.innerHTML = cleanText;
+        template.buttonText = cleanText;
         // Persist if custom
         if (isCustom) {
-          customLibrary[key].buttonText = cpText.innerHTML;
+          customLibrary[key].buttonText = cleanText;
           library.setMetadata(customLibrary[key], {
             category: library.getCategory(customLibrary[key], true),
             sourceSite: library.getSourceSite(customLibrary[key]),

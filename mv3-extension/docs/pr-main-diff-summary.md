@@ -37,6 +37,8 @@ The toolkit already had several one-off import/export flows, but similar reusabl
 - Option Set imports refuse exact-name matches under the same widget, so existing option sets are not silently overwritten.
 - Option Set saves read the active/default IDs from Widget Manager DOM state instead of using the old hardcoded default option set ID pattern.
 - Fancy Button library metadata lives under `cpToolkit` and is stripped before posting templates back to the CMS.
+- Fancy Button library previews sanitize imported button text HTML, prevent `</style>` breakout from imported CSS, and restrict generated Google Font weights to numeric values.
+- Saved skin source links are normalized to HTTP(S) URLs before rendering, so imported library JSON cannot create unsafe source links.
 - Snippet and skin exports are versioned and still tolerate older library payloads.
 
 ### Validation
@@ -86,11 +88,13 @@ Manual QA before ready-for-review:
   - Adds shared storage keys and normalizers for user snippets, copied skins, component snippets, and manual ordering.
   - Adds versioned import/export payload support for snippets and saved skins.
   - Centralizes backward-compatible normalization for older stored/exported shapes.
+  - Normalizes saved skin source URLs to HTTP(S) before they can be rendered as links.
 - `js/shared/snippet-library-view.js`
   - Adds shared query, filter, sort, category option, and category grouping helpers for snippets and saved skins.
 - `js/shared/fancy-button-library.js`
   - Adds shared Fancy Button normalization, filtering, sorting, category/source metadata helpers, export parsing, and metadata stripping.
   - Keeps CMS fields like `categoryID` separate from toolkit library metadata.
+  - Sanitizes preview-only button text HTML and style text used by imported/saved library previews.
 
 ### CSS Snippets and Saved Widget Skins
 

@@ -19,6 +19,85 @@
     return normalizeText(value).toLowerCase();
   }
 
+  function sanitizeStyleText(value) {
+    return String(value || "")
+      .replace(/\u0000/g, "")
+      .replace(/<\/style/gi, "<\\/style");
+  }
+
+  function sanitizeFontWeight(value) {
+    var normalized = normalizeLower(value);
+    if (normalized === "normal") return "400";
+    if (normalized === "bold") return "700";
+    return /^\d{1,4}$/.test(normalized) ? normalized : "400";
+  }
+
+  function sanitizeButtonTextHtml(value) {
+    var source = String(value == null ? "" : value);
+    if (!source) return "";
+    if (!root.document) return normalizeText(source);
+
+    var template = root.document.createElement("template");
+    template.innerHTML = source;
+
+    var output = root.document.createElement("div");
+    var allowedTags = {
+      B: true,
+      BR: true,
+      EM: true,
+      I: true,
+      SPAN: true,
+      STRONG: true,
+      SUB: true,
+      SUP: true,
+      U: true
+    };
+    var blockedTags = {
+      EMBED: true,
+      IFRAME: true,
+      LINK: true,
+      META: true,
+      OBJECT: true,
+      SCRIPT: true,
+      STYLE: true
+    };
+
+    function copySafeNode(node, parent) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        parent.appendChild(root.document.createTextNode(node.nodeValue || ""));
+        return;
+      }
+
+      if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+      var tagName = node.tagName.toUpperCase();
+      if (blockedTags[tagName]) return;
+
+      var target = parent;
+      if (allowedTags[tagName]) {
+        target = root.document.createElement(tagName.toLowerCase());
+        if (tagName === "SPAN" && node.classList) {
+          var safeClasses = Array.prototype.slice.call(node.classList).filter(function(className) {
+            return /^textStyle\d+$/.test(className);
+          });
+          if (safeClasses.length) target.setAttribute("class", safeClasses.join(" "));
+        }
+        parent.appendChild(target);
+      }
+
+      if (tagName === "BR") return;
+      Array.prototype.slice.call(node.childNodes).forEach(function(child) {
+        copySafeNode(child, target);
+      });
+    }
+
+    Array.prototype.slice.call(template.content.childNodes).forEach(function(child) {
+      copySafeNode(child, output);
+    });
+
+    return output.innerHTML;
+  }
+
   function formatName(key) {
     return normalizeText(key).replace(/_/g, " ");
   }
@@ -291,6 +370,9 @@
     formatName: formatName,
     makeStorageKey: makeStorageKey,
     normalizeText: normalizeText,
+    sanitizeButtonTextHtml: sanitizeButtonTextHtml,
+    sanitizeFontWeight: sanitizeFontWeight,
+    sanitizeStyleText: sanitizeStyleText,
     getCategory: getCategory,
     getSourceSite: getSourceSite,
     getSavedAt: getSavedAt,

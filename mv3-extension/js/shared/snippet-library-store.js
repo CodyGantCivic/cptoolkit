@@ -275,6 +275,18 @@
     }
   }
 
+  function normalizeSourceUrl(value) {
+    var raw = String(value || "").trim();
+    if (!raw) return "";
+
+    try {
+      var parsed = new URL(raw);
+      return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.href : "";
+    } catch (err) {
+      return "";
+    }
+  }
+
   function normalizeSavedSkin(rawSkin, fallbackKey) {
     var source = isPlainObject(rawSkin) ? rawSkin : {};
     var normalized = {};
@@ -290,8 +302,8 @@
     normalized.description = normalizeText(source.description);
     normalized.sourceSkinName = normalizeText(source.sourceSkinName);
     normalized.sourceSkinID = source.sourceSkinID;
-    normalized.sourceUrl = String(source.sourceUrl || "");
-    normalized.sourceSite = normalizeText(source.sourceSite) || normalizeSourceSite(source.sourceUrl);
+    normalized.sourceUrl = normalizeSourceUrl(source.sourceUrl);
+    normalized.sourceSite = normalizeText(source.sourceSite) || normalizeSourceSite(normalized.sourceUrl);
     normalized.savedAt = source.savedAt || source.createdAt || "";
     normalized.updatedAt = source.updatedAt || "";
     normalized.version = source.version || "1.1";

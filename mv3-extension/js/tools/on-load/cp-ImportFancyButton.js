@@ -449,6 +449,7 @@
               buttonText = previewTextOverride;
             }
           }
+          buttonText = buttonLibraryUtils.sanitizeButtonTextHtml(buttonText);
 
           // Collect custom fonts and load via Google Fonts
           var SYSTEM_FONTS = [
@@ -468,10 +469,9 @@
           function collectFont(prefix) {
             var ff = v(prefix + "FontFamily");
             if (ff && SYSTEM_FONTS.indexOf(ff.toLowerCase()) === -1) {
-              var weight =
-                v(prefix + "FontVariant") || v(prefix + "FontWeight") || "400";
-              if (weight === "normal") weight = "400";
-              else if (weight === "bold") weight = "700";
+              var weight = buttonLibraryUtils.sanitizeFontWeight(
+                v(prefix + "FontVariant") || v(prefix + "FontWeight") || "400",
+              );
               fontsNeeded[ff] = fontsNeeded[ff] || {};
               fontsNeeded[ff][weight] = true;
             }
@@ -505,7 +505,7 @@
             buttonText +
             "</span></span></span></a></div>" +
             "<style>" +
-            css +
+            buttonLibraryUtils.sanitizeStyleText(css) +
             "</style>";
 
           return html;
@@ -1535,11 +1535,13 @@
                 editBtn.classList.remove("active");
                 cpText.contentEditable = "false";
                 // Update the template's buttonText
-                template.buttonText = cpText.innerHTML;
+                var cleanText = buttonLibraryUtils.sanitizeButtonTextHtml(cpText.innerHTML);
+                cpText.innerHTML = cleanText;
+                template.buttonText = cleanText;
                 // Persist if custom
                 if (isCustom) {
                   var rawKey = key.replace(/^custom:/, "");
-                  customButtonLibrary[rawKey].buttonText = cpText.innerHTML;
+                  customButtonLibrary[rawKey].buttonText = cleanText;
                   buttonLibraryUtils.setMetadata(customButtonLibrary[rawKey], {
                     category: buttonLibraryUtils.getCategory(
                       customButtonLibrary[rawKey],
