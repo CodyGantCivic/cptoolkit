@@ -56,6 +56,31 @@
       "buttonHoverImageClear",
       "buttonImageClear"
     ];
+    var CMS_CLEAR_FIELDS = [
+      "clearHeaderImage",
+      "clearFooterImage",
+      "clearViewAllLinkImage",
+      "clearNotifyMeLinkImage",
+      "clearRssLinkImage",
+      "clearFeed1Image",
+      "clearFeed2Image",
+      "clearFeed3Image",
+      "clearFeed4Image",
+      "clearFeed5Image",
+      "clearFeed6Image",
+      "clearFeed7Image",
+      "clearFeed8Image",
+      "clearFeed9Image",
+      "clearFeed10Image",
+      "clearFeed11Image",
+      "clearFeed12Image",
+      "clearFeed13Image",
+      "clearFeed14Image",
+      "clearFeed15Image",
+      "clearFeed16Image",
+      "clearButtonHoverImage",
+      "clearButtonImage"
+    ];
     var IMAGE_SAVE_FIELDS = [
       "HeaderImage",
       "HeaderHoverImage",
@@ -205,16 +230,34 @@
       if (!inner) return normalized;
 
       var changed = false;
-      var sanitized = inner.split("CPStringSplitter").map(function(part) {
+      var seen = {};
+      var parts = [];
+
+      inner.split("CPStringSplitter").forEach(function(part) {
         var splitterIndex = part.indexOf("-CPSplitter-");
-        if (splitterIndex === -1) return part;
+        if (splitterIndex === -1) return;
 
         var fieldName = part.slice(0, splitterIndex);
-        if (!imageSaveFieldLookup[fieldName.toLowerCase()]) return part;
+        var lowerFieldName = fieldName.toLowerCase();
+        seen[lowerFieldName] = true;
+
+        if (!imageSaveFieldLookup[lowerFieldName]) {
+          parts.push(part);
+          return;
+        }
 
         changed = true;
-        return fieldName + "-CPSplitter-";
-      }).join("CPStringSplitter");
+        parts.push(fieldName + "-CPSplitter-");
+      });
+
+      IMAGE_SAVE_FIELDS.forEach(function(fieldName) {
+        var lowerFieldName = fieldName.toLowerCase();
+        if (seen[lowerFieldName]) return;
+        changed = true;
+        parts.push(fieldName + "-CPSplitter-");
+      });
+
+      var sanitized = parts.length ? parts.join("CPStringSplitter") + "CPStringSplitter" : inner;
 
       return changed ? JSON.stringify({ saveJson: sanitized }) : normalized;
     }
@@ -499,6 +542,10 @@
       };
 
       CLEAR_FIELDS.forEach(function(field) {
+        data[field] = "true";
+      });
+
+      CMS_CLEAR_FIELDS.forEach(function(field) {
         data[field] = "true";
       });
 

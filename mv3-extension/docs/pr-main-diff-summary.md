@@ -36,7 +36,7 @@ The toolkit already had several one-off import/export flows, but similar reusabl
 - Option Set imports call `/DesignCenter/OptionSet/Add` first and then save to the returned option set ID. The importer does not guess the next ID.
 - Option Set imports refuse exact-name matches under the same widget, so existing option sets are not silently overwritten.
 - Option Set saves read the active/default IDs from Widget Manager DOM state instead of using the old hardcoded default option set ID pattern.
-- Option Set imports clear CMS image-reference fields and preserve text/settings, avoiding stale or site-specific images being inherited by newly created option sets.
+- Option Set imports clear CMS image-reference fields, including Widget Manager's hidden `clear*Image` fields, and preserve text/settings, avoiding stale or site-specific images being inherited by newly created option sets.
 - Fancy Button library metadata lives under `cpToolkit` and is stripped before posting templates back to the CMS.
 - Fancy Button library previews sanitize imported button text HTML, prevent `</style>` breakout from imported CSS, and restrict generated Google Font weights to numeric values.
 - Saved skin source links are normalized to HTTP(S) URLs before rendering, so imported library JSON cannot create unsafe source links.
@@ -138,7 +138,7 @@ Manual QA before ready-for-review:
   - Saves the currently selected option set by serializing Widget Manager `.update[name]` fields into the CMS `saveJson` splitter payload.
   - Groups saved records by category, defaulting the category to the widget type name.
   - Imports by creating a new option set with `/DesignCenter/OptionSet/Add`, then posting saved settings to `/DesignCenter/Widgets/Save`.
-  - Clears imported image-reference fields while preserving saved text values, so portable imports do not inherit default or unrelated widget images.
+  - Clears imported image-reference fields through blank `saveJson` image keys and Widget Manager clear flags while preserving saved text values, so portable imports do not inherit default or unrelated widget images.
   - Blocks exact-name matches for the same widget and supports JSON import/export of the local option set library.
 - `data/on-load-tools.json`
   - Registers `option-set-importer` with help text describing Widget Manager-only usage and non-overwrite behavior.
