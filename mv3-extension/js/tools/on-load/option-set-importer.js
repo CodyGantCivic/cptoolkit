@@ -124,9 +124,12 @@
     }
 
     function escapeHtml(value) {
-      var div = document.createElement("div");
-      div.textContent = value == null ? "" : String(value);
-      return div.innerHTML;
+      return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
     }
 
     function slugify(value, fallback) {
@@ -395,8 +398,33 @@
       }) || null;
     }
 
+    function getCurrentUpdateFieldScope() {
+      var forms = Array.prototype.slice.call(document.querySelectorAll("form")).filter(function(form) {
+        return !!form.querySelector(".update[name]");
+      });
+
+      if (!forms.length) return document;
+      if (forms.length === 1) return forms[0];
+
+      var visibleForms = forms.filter(function(form) {
+        return !!(form.offsetWidth || form.offsetHeight || form.getClientRects().length);
+      });
+
+      if (visibleForms.length === 1) return visibleForms[0];
+
+      var focusedForm = document.activeElement && document.activeElement.closest ? document.activeElement.closest("form") : null;
+      if (focusedForm && focusedForm.querySelector(".update[name]")) return focusedForm;
+
+      var candidates = visibleForms.length ? visibleForms : forms;
+      candidates.sort(function(a, b) {
+        return b.querySelectorAll(".update[name]").length - a.querySelectorAll(".update[name]").length;
+      });
+      return candidates[0];
+    }
+
     function buildSaveJsonFromCurrentForm() {
-      var fields = Array.prototype.slice.call(document.querySelectorAll(".update[name]"));
+      var scope = getCurrentUpdateFieldScope();
+      var fields = Array.prototype.slice.call(scope.querySelectorAll(".update[name]"));
       var names = [];
       var groups = {};
 
@@ -570,7 +598,12 @@
       }
 
       var optionSetID = await createOptionSet(name, normalized.moduleWidgetID);
-      await saveOptionSet(normalized, optionSetID, name);
+      try {
+        await saveOptionSet(normalized, optionSetID, name);
+      } catch (err) {
+        err.createdOptionSetID = optionSetID;
+        throw err;
+      }
       return optionSetID;
     }
 
@@ -665,6 +698,7 @@
       ].join("");
 
       document.body.appendChild(backdrop);
+      var backdropPointerStartedOnBackdrop = false;
 
       function renderAll() {
         renderSavePanel(backdrop, active, library);
@@ -676,8 +710,13 @@
         backdrop.remove();
       });
 
+      backdrop.addEventListener("mousedown", function(e) {
+        backdropPointerStartedOnBackdrop = e.target === backdrop;
+      });
+
       backdrop.addEventListener("click", function(e) {
-        if (e.target === backdrop) backdrop.remove();
+        if (e.target === backdrop && backdropPointerStartedOnBackdrop) backdrop.remove();
+        backdropPointerStartedOnBackdrop = false;
       });
 
       backdrop.querySelectorAll(".cp-os-tab").forEach(function(tab) {
@@ -848,6 +887,10 @@
             status.textContent = 'Imported as optionSetID ' + newID + ". Reload Widget Manager to see it in the sidebar.";
           } catch (err) {
             status.className = "cp-os-status error";
+            if (err && err.createdOptionSetID) {
+              status.textContent = "Created optionSetID " + err.createdOptionSetID + ", but saving settings failed: " + (err.message || String(err)) + " Reload Widget Manager before trying again.";
+              return;
+            }
             status.textContent = err.message || String(err);
             button.disabled = false;
           }
@@ -933,7 +976,7 @@
         try {
           var text = await file.text();
           var parsed = JSON.parse(text);
-          var incoming = normalizeLibrary(parsed.type === EXPORT_TYPE ? parsed : parsed.optionSets ? parsed : parsed);
+          var incoming = normalizeLibrary(parsed);
           var keys = Object.keys(incoming);
           if (!keys.length) {
             throw new Error("No option sets found in that file.");

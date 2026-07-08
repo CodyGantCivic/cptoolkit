@@ -953,11 +953,17 @@
       }
     }
 
+    var overlayPointerStartedOnBackdrop = false;
+
     closeButton.addEventListener("click", closeModal);
     closeSecondary.addEventListener("click", closeModal);
     closePrimary.addEventListener("click", closeModal);
+    overlay.addEventListener("mousedown", function(event) {
+      overlayPointerStartedOnBackdrop = event.target === overlay;
+    });
     overlay.addEventListener("click", function(event) {
-      if (event.target === overlay) closeModal();
+      if (event.target === overlay && overlayPointerStartedOnBackdrop) closeModal();
+      overlayPointerStartedOnBackdrop = false;
     });
     addButton.addEventListener("click", addCategoryFromInputs);
     if (autoCategorizeButton) {

@@ -451,49 +451,8 @@
           }
           buttonText = buttonLibraryUtils.sanitizeButtonTextHtml(buttonText);
 
-          // Collect custom fonts and load via Google Fonts
-          var SYSTEM_FONTS = [
-            "arial",
-            "helvetica",
-            "verdana",
-            "georgia",
-            "times new roman",
-            "courier new",
-            "trebuchet ms",
-            "tahoma",
-            "sans-serif",
-            "serif",
-            "monospace",
-          ];
-          var fontsNeeded = {};
-          function collectFont(prefix) {
-            var ff = v(prefix + "FontFamily");
-            if (ff && SYSTEM_FONTS.indexOf(ff.toLowerCase()) === -1) {
-              var weight = buttonLibraryUtils.sanitizeFontWeight(
-                v(prefix + "FontVariant") || v(prefix + "FontWeight") || "400",
-              );
-              fontsNeeded[ff] = fontsNeeded[ff] || {};
-              fontsNeeded[ff][weight] = true;
-            }
-          }
-          collectFont("fancyButtonNormalText");
-          Object.keys(allTextStyles).forEach(function (num) {
-            collectFont("fancyButton" + num + "NormalText");
-          });
+          // Keep extension-rendered previews free of remote stylesheet loads.
           var fontImport = "";
-          var fontFamilies = Object.keys(fontsNeeded);
-          if (fontFamilies.length > 0) {
-            var params = fontFamilies
-              .map(function (ff) {
-                var weights = Object.keys(fontsNeeded[ff]).join(";");
-                return "family=" + encodeURIComponent(ff) + ":wght@" + weights;
-              })
-              .join("&");
-            fontImport =
-              '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?' +
-              params +
-              '&display=swap">';
-          }
 
           var html =
             fontImport +
@@ -1239,9 +1198,12 @@
           var templateSource = {};
 
           function escapeTemplateHtml(value) {
-            var div = document.createElement("div");
-            div.textContent = value || "";
-            return div.innerHTML;
+            return String(value == null ? "" : value)
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#39;");
           }
 
           function buildTemplateEntries() {
@@ -1709,7 +1671,7 @@
 
             var labelHtml = showVariant
               ? ' <span style="font-size:9px;color:#888;">(' +
-                displayColor +
+                escapeTemplateHtml(displayColor) +
                 ")</span>"
               : "";
 
@@ -1718,13 +1680,13 @@
               previewStyle +
               '">' +
               '<img src="' +
-              imgSrc +
+              escapeTemplateHtml(imgSrc) +
               '" alt="' +
-              icon.name +
+              escapeTemplateHtml(icon.name) +
               '">' +
               "</div>" +
               '<div class="cp-social-name">' +
-              icon.name +
+              escapeTemplateHtml(icon.name) +
               labelHtml +
               "</div>";
 
@@ -2008,18 +1970,25 @@
                       .map(function (f) {
                         return (
                           '<div class="cp-folder-item" data-id="' +
-                          f.id +
-                          '" style="padding:2px 4px;cursor:pointer;border-radius:3px;" ' +
-                          "onmouseover=\"this.style.background='#e8e8e8'\" onmouseout=\"this.style.background='none'\">" +
+                          escapeTemplateHtml(f.id) +
+                          '" style="padding:2px 4px;cursor:pointer;border-radius:3px;">' +
                           "<b>" +
-                          f.id +
+                          escapeTemplateHtml(f.id) +
                           "</b> — " +
-                          f.title +
+                          escapeTemplateHtml(f.title) +
                           "</div>"
                         );
                       })
                       .join("") +
                     "</div>";
+                  lookupDiv.addEventListener("mouseover", function (e) {
+                    var item = e.target.closest(".cp-folder-item");
+                    if (item) item.style.background = "#e8e8e8";
+                  });
+                  lookupDiv.addEventListener("mouseout", function (e) {
+                    var item = e.target.closest(".cp-folder-item");
+                    if (item) item.style.background = "none";
+                  });
                   lookupDiv.addEventListener("click", function (e) {
                     var item = e.target.closest(".cp-folder-item");
                     if (item && folderInput) {
@@ -3235,9 +3204,23 @@
             });
         }
 
+        function normalizeTemplateImageUrl(value) {
+          if (!value) return "";
+          try {
+            var url = new URL(String(value), window.location.href);
+            return url.protocol === "http:" || url.protocol === "https:"
+              ? url.href
+              : "";
+          } catch (e) {
+            return "";
+          }
+        }
+
         // Fetch an image URL and return a base64 data URL
         function fetchImageAsDataUrl(url) {
-          return fetch(url)
+          var safeUrl = normalizeTemplateImageUrl(url);
+          if (!safeUrl) return Promise.resolve(null);
+          return fetch(safeUrl)
             .then(function (resp) {
               if (!resp.ok) throw new Error("HTTP " + resp.status);
               return resp.blob();
@@ -3624,7 +3607,7 @@
                   .map(function (k) {
                     return (
                       "<li>" +
-                      k.replace(/_/g, " ") +
+                      escapeTemplateHtml(k.replace(/_/g, " ")) +
                       (customButtonLibrary[k]
                         ? ' <span style="color:#af282f;">(will overwrite)</span>'
                         : "") +

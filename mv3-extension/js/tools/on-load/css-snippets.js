@@ -42,6 +42,8 @@
         let userSnippetsData = null;
         let copiedSkinsData = null;
         let sidebarElement = null;
+        let sidebarPointerStartedInside = false;
+        let suppressNextOutsideSidebarClick = false;
 
         // ==================== USER SNIPPETS STORAGE ====================
 
@@ -835,7 +837,7 @@
 
             if (alwaysShowSnippets.length > 0) {
                 alwaysShowSnippets.forEach(([key, snippet]) => {
-                    html += `<li data-library-key="${key}" data-dynamic="true">${snippet.name}</li>`;
+                    html += `<li data-library-key="${escapeHtml(key)}" data-dynamic="true">${escapeHtml(snippet.name || key)}</li>`;
                 });
             }
 
@@ -853,7 +855,7 @@
 
                 // Add context-aware snippets from library (includes user snippets with matching category)
                 filteredContextSnippets.forEach(snippet => {
-                    html += `<li data-library-key="${snippet.key}">${snippet.name}</li>`;
+                    html += `<li data-library-key="${escapeHtml(snippet.key)}">${escapeHtml(snippet.name || snippet.key)}</li>`;
                 });
             }
 
@@ -952,9 +954,22 @@
         }
 
         function escapeHtml(value) {
-            var div = document.createElement('div');
-            div.textContent = value || '';
-            return div.innerHTML;
+            return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function normalizeSafeLinkUrl(value) {
+            if (!value) return '';
+            try {
+                const url = new URL(String(value), window.location.origin);
+                return (url.protocol === 'http:' || url.protocol === 'https:') ? url.href : '';
+            } catch (err) {
+                return '';
+            }
         }
 
         function encodeCategoryKey(value) {
@@ -2218,8 +2233,9 @@
             const savedDate = skin.savedAt ? new Date(skin.savedAt).toLocaleDateString() : '';
             const sourceInfo = skin.sourceSkinName ? 'from ' + skin.sourceSkinName + ' (ID: ' + skin.sourceSkinID + ')' : '';
             const componentCount = skin.components ? skin.components.length : 0;
-            const sourceLink = skin.sourceUrl
-                ? ` <a href="${escapeHtml(skin.sourceUrl)}" target="_blank" rel="noopener noreferrer" class="copied-skin-source-link" title="${escapeHtml(skin.sourceUrl)}">Source</a>`
+            const sourceUrl = normalizeSafeLinkUrl(skin.sourceUrl);
+            const sourceLink = sourceUrl
+                ? ` <a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer" class="copied-skin-source-link" title="${escapeHtml(sourceUrl)}">Source</a>`
                 : '';
 
             return `
@@ -2512,6 +2528,10 @@
             );
             const selectedCategory = isPredefinedCategory ? existingCategory : 'Custom';
             const customCategoryValue = isPredefinedCategory ? '' : existingCategory;
+            const escapedTitle = escapeHtml(title);
+            const escapedExistingName = escapeHtml(existingSnippet?.name || '');
+            const escapedCustomCategoryValue = escapeHtml(customCategoryValue);
+            const escapedExistingCode = escapeHtml(existingSnippet?.code || '');
 
             // Check existing snippet settings
             const hasDynamicSelector = existingSnippet?.dynamicSelector === true;
@@ -2521,7 +2541,7 @@
             // Build category options
             const categoryOptions = SNIPPET_CATEGORIES.map(cat => {
                 const selected = cat.value.toLowerCase() === selectedCategory.toLowerCase() ? 'selected' : '';
-                return `<option value="${cat.value}" ${selected}>${cat.label}</option>`;
+                return `<option value="${escapeHtml(cat.value)}" ${selected}>${escapeHtml(cat.label)}</option>`;
             }).join('');
 
             // Build component checkboxes
@@ -2529,8 +2549,8 @@
                 const checked = existingComponents[comp.id] !== undefined ? 'checked' : '';
                 return `
                     <label class="snippet-component-checkbox">
-                        <input type="checkbox" value="${comp.id}" ${checked} />
-                        <span>${comp.name}</span>
+                        <input type="checkbox" value="${escapeHtml(comp.id)}" ${checked} />
+                        <span>${escapeHtml(comp.name)}</span>
                     </label>
                 `;
             }).join('');
@@ -2541,13 +2561,13 @@
             overlay.innerHTML = `
                 <div class="snippet-modal snippet-modal-wide">
                     <div class="snippet-modal-header">
-                        <h3>${title}</h3>
+                        <h3>${escapedTitle}</h3>
                         <button class="snippet-modal-close">&times;</button>
                     </div>
                     <div class="snippet-modal-body">
                         <div class="snippet-modal-field">
                             <label for="snippet-name">Name</label>
-                            <input type="text" id="snippet-name" placeholder="My Snippet" value="${existingSnippet?.name || ''}" />
+                            <input type="text" id="snippet-name" placeholder="My Snippet" value="${escapedExistingName}" />
                         </div>
                         <div class="snippet-modal-field">
                             <label for="snippet-category">Category</label>
@@ -2558,7 +2578,7 @@
                         </div>
                         <div class="snippet-modal-field snippet-custom-category-field" style="display: ${selectedCategory === 'Custom' ? 'block' : 'none'};">
                             <label for="snippet-custom-category">Custom Category Name</label>
-                            <input type="text" id="snippet-custom-category" placeholder="My Category" value="${customCategoryValue}" />
+                            <input type="text" id="snippet-custom-category" placeholder="My Category" value="${escapedCustomCategoryValue}" />
                             <p class="snippet-category-note">Note: Custom categories won't appear in context-aware quick lists</p>
                         </div>
 
@@ -2657,7 +2677,7 @@
                         <!-- Single code textarea (shown when multi-component is OFF) -->
                         <div class="snippet-modal-field snippet-single-code" style="display: ${hasMultipleComponents ? 'none' : 'block'};">
                             <label for="snippet-code">CSS Code</label>
-                            <textarea id="snippet-code" rows="10" placeholder="/* Your CSS code here */">${existingSnippet?.code || ''}</textarea>
+                            <textarea id="snippet-code" rows="10" placeholder="/* Your CSS code here */">${escapedExistingCode}</textarea>
                         </div>
 
                         <!-- Multi-component section (shown when multi-component is ON) -->
@@ -2945,12 +2965,12 @@
                 selectedComponents.forEach((comp) => {
                     const existingCode = existingComponents[comp.id] || '';
                     editorsHtml += `
-                        <div class="snippet-component-editor" data-component-id="${comp.id}">
+                        <div class="snippet-component-editor" data-component-id="${escapeHtml(comp.id)}">
                             <div class="snippet-component-editor-header">
-                                <span>${comp.name}</span>
+                                <span>${escapeHtml(comp.name)}</span>
                             </div>
                             <div class="snippet-component-editor-body">
-                                <textarea placeholder="/* ${comp.name} styles */">${existingCode}</textarea>
+                                <textarea placeholder="/* ${escapeHtml(comp.name)} styles */">${escapeHtml(existingCode)}</textarea>
                             </div>
                         </div>
                     `;
@@ -3098,13 +3118,13 @@
             }
 
             const skinOptions = validSkins.map(function(skin) {
-                return '<option value="' + skin.WidgetSkinID + '">' +
-                    (skin.Name || 'Unnamed Skin') + ' (' + skin.WidgetSkinID + ')' +
+                return '<option value="' + escapeHtml(skin.WidgetSkinID) + '">' +
+                    escapeHtml(skin.Name || 'Unnamed Skin') + ' (' + escapeHtml(skin.WidgetSkinID) + ')' +
                     '</option>';
             }).join('');
             const categoryOptions = SNIPPET_CATEGORIES.map(function(cat) {
                 const selected = cat.value === 'Custom' ? 'selected' : '';
-                return '<option value="' + cat.value + '" ' + selected + '>' + cat.label + '</option>';
+                return '<option value="' + escapeHtml(cat.value) + '" ' + selected + '>' + escapeHtml(cat.label) + '</option>';
             }).join('');
 
             const selectSize = Math.min(validSkins.length, 12);
@@ -3267,8 +3287,8 @@
             }
 
             const skinOptions = validSkins.map(function(skin) {
-                return '<option value="' + skin.WidgetSkinID + '">' +
-                    (skin.Name || 'Unnamed Skin') + ' (' + skin.WidgetSkinID + ')' +
+                return '<option value="' + escapeHtml(skin.WidgetSkinID) + '">' +
+                    escapeHtml(skin.Name || 'Unnamed Skin') + ' (' + escapeHtml(skin.WidgetSkinID) + ')' +
                     '</option>';
             }).join('');
 
@@ -3277,6 +3297,8 @@
             const sourceInfo = savedSkinData.sourceSkinName
                 ? 'Originally from: ' + savedSkinData.sourceSkinName + ' (ID: ' + savedSkinData.sourceSkinID + ')'
                 : '';
+            const escapedSavedSkinName = escapeHtml(savedSkinData.name || savedSkinKey);
+            const escapedSourceInfo = escapeHtml(sourceInfo);
 
             const overlay = document.createElement('div');
             overlay.className = 'snippet-modal-overlay';
@@ -3288,8 +3310,8 @@
                     </div>
                     <div class="snippet-modal-body">
                         <div class="snippet-modal-skin-info">
-                            <div class="snippet-modal-skin-info-name">${savedSkinData.name}</div>
-                            <div class="snippet-modal-skin-info-detail">${sourceInfo}</div>
+                            <div class="snippet-modal-skin-info-name">${escapedSavedSkinName}</div>
+                            <div class="snippet-modal-skin-info-detail">${escapedSourceInfo}</div>
                             <div class="snippet-modal-skin-info-detail">${componentCount} component(s) saved</div>
                         </div>
                         <div class="snippet-modal-field">
@@ -4048,13 +4070,32 @@
             });
         }
 
-        // Close sidebar when clicking outside (but not when a modal is open)
+        document.addEventListener('mousedown', function(e) {
+            sidebarPointerStartedInside = !!(sidebarElement && sidebarElement.classList.contains('open') && sidebarElement.contains(e.target));
+        }, true);
+
+        document.addEventListener('mouseup', function(e) {
+            if (!sidebarPointerStartedInside) return;
+            suppressNextOutsideSidebarClick = !!(sidebarElement && sidebarElement.classList.contains('open') && !sidebarElement.contains(e.target));
+            sidebarPointerStartedInside = false;
+            if (suppressNextOutsideSidebarClick) {
+                setTimeout(function() {
+                    suppressNextOutsideSidebarClick = false;
+                }, 500);
+            }
+        }, true);
+
+        // Close sidebar when clicking outside (but not when a modal is open or text selection started inside)
         document.addEventListener('click', function(e) {
             if (sidebarElement && sidebarElement.classList.contains('open')) {
                 // Don't close if a modal is open (toolkit or CMS)
                 if (document.querySelector('.snippet-modal-overlay') ||
                     e.target.closest('.modalContainerCP')) return;
                 if (!sidebarElement.contains(e.target)) {
+                    if (suppressNextOutsideSidebarClick) {
+                        suppressNextOutsideSidebarClick = false;
+                        return;
+                    }
                     closeSidebar();
                 }
             }

@@ -67,7 +67,11 @@ async function checkForUpdate() {
     const release = await resp.json();
     const latestTag = (release.tag_name || '').replace(/^v/, '');
     if (latestTag && compareSemver(latestTag, currentVersion) === 1) {
-      updateDiv.innerHTML = '<i class="fas fa-arrow-circle-up"></i> Update available: v' + latestTag + ' (you have v' + currentVersion + '). Click to download.';
+      updateDiv.textContent = '';
+      const icon = document.createElement('i');
+      icon.className = 'fas fa-arrow-circle-up';
+      updateDiv.appendChild(icon);
+      updateDiv.appendChild(document.createTextNode(' Update available: v' + latestTag + ' (you have v' + currentVersion + '). Click to download.'));
       updateDiv.style.display = '';
       updateDiv.addEventListener('click', () => {
         chrome.tabs.create({ url: DOWNLOAD_PAGE });

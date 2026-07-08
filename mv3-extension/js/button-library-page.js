@@ -297,32 +297,8 @@
       template.previewText || template.buttonText || "Button"
     );
 
-    // Collect custom fonts and load via Google Fonts
-    var SYSTEM_FONTS = ["arial", "helvetica", "verdana", "georgia", "times new roman", "courier new", "trebuchet ms", "tahoma", "sans-serif", "serif", "monospace"];
-    var fontsNeeded = {};
-    function collectFont(prefix) {
-      var ff = v(prefix + "FontFamily");
-      if (ff && SYSTEM_FONTS.indexOf(ff.toLowerCase()) === -1) {
-        var weight = library.sanitizeFontWeight(
-          v(prefix + "FontVariant") || v(prefix + "FontWeight") || "400"
-        );
-        fontsNeeded[ff] = fontsNeeded[ff] || {};
-        fontsNeeded[ff][weight] = true;
-      }
-    }
-    collectFont("fancyButtonNormalText");
-    Object.keys(allTextStyles).forEach(function (num) {
-      collectFont("fancyButton" + num + "NormalText");
-    });
+    // Keep extension-rendered previews free of remote stylesheet loads.
     var fontImport = "";
-    var fontFamilies = Object.keys(fontsNeeded);
-    if (fontFamilies.length > 0) {
-      var params = fontFamilies.map(function (ff) {
-        var weights = Object.keys(fontsNeeded[ff]).join(";");
-        return "family=" + encodeURIComponent(ff) + ":wght@" + weights;
-      }).join("&");
-      fontImport = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?' + params + '&display=swap">';
-    }
 
     var html =
       fontImport +
@@ -339,9 +315,12 @@
   // ==================== HELPERS ====================
 
   function escapeHtml(str) {
-    var div = document.createElement("div");
-    div.textContent = str || "";
-    return div.innerHTML;
+    return String(str == null ? "" : str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
   function formatName(key) {
