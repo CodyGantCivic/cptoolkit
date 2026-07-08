@@ -23,7 +23,6 @@ These are loaded, fetched, or navigated to by the extension at runtime
 
 | Host | Used by | Purpose | Why it can't be vendored |
 |------|---------|---------|--------------------------|
-| `fonts.googleapis.com` | `js/button-library-page.js`, `js/tools/on-load/cp-ImportFancyButton.js` | Loads the Google Font the user selected so the fancy-button **preview** matches how the button will render on the live CivicPlus site. | The font family is chosen at runtime from the CMS's font catalog — there is no fixed set to bundle. See privacy note below. |
 | `api.github.com` | `js/popup.js` | Checks the latest published release tag to tell the user when a newer toolkit version is available (popup update banner). | It's a live status query against the release repo, not a static asset. |
 | `cp-vlasak.github.io` | `js/popup.js` | The toolkit's download / landing page, opened in a new tab when the user clicks the update banner. | A destination URL the user navigates to, not a loaded asset. |
 
@@ -41,15 +40,6 @@ surfaces in review.
 | `connect.civicplus.com` | `js/tools/on-demand/insertPoweredByHTML.js` | First-party CivicPlus referral link in the "Government Websites by CivicPlus" byline inserted into customer layouts. |
 | `www.w3.org` | `js/tools/on-demand/insertPoweredByHTML.js` | SVG `xmlns` namespace identifier in inserted markup — a constant string, **not a network request**. |
 
-## Privacy note — Google Fonts preview
-
-When a user opens a fancy-button tool and a button uses a Google Font, the
-extension injects a `<link>` to `fonts.googleapis.com` so the preview renders in
-that font. This causes the user's browser to contact Google while previewing.
-This is the same request the live CivicPlus site already makes to render the
-button, so it exposes nothing the published page doesn't — but it does happen
-inside the admin tool. It is required for an accurate preview and cannot be
-vendored because the font is user-selected.
 
 ## Vendored (no external load)
 
@@ -69,3 +59,4 @@ them (same PR that added this doc):
 - `ajax.googleapis.com` + `code.jquery.com` — jQuery 1.7.1 (was: `Generate client timeline.js`)
 - `irp-cdn.multiscreensite.com` — CivicPlus product wordmark logos (was: `Generate client timeline.js`)
 - `fonts.googleapis.com` @import in `fancybutton.css` and font links in `Generate client pdf.js` (both files deleted)
+- `fonts.googleapis.com` preview stylesheet links in the fancy-button library pages (removed to avoid remote stylesheet loads from extension-rendered previews)
