@@ -6,6 +6,7 @@ console.log('[CP Toolkit] Service worker initializing...');
 // Import modules
 importScripts('context-menus.js');
 importScripts('first-run.js');
+importScripts('toolkit-injection-registry.js');
 
 console.log('[CP Toolkit] Service worker initialized');
 

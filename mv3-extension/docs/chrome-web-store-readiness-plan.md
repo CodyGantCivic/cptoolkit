@@ -68,6 +68,14 @@ Step 1 implementation status as of 2026-07-14:
 - The validator derives an allowed component-field schema from the current Theme Manager `DesignCenter.themeJSON.WidgetSkins[*].Components[*]`, rejects unexpected fields and unsafe keys, rejects arrays/functions/non-plain objects, validates nested spacing/value objects against observed nested keys, caps string size, requires valid component indexes/views, and shows an error toast/status message when import is cancelled.
 - This contains the storage-bridge value-trust issue without changing the broader manifest/activation model yet.
 
+Step 2 implementation status as of 2026-07-14:
+
+- Added `js/background/toolkit-injection-registry.js` as the central automatic-injection inventory.
+- `js/background/service-worker.js` imports the registry, but no runtime injection behavior is switched over yet.
+- The registry preserves current manifest order and classifies each automatic file by kind, activation lane, frame target, execution world, jQuery dependency, timing risk, and ordering notes.
+- The registry explicitly separates automatic on-load tooling from existing on-demand context-menu tooling (`data/on-demand-tools.json`).
+- New finding recorded during registry work: `adfs.js` currently depends on jQuery even though it needs a narrow static identity/SAML lane. Before the manifest-scope refactor, either include jQuery only on that narrow lane or rewrite `adfs.js` to vanilla JS. Preferred path: rewrite `adfs.js` to vanilla so the static identity lane does not load jQuery.
+
 Prior review conclusion: recent PR work did not add new permissions, host permissions, or web-accessible-resource exposure, and it did not add remote code execution patterns. The residual Chrome Store/internal-vetting issue remained extension-wide broad access: `*://*/*` content-script matching, `*://*/*` host permissions, and broad WAR exposure.
 
 ## Cody Architecture Verdict
@@ -120,6 +128,7 @@ Hard constraint: zero-click auto-detection on arbitrary customer vanity domains 
    - `adfs.js` intentionally does not call `detect_if_cp_site`.
    - It self-gates on `/admin/saml/logonrequest` and redirects to `/Admin/?saml=off`.
    - A DOM-shell-only activator could break this unless ADFS gets its own narrow host/path lane.
+   - Registry follow-up: `adfs.js` uses jQuery today, so either the narrow static lane must include jQuery or `adfs.js` should be rewritten to vanilla JS before manifest narrowing. Prefer the vanilla rewrite to keep jQuery out of static lanes.
 
 8. Preserve `custom-css-deployer` as a third activation lane if the product decision is to keep `all-pages` rules.
    - Recommended by the Phase 0 audit: keep a dedicated all-paths lane on enumerated CP hosts.
@@ -207,16 +216,18 @@ Candidate marker categories:
 
 1. Lock the two Phase 0 decisions: `custom-css-deployer` all-pages lane and frame-aware injection.
 2. Confirm required host list.
-3. Create a detector module with weighted DOM markers and bounded observation.
-4. Add activation orchestration in the service worker.
-5. Split manifest loading so only tiny detector lanes are declared up front.
-6. Move full toolkit injection to ordered `chrome.scripting.executeScript` calls / dynamic registered content scripts.
-7. Preserve the ADFS static lane.
-8. Add per-origin optional permission request flow for vanity domains.
-9. Narrow web-accessible resources.
-10. Remove dead legacy HEAD probe code, starting with `mini-ide.js`.
-11. Add/ratchet guardrails for broad matches and WAR exposure.
-12. Run manual QA on known CP domains, vanity domains, Live Edit, ADFS, Widget Manager, Theme Manager, Graphic Links, image-picker iframe behavior, custom CSS all-pages behavior, and on-demand context-menu tools.
+3. Create a central injection registry. Status: implemented on `codex/security-multi-skins-data-validation`, pending review/merge.
+4. Rewrite `adfs.js` to vanilla JS or otherwise plan the narrow identity lane jQuery load.
+5. Create a detector module with weighted DOM markers and bounded observation.
+6. Add activation orchestration in the service worker.
+7. Split manifest loading so only tiny detector lanes are declared up front.
+8. Move full toolkit injection to ordered `chrome.scripting.executeScript` calls / dynamic registered content scripts.
+9. Preserve the ADFS static lane.
+10. Add per-origin optional permission request flow for vanity domains.
+11. Narrow web-accessible resources.
+12. Remove dead legacy HEAD probe code, starting with `mini-ide.js`.
+13. Add/ratchet guardrails for broad matches and WAR exposure.
+14. Run manual QA on known CP domains, vanity domains, Live Edit, ADFS, Widget Manager, Theme Manager, Graphic Links, image-picker iframe behavior, custom CSS all-pages behavior, and on-demand context-menu tools.
 
 ## EOW Submission Track
 

@@ -137,3 +137,11 @@ Before implementing the injection pipeline:
 3. Confirm required host list: `*.civicplus.com`, `*.civic.place`, `*.civicplus.pro`, `*.cpqa.ninja`, plus any missing staging/legacy/identity hosts.
 4. Preserve ADFS as a narrow static lane.
 5. Build the injection list from this table, not from the current broad manifest content script list.
+
+## Phase 2 Registry Checkpoint
+
+Implementation branch `codex/security-multi-skins-data-validation` added `js/background/toolkit-injection-registry.js` on 2026-07-14.
+
+The registry is now the code-level inventory for the next activation refactor. It preserves current manifest order and records each automatic script's activation lane, frame target, execution world, jQuery dependency, timing risk, and ordering notes.
+
+Follow-up found during registry work: `adfs.js` currently uses jQuery. Because ADFS needs a narrow `document_start` identity/SAML lane, the preferred next move is to rewrite `adfs.js` to vanilla JS before narrowing the manifest. Otherwise the static ADFS lane would need to include jQuery even though the broader architecture is trying to delay jQuery until after activation.
