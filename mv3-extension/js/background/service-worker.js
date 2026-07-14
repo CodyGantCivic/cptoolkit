@@ -7,6 +7,7 @@ console.log('[CP Toolkit] Service worker initializing...');
 importScripts('context-menus.js');
 importScripts('first-run.js');
 importScripts('toolkit-injection-registry.js');
+importScripts('toolkit-activation.js');
 
 console.log('[CP Toolkit] Service worker initialized');
 
@@ -338,6 +339,10 @@ chrome.alarms.get('cp-prevent-timeout', (existing) => {
 // Keep service worker alive (MV3 best practice)
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('[CP Toolkit] Message received:', message);
+
+  if (self.CPToolkitActivation && self.CPToolkitActivation.handleMessage(message, sender, sendResponse)) {
+    return true;
+  }
 
   // Show badge with refresh count from prevent-timeout
   if (message && message.action === 'cp-update-badge') {

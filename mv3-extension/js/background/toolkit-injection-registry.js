@@ -1,6 +1,6 @@
 // CivicPlus Toolkit - automatic injection inventory
-// This file is intentionally data-first. Step 3 will use it to replace the
-// broad manifest content-script chain with detector-triggered script loading.
+// This file is intentionally data-first. It backs detector-triggered script
+// loading and keeps the manifest, docs, and service worker aligned.
 (function(root) {
   'use strict';
 
@@ -37,8 +37,8 @@
   });
 
   var CURRENT_STATIC_BOOTSTRAP = Object.freeze([
-    'js/detect_cp_site.js',
-    'js/external/jquery-3.3.1.min.js'
+    'js/content/cp-dom-detector.js',
+    'js/content/toolkit-activation-bootstrap.js'
   ]);
 
   var DOM_DETECTOR = Object.freeze({
@@ -51,6 +51,17 @@
       'Bounded DOM-marker detector for Step 3 activation orchestration.',
       'Does not load jQuery or full toolkit files.',
       'All-pages CP-host CSS lane must be handled separately so it does not activate the full toolkit.'
+    ]
+  });
+
+  var ACTIVATION_BOOTSTRAP = Object.freeze({
+    file: 'js/content/toolkit-activation-bootstrap.js',
+    world: WORLDS.ISOLATED,
+    runAt: 'document_start',
+    notes: [
+      'Provides detect_if_cp_site compatibility only after detector activation.',
+      'Sends lane-only activation messages; the service worker owns file selection.',
+      'Image-picker frames request only remember-image-picker-state, not the full toolkit.'
     ]
   });
 
@@ -454,6 +465,7 @@
     jquery: JQUERY,
     timingRisk: TIMING_RISK,
     detector: DOM_DETECTOR,
+    activationBootstrap: ACTIVATION_BOOTSTRAP,
     currentStaticBootstrap: CURRENT_STATIC_BOOTSTRAP,
     onLoad: ON_LOAD_INJECTION_ORDER,
     getEntriesForLane: getEntriesForLane,

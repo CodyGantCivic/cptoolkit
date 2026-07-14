@@ -19,7 +19,7 @@ The risky work is not the common case. The risky work is the exception handling:
 
 - `custom-css-deployer` creates a third activation context: all pages on approved CP hosts.
 - `remember-image-picker-state` requires frame-aware injection.
-- `adfs` needs a narrow static identity/SAML lane at `document_start`.
+- `adfs` needs a narrow identity/SAML lane with early-enough activation.
 - Several tools need "scan existing, then observe future" fixes before they can safely move from static `document_start` loading to later programmatic injection.
 - MAIN-world helper injection and load order must be preserved.
 
@@ -59,7 +59,7 @@ Decision needed: confirm the service worker injection pipeline can target specif
 
 1. `custom-css-deployer` needs an all-pages lane or a product decision to reduce scope.
 2. Programmatic injection must support specific frame targeting.
-3. `adfs.js` must stay in its own narrow static lane.
+3. `adfs.js` must stay in its own narrow identity lane.
 4. MAIN-world helpers must preserve MAIN-world execution and load order.
 5. Remove dead legacy HEAD probe code from `mini-ide.js` when detection is centralized.
 
@@ -122,7 +122,7 @@ Lane meanings:
 
 ## Verification Notes From This Repo
 
-- Current `manifest.json` still injects the full content script chain at `document_start` on `*://*/*` with `all_frames: true`.
+- Current `manifest.json` injects only `js/content/cp-dom-detector.js` and `js/content/toolkit-activation-bootstrap.js` at `document_start` on enumerated CivicPlus platform/identity hosts. The full on-load toolkit chain is now detector-triggered from the service worker.
 - `adfs.js` self-gates on `/admin/saml/logonrequest`, `account.civicplus.com`, and `identityserver.cpqa.ninja`.
 - `mini-ide.js` still contains its own `isCivicPlusSite()` HEAD probe to the Mystique module tile path.
 - `graphic-link-advanced-style-helper.js` calls `setupInsertButtonHandler()`, but that function only binds `.insertFancy` from a `MutationObserver` callback. It should also scan existing DOM when initialized.
@@ -130,13 +130,13 @@ Lane meanings:
 
 ## Phase 2 Preconditions
 
-Before implementing the injection pipeline:
+Before implementing or extending the injection pipeline:
 
-1. Decide F1: preserve `custom-css-deployer` as an all-pages lane on enumerated CP hosts, or limit/rework it.
-2. Confirm F2: pipeline supports per-tool frame targeting.
+1. Decide F1: preserve `custom-css-deployer` as an all-pages lane on enumerated CP hosts, or limit/rework it. Status: decided to preserve it as a minimal top-frame CSS lane on approved hosts.
+2. Confirm F2: pipeline supports per-tool frame targeting. Status: implemented for selected image-picker frames.
 3. Confirm required host list: `*.civicplus.com`, `*.civic.place`, `*.civicplus.pro`, `*.cpqa.ninja`, plus any missing staging/legacy/identity hosts.
-4. Preserve ADFS as a narrow static lane.
-5. Build the injection list from this table, not from the current broad manifest content script list.
+4. Preserve ADFS as a narrow identity lane. Status: implemented as detector-triggered identity activation; manual timing QA required.
+5. Build the injection list from this table, not from the current broad manifest content script list. Status: implemented through `js/background/toolkit-injection-registry.js`.
 
 ## Phase 2 Registry Checkpoint
 
@@ -146,4 +146,18 @@ The registry is now the code-level inventory for the next activation refactor. I
 
 Follow-up found during registry work: `adfs.js` used jQuery even though ADFS needs a narrow `document_start` identity/SAML lane. This was resolved on the implementation branch by rewriting `adfs.js` to vanilla JS, so the future static ADFS lane does not need to include jQuery.
 
-Detector checkpoint: implementation branch `codex/security-multi-skins-data-validation` added `js/content/cp-dom-detector.js` on 2026-07-14. The detector is additive and is not wired into the manifest yet. It uses bounded DOM observation, path/host markers, CMS shell selectors, Live Edit markers, CP asset markers, and hidden form inputs. It ignores `cp-toolkit-*` elements and reports lanes (`admin`, `live-edit`, `identity`, `all-pages-cp-host-css`) so the later activation orchestrator can load only lane-appropriate files.
+Detector checkpoint: implementation branch `codex/security-multi-skins-data-validation` added `js/content/cp-dom-detector.js` on 2026-07-14. It uses bounded DOM observation, path/host markers, CMS shell selectors, Live Edit markers, CP asset markers, and hidden form inputs. It ignores `cp-toolkit-*` elements and reports lanes (`admin`, `live-edit`, `identity`, `all-pages-cp-host-css`) so the activation orchestrator can load only lane-appropriate files.
+
+## Activation Checkpoint
+
+Implementation branch `codex/security-multi-skins-data-validation` added detector-triggered activation on 2026-07-14:
+
+- `manifest.json` now statically declares only `cp-dom-detector.js` and `toolkit-activation-bootstrap.js` on enumerated CP platform/identity hosts.
+- `host_permissions` and `web_accessible_resources.matches` no longer use `*://*/*`.
+- `activeTab` is declared for user-invoked surfaces.
+- `js/content/toolkit-activation-bootstrap.js` provides the compatibility `detect_if_cp_site()` shim after detector activation.
+- `js/background/toolkit-activation.js` validates the sender URL against approved CivicPlus hosts and selects fixed local files from `CPToolkitInjectionRegistry`.
+- Full toolkit activation is top-frame only and excludes `custom-css-deployer`, `adfs`, and `remember-image-picker-state` because each has its own narrower lane.
+- `custom-css-deployer` activates as a minimal top-frame all-pages CP-host CSS lane.
+- `remember-image-picker-state` activates only in selected image-picker frames.
+- Vanity-domain optional permission flow is still pending.

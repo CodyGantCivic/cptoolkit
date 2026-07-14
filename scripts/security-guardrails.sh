@@ -19,7 +19,7 @@ set -u
 # Ratchet: lower these as Findings #4 (broad host matches) and #7 (remote
 # third-party assets) narrow the surface area. The cap must always equal
 # today's actual count, not just an upper bound — see check_broad_matches.
-ALLOWED_BROAD_MATCHES=3
+ALLOWED_BROAD_MATCHES=0
 
 # Finding #7: remote hosts our OWN (non-vendored) JS/CSS may reference, split by
 # scope for honesty. Both lists are ratchet floors — they must list EXACTLY the

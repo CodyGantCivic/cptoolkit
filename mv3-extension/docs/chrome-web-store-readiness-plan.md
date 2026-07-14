@@ -18,22 +18,28 @@ Purpose: preserve the Chrome Web Store / MV3 action plan in the repo so future w
 
 ## Current State
 
-The extension is MV3, but the current manifest still declares broad page access:
+The extension is MV3. As of the 2026-07-14 activation checkpoint, the manifest no longer declares required all-sites access:
 
-- `content_scripts[0].matches`: `*://*/*`
-- `content_scripts[0].all_frames`: `true`
-- `content_scripts[0].run_at`: `document_start`
-- The declared content script chain loads `detect_cp_site.js`, jQuery, shared helpers, and the on-load tools on every matched page.
-- `host_permissions`: `*://*/*`
-- `web_accessible_resources.matches`: `*://*/*`
+- `content_scripts[0].matches`: enumerated CivicPlus platform/identity hosts only:
+  - `*://civicplus.com/*`, `*://*.civicplus.com/*`
+  - `*://civic.place/*`, `*://*.civic.place/*`
+  - `*://civicplus.pro/*`, `*://*.civicplus.pro/*`
+  - `*://cpqa.ninja/*`, `*://*.cpqa.ninja/*`
+- `content_scripts[0].all_frames`: `true`, but the static chain is now tiny detector-only:
+  - `js/content/cp-dom-detector.js`
+  - `js/content/toolkit-activation-bootstrap.js`
+- `permissions`: `activeTab` has been added for user-invoked surfaces.
+- `host_permissions`: narrowed to the same enumerated CivicPlus platform/identity host list.
+- `web_accessible_resources.matches`: narrowed to the same enumerated host list.
+- jQuery and the automatic on-load toolkit files are now delayed until the detector activates a specific lane.
 
-The current CP-site gate is `js/detect_cp_site.js`, which performs a `HEAD` request to:
+The legacy CP-site gate is still present in `js/detect_cp_site.js`, which performs a `HEAD` request to:
 
 ```text
 /Assets/Mystique/Shared/Components/ModuleTiles/Templates/cp-Module-Tile.html
 ```
 
-This reduces per-tool behavior only after scripts have already been injected. It also has a known false-positive class on some `*.civicplus.pro` Evolve SPA routes that return a 200 HTML shell for missing paths.
+That legacy gate is no longer part of the static content-script chain, but dead references still need cleanup in later work (`mini-ide.js` still has its own copy of the HEAD probe, and popup/status behavior still has legacy fallback logic). The old probe has a known false-positive class on some `*.civicplus.pro` Evolve SPA routes that return a 200 HTML shell for missing paths.
 
 The Phase 0 audit adds one important correction to the simple two-lane model: the toolkit has three activation contexts, not two:
 
@@ -79,7 +85,7 @@ Step 2 implementation status as of 2026-07-14:
 Detector module checkpoint as of 2026-07-14:
 
 - Added `js/content/cp-dom-detector.js` as an additive bounded DOM-marker detector.
-- `js/background/toolkit-injection-registry.js` now records this detector as the future `document_start` static detector, but the current manifest has not been switched over yet.
+- `js/background/toolkit-injection-registry.js` records this detector as the `document_start` static detector.
 - The detector does not use jQuery and does not perform the legacy Mystique `HEAD` request.
 - It classifies lanes instead of returning a single yes/no:
   - `admin`: `/Admin` or `/DesignCenter` path plus independent CMS DOM evidence.
@@ -89,9 +95,22 @@ Detector module checkpoint as of 2026-07-14:
 - It uses path/host markers, CMS shell selectors, Live Edit markers, CP asset/link/script markers, and hidden form inputs.
 - It ignores `cp-toolkit-*` elements so toolkit UI cannot self-confirm a page.
 - It uses a bounded `MutationObserver`, `requestAnimationFrame` coalescing, and a 7-second timeout.
-- Next implementation step is activation orchestration: run this tiny detector first, then load lane-appropriate files from the registry.
+- Activation orchestration has been added: run this tiny detector first, then load lane-appropriate files from the registry.
 
-Prior review conclusion: recent PR work did not add new permissions, host permissions, or web-accessible-resource exposure, and it did not add remote code execution patterns. The residual Chrome Store/internal-vetting issue remained extension-wide broad access: `*://*/*` content-script matching, `*://*/*` host permissions, and broad WAR exposure.
+Activation orchestration checkpoint as of 2026-07-14:
+
+- Added `js/content/toolkit-activation-bootstrap.js` as the detector companion content script.
+- Added `js/background/toolkit-activation.js` and wired it into `js/background/service-worker.js`.
+- The bootstrap sends only lane names and activation kind. It does not send script paths or detector marker details.
+- The service worker validates sender URL against approved CivicPlus hosts and maps lanes to fixed local extension files from `CPToolkitInjectionRegistry`.
+- `full-toolkit` activation injects jQuery plus ordered on-load tools only after `admin` or `live-edit` detection.
+- `all-pages-cp-host-css` activation injects only `custom-css-deployer.js` on approved CP host top frames.
+- `identity` activation injects only `adfs.js`.
+- `image-picker-frame` activation injects only `remember-image-picker-state.js` into selected image-picker frames.
+- Duplicate injection is guarded per frame with an extension-world marker.
+- Vanity-domain optional permissions are not implemented yet; public vanity URLs will not auto-run until that flow exists.
+
+Prior review conclusion: earlier PR work did not add new permissions, host permissions, or web-accessible-resource exposure, and it did not add remote code execution patterns. The activation checkpoint directly addresses the biggest residual Chrome Store/internal-vetting issue by removing required `*://*/*` from content-script matching, host permissions, and WAR exposure. Remaining review work is focused on optional vanity-domain permission flow, manual CMS QA, dead legacy probe cleanup, and permission/behavior justification.
 
 ## Cody Architecture Verdict
 
@@ -128,7 +147,8 @@ Hard constraint: zero-click auto-detection on arbitrary customer vanity domains 
    - Manifest-declared content scripts should be tiny and detector-only on known CP domains.
    - Full toolkit scripts load only after detection passes.
    - Use `chrome.scripting.executeScript` for current-tab activation.
-   - Use `chrome.scripting.registerContentScripts` for future navigations on approved origins.
+   - Current checkpoint uses `chrome.scripting.executeScript` for detector-triggered activation.
+   - Future optional-permission work may use `chrome.scripting.registerContentScripts` for approved vanity origins.
 
 5. Replace the network `HEAD` probe with DOM-marker detection.
    - Prefer path plus DOM shell markers over probing a Mystique asset.
@@ -136,9 +156,10 @@ Hard constraint: zero-click auto-detection on arbitrary customer vanity domains 
    - Detector module added; the current runtime has not been switched over yet.
 
 6. Rework `web_accessible_resources`.
-   - Current `matches: ["*://*/*"]` is too broad.
+   - Previous `matches: ["*://*/*"]` was too broad.
    - Content scripts usually do not need files to be web-accessible.
-   - Keep only resources that page context truly loads by URL, and restrict matches to approved origins.
+   - Current checkpoint restricts matches to approved origins.
+   - Follow-up: reduce the resource list itself to only files that page context truly loads by URL.
 
 7. Handle `adfs.js` separately.
    - `adfs.js` intentionally does not call `detect_if_cp_site`.
@@ -201,10 +222,10 @@ Candidate marker categories:
    - Identify scripts that need frames and which frame URL patterns they need.
 
 4. Manifest audit
-   - Replace `*://*/*` in `host_permissions`.
-   - Narrow `content_scripts.matches`.
-   - Narrow or remove broad `web_accessible_resources.matches`.
-   - Add `activeTab` and `optional_host_permissions`.
+   - Replace `*://*/*` in `host_permissions`. Status: implemented for required hosts.
+   - Narrow `content_scripts.matches`. Status: implemented for static detector bootstrap.
+   - Narrow or remove broad `web_accessible_resources.matches`. Status: matches narrowed; resource list still needs pruning.
+   - Add `activeTab` and `optional_host_permissions`. Status: `activeTab` added; optional vanity-origin permissions still pending.
 
 5. Service worker audit
    - Recheck any broad tab queries or messaging loops, especially prevent-timeout alarm behavior.
@@ -235,15 +256,28 @@ Candidate marker categories:
 3. Create a central injection registry. Status: implemented on `codex/security-multi-skins-data-validation`, pending review/merge.
 4. Rewrite `adfs.js` to vanilla JS or otherwise plan the narrow identity lane jQuery load. Status: implemented on `codex/security-multi-skins-data-validation`, pending review/merge.
 5. Create a detector module with weighted DOM markers and bounded observation. Status: implemented on `codex/security-multi-skins-data-validation`, pending review/merge.
-6. Add activation orchestration in the service worker.
-7. Split manifest loading so only tiny detector lanes are declared up front.
-8. Move full toolkit injection to ordered `chrome.scripting.executeScript` calls / dynamic registered content scripts.
-9. Preserve the ADFS static lane.
+6. Add activation orchestration in the service worker. Status: implemented with lane-only messages and fixed registry-selected files.
+7. Split manifest loading so only tiny detector lanes are declared up front. Status: implemented for enumerated CP hosts.
+8. Move full toolkit injection to ordered `chrome.scripting.executeScript` calls / dynamic registered content scripts. Status: implemented with `executeScript`; dynamic registered content scripts deferred for optional vanity-origin work.
+9. Preserve the ADFS static lane. Status: implemented as a detector-triggered identity lane with jQuery-free `adfs.js`; manual timing QA required.
 10. Add per-origin optional permission request flow for vanity domains.
-11. Narrow web-accessible resources.
+11. Narrow web-accessible resources. Status: broad matches narrowed; resource list pruning remains.
 12. Remove dead legacy HEAD probe code, starting with `mini-ide.js`.
 13. Add/ratchet guardrails for broad matches and WAR exposure.
 14. Run manual QA on known CP domains, vanity domains, Live Edit, ADFS, Widget Manager, Theme Manager, Graphic Links, image-picker iframe behavior, custom CSS all-pages behavior, and on-demand context-menu tools.
+
+## Manual CMS QA Needed
+
+After reloading the unpacked extension from this branch, test these before Store packaging:
+
+1. Known CP admin host: `/Admin` dashboard loads normal toolkit on-load tools after detector activation.
+2. DesignCenter/Theme Manager: skin organizer/enhancer, copy/import workflows, mini IDE entry points, and advanced-style helpers still appear.
+3. Public Live Edit on an enumerated CP host: Live Edit lane activates without loading the toolkit on ordinary non-editor public pages.
+4. Custom CSS deployer: an enabled `all-pages` rule applies on a matching known CP host top-frame page, without full toolkit UI appearing on unrelated public pages.
+5. ADFS/SAML: `/admin/saml/logonrequest` and `account.civicplus.com` / `identityserver.cpqa.ninja` identity redirects still happen quickly enough.
+6. Image picker: folder state restore still works inside `/DocumentCenter/FolderForModal` or `/Admin/DocumentCenter` frames.
+7. On-demand context menus: user-invoked tools still run under `activeTab` without required all-sites host permission.
+8. Non-CP site: no jQuery/toolkit on-load scripts are injected.
 
 ## EOW Submission Track
 
@@ -258,9 +292,10 @@ Recommended scope for this week:
    - `activeTab`;
    - `optional_host_permissions`;
    - detector-only static content script on enumerated hosts;
-   - separate ADFS static lane;
+   - separate ADFS identity lane;
    - service worker ordered toolkit injection;
    - no broad WAR matches.
+   - Current status: all above are implemented except optional vanity-origin permissions; WAR matches are narrowed, but resource list pruning remains.
 4. Fix `copy-multiple-skins.js` stored component-data validation before packaging. This is smaller than the manifest refactor and removes a clear security-review finding. Status: implemented on `codex/security-multi-skins-data-validation`, pending review/merge.
 5. Defer nice-to-have management UI if needed, but do not defer the permission model.
 6. Package as the next patch version if `1.1.4` is already in review.
