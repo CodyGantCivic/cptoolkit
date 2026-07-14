@@ -144,4 +144,4 @@ Implementation branch `codex/security-multi-skins-data-validation` added `js/bac
 
 The registry is now the code-level inventory for the next activation refactor. It preserves current manifest order and records each automatic script's activation lane, frame target, execution world, jQuery dependency, timing risk, and ordering notes.
 
-Follow-up found during registry work: `adfs.js` currently uses jQuery. Because ADFS needs a narrow `document_start` identity/SAML lane, the preferred next move is to rewrite `adfs.js` to vanilla JS before narrowing the manifest. Otherwise the static ADFS lane would need to include jQuery even though the broader architecture is trying to delay jQuery until after activation.
+Follow-up found during registry work: `adfs.js` used jQuery even though ADFS needs a narrow `document_start` identity/SAML lane. This was resolved on the implementation branch by rewriting `adfs.js` to vanilla JS, so the future static ADFS lane does not need to include jQuery.

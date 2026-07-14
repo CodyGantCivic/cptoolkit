@@ -385,9 +385,9 @@
       lanes: [LANES.IDENTITY],
       frameTarget: FRAME_TARGETS.TOP,
       world: WORLDS.ISOLATED,
-      jquery: JQUERY.REQUIRED,
+      jquery: JQUERY.NONE,
       timingRisk: TIMING_RISK.HIGH,
-      notes: ['Static identity/SAML lane. Prefer rewriting to vanilla JS before manifest narrowing so this lane does not need jQuery.']
+      notes: ['Static identity/SAML lane; intentionally does not depend on detector or jQuery.']
     },
     {
       id: 'cp-MultipleInfoAdvancedItems',

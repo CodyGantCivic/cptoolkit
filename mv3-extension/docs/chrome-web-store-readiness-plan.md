@@ -74,7 +74,7 @@ Step 2 implementation status as of 2026-07-14:
 - `js/background/service-worker.js` imports the registry, but no runtime injection behavior is switched over yet.
 - The registry preserves current manifest order and classifies each automatic file by kind, activation lane, frame target, execution world, jQuery dependency, timing risk, and ordering notes.
 - The registry explicitly separates automatic on-load tooling from existing on-demand context-menu tooling (`data/on-demand-tools.json`).
-- New finding recorded during registry work: `adfs.js` currently depends on jQuery even though it needs a narrow static identity/SAML lane. Before the manifest-scope refactor, either include jQuery only on that narrow lane or rewrite `adfs.js` to vanilla JS. Preferred path: rewrite `adfs.js` to vanilla so the static identity lane does not load jQuery.
+- Registry follow-up completed: `adfs.js` was rewritten to vanilla JS so the future narrow static identity/SAML lane does not need jQuery.
 
 Prior review conclusion: recent PR work did not add new permissions, host permissions, or web-accessible-resource exposure, and it did not add remote code execution patterns. The residual Chrome Store/internal-vetting issue remained extension-wide broad access: `*://*/*` content-script matching, `*://*/*` host permissions, and broad WAR exposure.
 
@@ -128,7 +128,7 @@ Hard constraint: zero-click auto-detection on arbitrary customer vanity domains 
    - `adfs.js` intentionally does not call `detect_if_cp_site`.
    - It self-gates on `/admin/saml/logonrequest` and redirects to `/Admin/?saml=off`.
    - A DOM-shell-only activator could break this unless ADFS gets its own narrow host/path lane.
-   - Registry follow-up: `adfs.js` uses jQuery today, so either the narrow static lane must include jQuery or `adfs.js` should be rewritten to vanilla JS before manifest narrowing. Prefer the vanilla rewrite to keep jQuery out of static lanes.
+   - Registry follow-up completed: `adfs.js` no longer depends on jQuery, so the future static identity/SAML lane can stay tiny.
 
 8. Preserve `custom-css-deployer` as a third activation lane if the product decision is to keep `all-pages` rules.
    - Recommended by the Phase 0 audit: keep a dedicated all-paths lane on enumerated CP hosts.
@@ -217,7 +217,7 @@ Candidate marker categories:
 1. Lock the two Phase 0 decisions: `custom-css-deployer` all-pages lane and frame-aware injection.
 2. Confirm required host list.
 3. Create a central injection registry. Status: implemented on `codex/security-multi-skins-data-validation`, pending review/merge.
-4. Rewrite `adfs.js` to vanilla JS or otherwise plan the narrow identity lane jQuery load.
+4. Rewrite `adfs.js` to vanilla JS or otherwise plan the narrow identity lane jQuery load. Status: implemented on `codex/security-multi-skins-data-validation`, pending review/merge.
 5. Create a detector module with weighted DOM markers and bounded observation.
 6. Add activation orchestration in the service worker.
 7. Split manifest loading so only tiny detector lanes are declared up front.
