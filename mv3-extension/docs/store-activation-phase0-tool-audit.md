@@ -145,3 +145,5 @@ Implementation branch `codex/security-multi-skins-data-validation` added `js/bac
 The registry is now the code-level inventory for the next activation refactor. It preserves current manifest order and records each automatic script's activation lane, frame target, execution world, jQuery dependency, timing risk, and ordering notes.
 
 Follow-up found during registry work: `adfs.js` used jQuery even though ADFS needs a narrow `document_start` identity/SAML lane. This was resolved on the implementation branch by rewriting `adfs.js` to vanilla JS, so the future static ADFS lane does not need to include jQuery.
+
+Detector checkpoint: implementation branch `codex/security-multi-skins-data-validation` added `js/content/cp-dom-detector.js` on 2026-07-14. The detector is additive and is not wired into the manifest yet. It uses bounded DOM observation, path/host markers, CMS shell selectors, Live Edit markers, CP asset markers, and hidden form inputs. It ignores `cp-toolkit-*` elements and reports lanes (`admin`, `live-edit`, `identity`, `all-pages-cp-host-css`) so the later activation orchestrator can load only lane-appropriate files.

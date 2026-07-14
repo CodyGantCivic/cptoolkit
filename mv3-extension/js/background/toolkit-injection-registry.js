@@ -41,6 +41,19 @@
     'js/external/jquery-3.3.1.min.js'
   ]);
 
+  var DOM_DETECTOR = Object.freeze({
+    file: 'js/content/cp-dom-detector.js',
+    world: WORLDS.ISOLATED,
+    runAt: 'document_start',
+    timeoutMs: 7000,
+    targetLanes: [LANES.ADMIN, LANES.LIVE_EDIT, LANES.IDENTITY],
+    notes: [
+      'Bounded DOM-marker detector for Step 3 activation orchestration.',
+      'Does not load jQuery or full toolkit files.',
+      'All-pages CP-host CSS lane must be handled separately so it does not activate the full toolkit.'
+    ]
+  });
+
   function freezeSpec(spec) {
     if (Array.isArray(spec.files)) Object.freeze(spec.files);
     if (Array.isArray(spec.lanes)) Object.freeze(spec.lanes);
@@ -440,6 +453,7 @@
     worlds: WORLDS,
     jquery: JQUERY,
     timingRisk: TIMING_RISK,
+    detector: DOM_DETECTOR,
     currentStaticBootstrap: CURRENT_STATIC_BOOTSTRAP,
     onLoad: ON_LOAD_INJECTION_ORDER,
     getEntriesForLane: getEntriesForLane,

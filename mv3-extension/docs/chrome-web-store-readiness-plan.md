@@ -76,6 +76,21 @@ Step 2 implementation status as of 2026-07-14:
 - The registry explicitly separates automatic on-load tooling from existing on-demand context-menu tooling (`data/on-demand-tools.json`).
 - Registry follow-up completed: `adfs.js` was rewritten to vanilla JS so the future narrow static identity/SAML lane does not need jQuery.
 
+Detector module checkpoint as of 2026-07-14:
+
+- Added `js/content/cp-dom-detector.js` as an additive bounded DOM-marker detector.
+- `js/background/toolkit-injection-registry.js` now records this detector as the future `document_start` static detector, but the current manifest has not been switched over yet.
+- The detector does not use jQuery and does not perform the legacy Mystique `HEAD` request.
+- It classifies lanes instead of returning a single yes/no:
+  - `admin`: `/Admin` or `/DesignCenter` path plus independent CMS DOM evidence.
+  - `live-edit`: public-style editor shell markers plus host/form/asset evidence.
+  - `identity`: SAML login or known CivicPlus identity paths.
+  - `all-pages-cp-host-css`: known CivicPlus platform host only, for the future minimal custom CSS lane.
+- It uses path/host markers, CMS shell selectors, Live Edit markers, CP asset/link/script markers, and hidden form inputs.
+- It ignores `cp-toolkit-*` elements so toolkit UI cannot self-confirm a page.
+- It uses a bounded `MutationObserver`, `requestAnimationFrame` coalescing, and a 7-second timeout.
+- Next implementation step is activation orchestration: run this tiny detector first, then load lane-appropriate files from the registry.
+
 Prior review conclusion: recent PR work did not add new permissions, host permissions, or web-accessible-resource exposure, and it did not add remote code execution patterns. The residual Chrome Store/internal-vetting issue remained extension-wide broad access: `*://*/*` content-script matching, `*://*/*` host permissions, and broad WAR exposure.
 
 ## Cody Architecture Verdict
@@ -118,6 +133,7 @@ Hard constraint: zero-click auto-detection on arbitrary customer vanity domains 
 5. Replace the network `HEAD` probe with DOM-marker detection.
    - Prefer path plus DOM shell markers over probing a Mystique asset.
    - This improves privacy and avoids the Evolve SPA false positive.
+   - Detector module added; the current runtime has not been switched over yet.
 
 6. Rework `web_accessible_resources`.
    - Current `matches: ["*://*/*"]` is too broad.
@@ -218,7 +234,7 @@ Candidate marker categories:
 2. Confirm required host list.
 3. Create a central injection registry. Status: implemented on `codex/security-multi-skins-data-validation`, pending review/merge.
 4. Rewrite `adfs.js` to vanilla JS or otherwise plan the narrow identity lane jQuery load. Status: implemented on `codex/security-multi-skins-data-validation`, pending review/merge.
-5. Create a detector module with weighted DOM markers and bounded observation.
+5. Create a detector module with weighted DOM markers and bounded observation. Status: implemented on `codex/security-multi-skins-data-validation`, pending review/merge.
 6. Add activation orchestration in the service worker.
 7. Split manifest loading so only tiny detector lanes are declared up front.
 8. Move full toolkit injection to ordered `chrome.scripting.executeScript` calls / dynamic registered content scripts.
