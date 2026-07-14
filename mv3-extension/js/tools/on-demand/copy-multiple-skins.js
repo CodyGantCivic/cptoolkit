@@ -206,9 +206,12 @@
   // ==================== HELPERS ====================
 
   function escapeHtml(str) {
-    var div = document.createElement('div');
-    div.textContent = str || '';
-    return div.innerHTML;
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   function generateKey(name) {
@@ -313,7 +316,7 @@
 
     html += '<div class="cms-rows">';
     siteSkins.forEach(function(skin) {
-      html += '<div class="cms-row" data-skin-id="' + skin.WidgetSkinID + '">' +
+      html += '<div class="cms-row" data-skin-id="' + escapeHtml(skin.WidgetSkinID) + '">' +
         '<label class="cms-row-label">' +
           '<input type="checkbox" class="cms-export-check">' +
           '<div class="cms-row-info">' +
@@ -339,7 +342,7 @@
     var targetOptions = '<option value="">-- Select target --</option>' +
       '<option value="__create__">+ Create new skin</option>';
     siteSkins.forEach(function(s) {
-      targetOptions += '<option value="' + s.WidgetSkinID + '">' + escapeHtml(s.Name) + '</option>';
+      targetOptions += '<option value="' + escapeHtml(s.WidgetSkinID) + '">' + escapeHtml(s.Name) + '</option>';
     });
 
     var html = '<div class="cms-section-bar">' +

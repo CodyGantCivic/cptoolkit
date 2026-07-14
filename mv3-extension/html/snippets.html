@@ -10,14 +10,15 @@
     <div id="banner-content">
       <div id="banner-text">
         <h1>Snippet Library</h1>
-        <p>Your saved snippets</p>
+        <p>Your saved snippets and skins</p>
       </div>
     </div>
   </div>
 
   <div id="page-wrap">
-    <div id="tabs" style="display:none;">
+    <div id="tabs">
       <button class="tab active" data-tab="snippets">Snippets</button>
+      <button class="tab" data-tab="skins">Saved Skins</button>
     </div>
 
     <div id="tab-snippets" class="tab-content active">
@@ -27,6 +28,13 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             New Snippet
           </button>
+          <div id="snippet-library-search-wrap">
+            <input id="snippet-library-search" type="text" placeholder="Search snippets..." />
+            <button id="btn-filter-snippets" class="toolbar-btn icon-only" title="Filter snippets">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+            </button>
+            <div id="snippet-library-filter-popover"></div>
+          </div>
         </div>
         <div id="toolbar-right">
           <button id="btn-sort-category" class="toolbar-btn" title="Group by category">
@@ -55,6 +63,44 @@
       <div id="snippets-grid"></div>
     </div>
 
+    <div id="tab-skins" class="tab-content">
+      <div id="skins-toolbar" class="library-toolbar">
+        <div id="skins-toolbar-left" class="toolbar-group">
+          <div id="skin-library-search-wrap" class="library-search-wrap">
+            <input id="skin-library-search" type="text" placeholder="Search saved skins..." />
+            <button id="btn-filter-skins" class="toolbar-btn icon-only" title="Filter saved skins">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+            </button>
+            <div id="skin-library-filter-popover" class="library-filter-popover"></div>
+          </div>
+        </div>
+        <div id="skins-toolbar-right" class="toolbar-group">
+          <button id="btn-sort-skins-category" class="toolbar-btn" title="Group saved skins by category">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="14" y2="12"></line><line x1="4" y1="18" x2="8" y2="18"></line></svg>
+            Categories
+          </button>
+          <div id="skins-view-toggle" title="Switch saved skin view">
+            <button class="skin-view-btn" data-view="grid">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect></svg>
+            </button>
+            <button class="skin-view-btn active" data-view="list">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="skins-empty" class="empty-state" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+          <polyline points="17 21 17 13 7 13 7 21"></polyline>
+          <polyline points="7 3 7 8 15 8"></polyline>
+        </svg>
+        <h3>No Saved Skins Yet</h3>
+        <p>Save widget skins from the snippets sidebar in Theme Manager.</p>
+      </div>
+      <div id="skins-grid" class="view-grid"></div>
+    </div>
+
   </div>
 
   <!-- Edit/Create Modal -->
@@ -72,7 +118,6 @@
         <div class="form-group">
           <label for="snippet-category">Category</label>
           <select id="snippet-category">
-            <option value="">None</option>
             <option value="Buttons">Buttons</option>
             <option value="News">News</option>
             <option value="Slideshow">Slideshow</option>
@@ -85,10 +130,29 @@
             <option value="Headers">Headers</option>
             <option value="Custom">Custom</option>
           </select>
+          <p id="snippet-category-hint" class="field-hint"></p>
         </div>
-        <div class="form-group">
+        <div class="form-group" id="snippet-custom-category-wrap" style="display:none;">
+          <label for="snippet-custom-category">Custom Category Name</label>
+          <input type="text" id="snippet-custom-category" placeholder="My Category" />
+          <p class="field-note">Custom categories appear in library filters and folders.</p>
+        </div>
+        <div class="form-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="snippet-multi-component" />
+            Uses multiple skin components
+          </label>
+        </div>
+        <div class="form-group" id="snippet-single-code-wrap">
           <label for="snippet-code">CSS Code</label>
           <textarea id="snippet-code" rows="12" placeholder="Paste your CSS here..."></textarea>
+        </div>
+        <div id="snippet-multi-component-wrap" style="display:none;">
+          <div class="form-group">
+            <label>Skin Components</label>
+            <div id="snippet-component-grid"></div>
+          </div>
+          <div id="snippet-component-editors"></div>
         </div>
         <div class="form-row">
           <label class="checkbox-label">
@@ -112,6 +176,8 @@
     </div>
   </div>
 
+  <script src="../js/shared/snippet-library-store.js"></script>
+  <script src="../js/shared/snippet-library-view.js"></script>
   <script src="../js/snippets-page.js"></script>
 </body>
 </html>

@@ -17,6 +17,13 @@
       "text": "Open Custom CSS Deployments"
     }
   },
+  "option-set-importer": {
+    "name": "Option Set Importer",
+    "description": "Save and import Widget Manager option sets from a local library.",
+    "enabled-by-default": true,
+    "version-introduced": "1.1.5",
+    "help-text": "On /DesignCenter/Widgets/Index, opens an Option Set Importer flyout from the extension popup. Save the currently selected option set to a local library, grouped by a category that defaults to the widget type name. Import saved option sets by creating a new CMS option set first, and import/export the library as JSON. Existing exact-name matches are not overwritten."
+  },
   "auto-dismiss-help-welcome": {
     "name": "Auto-dismiss Help and Welcome Messages",
     "description": "Automatically dismisses welcome and help messages.",

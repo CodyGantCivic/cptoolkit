@@ -50,6 +50,7 @@ function categorizeTools() {
     "CSS & Design Tools": [
       "mini-ide",
       "custom-css-deployer",
+      "option-set-importer",
       "widget-skin-advanced-style-helper",
       "graphic-link-advanced-style-helper",
       "widget-skin-default-override",
