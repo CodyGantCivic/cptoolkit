@@ -15,6 +15,16 @@
   var TOOLKIT_NAME = '[CP Copy Multiple Skins]';
   var STORAGE_KEY  = 'cp-toolkit-multi-skins';
   var MAX_CREATE_NEW = 8;
+  var MAX_COMPONENT_STRING_LENGTH = 20000;
+  var MAX_COMPONENT_TOTAL_STRING_LENGTH = 150000;
+  var MAX_COMPONENT_FIELD_COUNT = 200;
+  var MAX_NESTED_FIELD_COUNT = 20;
+  var MAX_SAVED_SKIN_COMPONENT_COUNT = 24;
+  var DANGEROUS_STORAGE_KEYS = {
+    '__proto__': true,
+    'constructor': true,
+    'prototype': true
+  };
 
   // ==================== STORAGE BRIDGE ====================
   // Content script (css-snippets.js) listens for these and relays to chrome.storage.local
@@ -95,6 +105,243 @@
     { index: 23, name: 'Cal Wrapper', view: 'calendar' }
   ];
 
+  function hasOwn(obj, key) {
+    return Object.prototype.hasOwnProperty.call(obj, key);
+  }
+
+  function isDangerousKey(key) {
+    return hasOwn(DANGEROUS_STORAGE_KEYS, key);
+  }
+
+  function isPlainObject(value) {
+    if (!value || Object.prototype.toString.call(value) !== '[object Object]') return false;
+    var proto = Object.getPrototypeOf(value);
+    return proto === Object.prototype || proto === null;
+  }
+
+  function addAllowedComponentField(schema, field, value) {
+    if (isDangerousKey(field)) return;
+    schema.fields[field] = true;
+    if (isPlainObject(value)) {
+      schema.objectFields[field] = true;
+      if (!schema.nestedFields[field]) schema.nestedFields[field] = Object.create(null);
+      Object.keys(value).forEach(function(nestedField) {
+        if (!isDangerousKey(nestedField)) {
+          schema.nestedFields[field][nestedField] = true;
+        }
+      });
+    }
+  }
+
+  function buildAllowedComponentSchema() {
+    var schema = {
+      fields: Object.create(null),
+      objectFields: Object.create(null),
+      nestedFields: Object.create(null)
+    };
+    var skins = (typeof DesignCenter !== 'undefined' && DesignCenter.themeJSON && DesignCenter.themeJSON.WidgetSkins) || [];
+    skins.forEach(function(skin) {
+      if (!skin || !skin.Components) return;
+      for (var i = 0; i < MAX_SAVED_SKIN_COMPONENT_COUNT; i++) {
+        var component = skin.Components[i];
+        if (!isPlainObject(component)) continue;
+        Object.keys(component).forEach(function(field) {
+          addAllowedComponentField(schema, field, component[field]);
+        });
+      }
+    });
+    return schema;
+  }
+
+  function failValidation(message) {
+    return { success: false, error: message };
+  }
+
+  function validateStringLength(value, path, state) {
+    if (value.length > MAX_COMPONENT_STRING_LENGTH) {
+      return failValidation(path + ' exceeds ' + MAX_COMPONENT_STRING_LENGTH + ' characters');
+    }
+    state.totalStringLength += value.length;
+    if (state.totalStringLength > MAX_COMPONENT_TOTAL_STRING_LENGTH) {
+      return failValidation('Component data exceeds ' + MAX_COMPONENT_TOTAL_STRING_LENGTH + ' total string characters');
+    }
+    return { success: true };
+  }
+
+  function validateScalarValue(value, path, state) {
+    if (value === null) return { success: true };
+    if (typeof value === 'string') return validateStringLength(value, path, state);
+    if (typeof value === 'number') {
+      return isFinite(value) ? { success: true } : failValidation(path + ' must be a finite number');
+    }
+    if (typeof value === 'boolean') return { success: true };
+    return failValidation(path + ' has unsupported value type');
+  }
+
+  function validateNestedValueObject(value, allowedNestedFields, path, state) {
+    if (!isPlainObject(value)) return failValidation(path + ' must be a plain object');
+    var keys = Object.keys(value);
+    if (keys.length > MAX_NESTED_FIELD_COUNT) {
+      return failValidation(path + ' has too many nested fields');
+    }
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      if (isDangerousKey(key)) return failValidation(path + ' contains unsafe key "' + key + '"');
+      if (!allowedNestedFields || !hasOwn(allowedNestedFields, key)) {
+        return failValidation(path + ' contains unexpected nested field "' + key + '"');
+      }
+      var result = validateScalarValue(value[key], path + '.' + key, state);
+      if (!result.success) return result;
+    }
+    return { success: true };
+  }
+
+  function validateComponentDataShape(data, schema, path) {
+    if (!isPlainObject(data)) return failValidation(path + ' must be a plain object');
+    var fields = Object.keys(data);
+    if (fields.length === 0) return failValidation(path + ' must not be empty');
+    if (fields.length > MAX_COMPONENT_FIELD_COUNT) {
+      return failValidation(path + ' has too many fields');
+    }
+
+    var state = { totalStringLength: 0 };
+    for (var i = 0; i < fields.length; i++) {
+      var field = fields[i];
+      if (isDangerousKey(field)) return failValidation(path + ' contains unsafe key "' + field + '"');
+      if (!hasOwn(schema.fields, field)) return failValidation(path + ' contains unexpected field "' + field + '"');
+
+      var value = data[field];
+      var result;
+      if (isPlainObject(value)) {
+        if (!hasOwn(schema.objectFields, field)) {
+          return failValidation(path + '.' + field + ' is not expected to be an object');
+        }
+        result = validateNestedValueObject(value, schema.nestedFields[field], path + '.' + field, state);
+      } else if (Array.isArray(value)) {
+        result = failValidation(path + '.' + field + ' must not be an array');
+      } else {
+        result = validateScalarValue(value, path + '.' + field, state);
+      }
+      if (!result.success) return result;
+    }
+    return { success: true };
+  }
+
+  function validateSavedSkinForImport(savedSkin, schema) {
+    if (!isPlainObject(savedSkin)) return failValidation('saved skin must be a plain object');
+    var allowedSkinFields = {
+      name: true,
+      sourceSkinID: true,
+      sourceUrl: true,
+      savedAt: true,
+      components: true
+    };
+    var savedSkinKeys = Object.keys(savedSkin);
+    for (var i = 0; i < savedSkinKeys.length; i++) {
+      var skinKey = savedSkinKeys[i];
+      if (isDangerousKey(skinKey)) return failValidation('saved skin contains unsafe key "' + skinKey + '"');
+      if (!hasOwn(allowedSkinFields, skinKey)) return failValidation('saved skin contains unexpected field "' + skinKey + '"');
+    }
+
+    if (typeof savedSkin.name !== 'string' || savedSkin.name.length > 500) {
+      return failValidation('saved skin name is invalid');
+    }
+    if (typeof savedSkin.sourceSkinID !== 'number' && typeof savedSkin.sourceSkinID !== 'string') {
+      return failValidation('saved skin sourceSkinID is invalid');
+    }
+    if (savedSkin.sourceUrl != null && (typeof savedSkin.sourceUrl !== 'string' || savedSkin.sourceUrl.length > 1000)) {
+      return failValidation('saved skin sourceUrl is invalid');
+    }
+    if (savedSkin.savedAt != null && (typeof savedSkin.savedAt !== 'string' || savedSkin.savedAt.length > 100)) {
+      return failValidation('saved skin savedAt is invalid');
+    }
+    if (!Array.isArray(savedSkin.components)) return failValidation('saved skin components must be an array');
+    if (savedSkin.components.length === 0) return failValidation('saved skin has no components');
+    if (savedSkin.components.length > MAX_SAVED_SKIN_COMPONENT_COUNT) {
+      return failValidation('saved skin has too many components');
+    }
+    if (Object.keys(schema.fields).length === 0) {
+      return failValidation('current theme component schema is not available');
+    }
+
+    var seenIndexes = Object.create(null);
+    for (var c = 0; c < savedSkin.components.length; c++) {
+      var comp = savedSkin.components[c];
+      var compPath = 'component #' + (c + 1);
+      if (!isPlainObject(comp)) return failValidation(compPath + ' must be a plain object');
+
+      var allowedComponentFields = { idx: true, type: true, view: true, data: true };
+      var compKeys = Object.keys(comp);
+      for (var k = 0; k < compKeys.length; k++) {
+        var compKey = compKeys[k];
+        if (isDangerousKey(compKey)) return failValidation(compPath + ' contains unsafe key "' + compKey + '"');
+        if (!hasOwn(allowedComponentFields, compKey)) {
+          return failValidation(compPath + ' contains unexpected field "' + compKey + '"');
+        }
+      }
+
+      var idx = comp.idx;
+      if (typeof idx !== 'number' || idx % 1 !== 0 || idx < 0 || idx >= MAX_SAVED_SKIN_COMPONENT_COUNT) {
+        return failValidation(compPath + ' has invalid idx');
+      }
+      if (seenIndexes[idx]) return failValidation('saved skin contains duplicate component idx ' + idx);
+      seenIndexes[idx] = true;
+
+      var compInfo = COMPONENT_TYPES[idx];
+      if (typeof comp.type !== 'string' || comp.type.length > 100) {
+        return failValidation(compPath + ' has invalid type');
+      }
+      if (typeof comp.view !== 'string' || !compInfo || comp.view !== compInfo.view) {
+        return failValidation(compPath + ' has invalid view');
+      }
+
+      var dataResult = validateComponentDataShape(comp.data, schema, compPath + '.data');
+      if (!dataResult.success) return dataResult;
+    }
+
+    return { success: true };
+  }
+
+  function validateSelectedImportSkins(items, savedSkins) {
+    var schema = buildAllowedComponentSchema();
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      var skin = savedSkins[item.key];
+      var label = (skin && skin.name) || ('saved skin ' + (i + 1));
+      var result = validateSavedSkinForImport(skin, schema);
+      if (!result.success) {
+        return failValidation('Invalid saved data for "' + label + '": ' + result.error);
+      }
+    }
+    return { success: true };
+  }
+
+  function showErrorToast(message) {
+    var existing = document.getElementById('cp-multi-skins-error-toast');
+    if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+
+    var toast = document.createElement('div');
+    toast.id = 'cp-multi-skins-error-toast';
+    toast.textContent = message;
+    toast.style.cssText = [
+      'position:fixed',
+      'z-index:2147483647',
+      'right:20px',
+      'bottom:20px',
+      'max-width:420px',
+      'padding:12px 14px',
+      'border-radius:4px',
+      'background:#c62828',
+      'color:#fff',
+      'font:13px/1.4 Arial,sans-serif',
+      'box-shadow:0 2px 10px rgba(0,0,0,.25)'
+    ].join(';');
+    document.body.appendChild(toast);
+    setTimeout(function() {
+      if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
+    }, 10000);
+  }
+
   function readSkinData(skin) {
     var components = [];
     for (var i = 0; i < 24; i++) {
@@ -127,6 +374,9 @@
     });
     if (!targetSkin) return { success: false, error: 'Target skin not found' };
     if (!savedSkin || !savedSkin.components) return { success: false, error: 'No component data to apply' };
+
+    var validation = validateSavedSkinForImport(savedSkin, buildAllowedComponentSchema());
+    if (!validation.success) return { success: false, error: validation.error };
 
     var copiedCount = 0;
     var copiedIndexes = [];
@@ -633,6 +883,15 @@
       if (toCreate.length > MAX_CREATE_NEW) {
         status.textContent = 'You can create a maximum of ' + MAX_CREATE_NEW + ' new skins at once. You selected ' + toCreate.length + '.';
         status.className = 'cms-status error';
+        return;
+      }
+
+      var validation = validateSelectedImportSkins(toExisting.concat(toCreate), savedSkins);
+      if (!validation.success) {
+        var validationMessage = validation.error + '. Import cancelled before making changes.';
+        status.textContent = validationMessage;
+        status.className = 'cms-status error';
+        showErrorToast(validationMessage);
         return;
       }
 
