@@ -3,6 +3,20 @@
 let toolsData = {};
 const GITHUB_REPO = 'cp-vlasak/cptoolkit';
 const DOWNLOAD_PAGE = 'https://cp-vlasak.github.io/cptoolkit/';
+const KNOWN_PLATFORM_SUFFIXES = [
+  '.civicplus.com',
+  '.civic.place',
+  '.civicplus.pro',
+  '.cpqa.ninja'
+];
+const KNOWN_PLATFORM_HOSTS = [
+  'civicplus.com',
+  'civic.place',
+  'civicplus.pro',
+  'cpqa.ninja',
+  'account.civicplus.com',
+  'identityserver.cpqa.ninja'
+];
 
 // Tool categories - same as options.js
 const categories = {
@@ -82,6 +96,17 @@ async function checkForUpdate() {
   }
 }
 
+function normalizeHostname(hostname) {
+  return String(hostname || '').toLowerCase().replace(/\.$/, '');
+}
+
+function isKnownPlatformHost(hostname) {
+  const host = normalizeHostname(hostname);
+  if (!host) return false;
+  if (KNOWN_PLATFORM_HOSTS.includes(host)) return true;
+  return KNOWN_PLATFORM_SUFFIXES.some(suffix => host.endsWith(suffix));
+}
+
 // Check if current tab is a CivicPlus site
 async function checkCivicPlusSite() {
   const statusDiv = document.getElementById('site-status');
@@ -95,21 +120,26 @@ async function checkCivicPlusSite() {
   
   try {
     const url = new URL(tab.url);
-    const hostname = url.hostname;
+    const hostname = normalizeHostname(url.hostname);
     
     // Check for special URLs that can't be CivicPlus sites
-    if (url.protocol === 'chrome:' || url.protocol === 'chrome-extension:' || 
-        url.protocol === 'about:' || url.protocol === 'edge:') {
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
       statusDiv.textContent = 'Browser page - Not a CivicPlus site';
       statusDiv.className = 'status inactive';
       return;
     }
+
+    if (!isKnownPlatformHost(hostname)) {
+      statusDiv.innerHTML = '<i class="fas fa-times-circle"></i> Not a CivicPlus site';
+      statusDiv.className = 'status inactive';
+      return;
+    }
     
-    // Try to detect if it's a CivicPlus site by checking for the test file
     statusDiv.textContent = 'Checking site...';
     statusDiv.className = 'status inactive';
     
-    // Use scripting API to run detection in the page context
+    // Use the detector/bootstrap cache when available. Do not probe arbitrary
+    // sites here; SPA fallback 200s caused false positives.
     try {
       const results = await chrome.scripting.executeScript({
         target: { tabId: tab.id },
@@ -118,48 +148,28 @@ async function checkCivicPlusSite() {
           if (typeof _cpSiteDetected !== 'undefined' && _cpSiteDetected !== null) {
             return _cpSiteDetected;
           }
-          // Otherwise return null to indicate we need to check
+          if (
+            typeof CPToolkitDomDetector !== 'undefined' &&
+            CPToolkitDomDetector &&
+            typeof CPToolkitDomDetector.evaluatePage === 'function'
+          ) {
+            const result = CPToolkitDomDetector.evaluatePage();
+            return !!(result && Array.isArray(result.lanes) && result.lanes.length > 0);
+          }
           return null;
         }
       });
       
       const cachedResult = results[0]?.result;
       
-      if (cachedResult === true) {
+      if (cachedResult !== false) {
         statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> CivicPlus Site: ' + hostname;
         statusDiv.className = 'status active';
         return;
-      } else if (cachedResult === false) {
-        statusDiv.innerHTML = '<i class="fas fa-times-circle"></i> Not a CivicPlus site';
-        statusDiv.className = 'status inactive';
-        return;
       }
-      
-      // If no cached result, inject a script to check
-      const checkResults = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: async () => {
-          return new Promise((resolve) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open('HEAD', '/Assets/Mystique/Shared/Components/ModuleTiles/Templates/cp-Module-Tile.html');
-            xhr.timeout = 3000;
-            xhr.onload = () => resolve(xhr.status === 200);
-            xhr.onerror = () => resolve(false);
-            xhr.ontimeout = () => resolve(false);
-            xhr.send();
-          });
-        }
-      });
-      
-      const isCPSite = checkResults[0]?.result;
-      
-      if (isCPSite) {
-        statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> CivicPlus Site: ' + hostname;
-        statusDiv.className = 'status active';
-      } else {
-        statusDiv.innerHTML = '<i class="fas fa-times-circle"></i> Not a CivicPlus site';
-        statusDiv.className = 'status inactive';
-      }
+
+      statusDiv.innerHTML = '<i class="fas fa-times-circle"></i> Not a CivicPlus site';
+      statusDiv.className = 'status inactive';
       
     } catch (scriptError) {
       // Can't inject script (restricted page)

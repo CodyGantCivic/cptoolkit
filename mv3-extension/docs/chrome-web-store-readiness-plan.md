@@ -32,6 +32,7 @@ The extension is MV3. As of the 2026-07-14 activation checkpoint, the manifest n
 - `host_permissions`: narrowed to the same enumerated CivicPlus platform/identity host list.
 - `web_accessible_resources.matches`: narrowed to the same enumerated host list.
 - jQuery and the automatic on-load toolkit files are now delayed until the detector activates a specific lane.
+- `js/popup.js` no longer runs the legacy Mystique `HEAD` probe on arbitrary active tabs, which prevents SPA/fallback 200 false positives such as `reddit.com`.
 
 The legacy CP-site gate is still present in `js/detect_cp_site.js`, which performs a `HEAD` request to:
 
@@ -39,7 +40,7 @@ The legacy CP-site gate is still present in `js/detect_cp_site.js`, which perfor
 /Assets/Mystique/Shared/Components/ModuleTiles/Templates/cp-Module-Tile.html
 ```
 
-That legacy gate is no longer part of the static content-script chain, but dead references still need cleanup in later work (`mini-ide.js` still has its own copy of the HEAD probe, and popup/status behavior still has legacy fallback logic). The old probe has a known false-positive class on some `*.civicplus.pro` Evolve SPA routes that return a 200 HTML shell for missing paths.
+That legacy gate is no longer part of the static content-script chain, but dead references still need cleanup in later work (`mini-ide.js` still has its own copy of the HEAD probe). The old probe has a known false-positive class on some `*.civicplus.pro` Evolve SPA routes that return a 200 HTML shell for missing paths.
 
 The Phase 0 audit adds one important correction to the simple two-lane model: the toolkit has three activation contexts, not two:
 
