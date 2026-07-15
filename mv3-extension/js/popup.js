@@ -107,6 +107,141 @@ function isKnownPlatformHost(hostname) {
   return KNOWN_PLATFORM_SUFFIXES.some(suffix => host.endsWith(suffix));
 }
 
+function getHttpsOriginPattern(urlString) {
+  try {
+    const url = new URL(urlString);
+    const hostname = normalizeHostname(url.hostname);
+    if (url.protocol !== 'https:' || !hostname || hostname.includes('*')) return null;
+    return 'https://' + hostname + '/*';
+  } catch (e) {
+    return null;
+  }
+}
+
+function isVanityAdminCandidate(url) {
+  const pathname = String(url.pathname || '');
+  return /^\/(?:admin|designcenter)(?:\/|$)/i.test(pathname);
+}
+
+function getActivatingLanes(lanes) {
+  if (!Array.isArray(lanes)) return [];
+  return lanes.filter(lane => lane === 'admin' || lane === 'live-edit' || lane === 'identity');
+}
+
+function setSiteStatus(statusDiv, className, iconClass, text) {
+  statusDiv.textContent = '';
+  statusDiv.className = 'status ' + className;
+
+  const icon = document.createElement('i');
+  icon.className = iconClass;
+  statusDiv.appendChild(icon);
+  statusDiv.appendChild(document.createTextNode(' ' + text));
+}
+
+async function detectCurrentTabWithDomDetector(tabId) {
+  await chrome.scripting.executeScript({
+    target: { tabId: tabId },
+    files: ['js/content/cp-dom-detector.js']
+  });
+
+  const results = await chrome.scripting.executeScript({
+    target: { tabId: tabId },
+    func: async () => {
+      if (
+        typeof CPToolkitDomDetector === 'undefined' ||
+        !CPToolkitDomDetector ||
+        typeof CPToolkitDomDetector.waitForDetection !== 'function'
+      ) {
+        return { detected: false, lanes: [] };
+      }
+
+      const result = await CPToolkitDomDetector.waitForDetection({
+        targetLanes: ['admin', 'live-edit', 'identity'],
+        timeoutMs: 1500
+      });
+
+      return {
+        detected: !!(
+          result &&
+          Array.isArray(result.lanes) &&
+          result.lanes.some(lane => lane === 'admin' || lane === 'live-edit' || lane === 'identity')
+        ),
+        lanes: result && Array.isArray(result.lanes) ? result.lanes : []
+      };
+    }
+  });
+
+  return results[0]?.result || { detected: false, lanes: [] };
+}
+
+async function registerAndActivateTrustedOrigin(statusDiv, tab, originPattern, lanes) {
+  const registerResponse = await chrome.runtime.sendMessage({
+    action: 'cp-toolkit-register-trusted-origin',
+    originPattern: originPattern
+  });
+  const registerResult = registerResponse && registerResponse.result;
+  if (!registerResult || registerResult.registered !== true) {
+    throw new Error(registerResult && registerResult.skipped ? registerResult.skipped : 'Origin registration failed');
+  }
+
+  const activateResponse = await chrome.runtime.sendMessage({
+    action: 'cp-toolkit-activate-trusted-tab',
+    tabId: tab.id,
+    lanes: lanes
+  });
+  const activateResult = activateResponse && activateResponse.result;
+  if (!activateResult || activateResult.activated !== true) {
+    throw new Error(activateResult && activateResult.skipped ? activateResult.skipped : 'Current tab activation failed');
+  }
+
+  setSiteStatus(statusDiv, 'active', 'fas fa-check-circle', 'CivicPlus Site: ' + normalizeHostname(new URL(tab.url).hostname));
+}
+
+async function renderVanityTrustPrompt(statusDiv, tab, detection, originPattern) {
+  const lanes = getActivatingLanes(detection && detection.lanes);
+  if (lanes.length === 0) {
+    setSiteStatus(statusDiv, 'inactive', 'fas fa-times-circle', 'Not a CivicPlus site');
+    return;
+  }
+
+  const hasPermission = await chrome.permissions.contains({ origins: [originPattern] });
+  if (hasPermission) {
+    await registerAndActivateTrustedOrigin(statusDiv, tab, originPattern, lanes);
+    return;
+  }
+
+  statusDiv.textContent = '';
+  statusDiv.className = 'status inactive';
+
+  const icon = document.createElement('i');
+  icon.className = 'fas fa-exclamation-circle';
+  statusDiv.appendChild(icon);
+  statusDiv.appendChild(document.createTextNode(' CivicPlus admin detected on this domain.'));
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = 'Trust this domain';
+  button.addEventListener('click', async () => {
+    button.disabled = true;
+    button.textContent = 'Requesting access...';
+
+    try {
+      const granted = await chrome.permissions.request({ origins: [originPattern] });
+      if (!granted) {
+        setSiteStatus(statusDiv, 'inactive', 'fas fa-times-circle', 'Domain was not trusted');
+        return;
+      }
+
+      button.textContent = 'Activating...';
+      await registerAndActivateTrustedOrigin(statusDiv, tab, originPattern, lanes);
+    } catch (error) {
+      setSiteStatus(statusDiv, 'inactive', 'fas fa-exclamation-circle', error.message || 'Could not trust this domain');
+    }
+  });
+
+  statusDiv.appendChild(button);
+}
+
 // Check if current tab is a CivicPlus site
 async function checkCivicPlusSite() {
   const statusDiv = document.getElementById('site-status');
@@ -130,8 +265,25 @@ async function checkCivicPlusSite() {
     }
 
     if (!isKnownPlatformHost(hostname)) {
-      statusDiv.innerHTML = '<i class="fas fa-times-circle"></i> Not a CivicPlus site';
+      const originPattern = getHttpsOriginPattern(tab.url);
+      if (!originPattern || !isVanityAdminCandidate(url)) {
+        setSiteStatus(statusDiv, 'inactive', 'fas fa-times-circle', 'Not a CivicPlus site');
+        return;
+      }
+
+      statusDiv.textContent = 'Checking site...';
       statusDiv.className = 'status inactive';
+
+      try {
+        const detection = await detectCurrentTabWithDomDetector(tab.id);
+        if (detection && detection.detected) {
+          await renderVanityTrustPrompt(statusDiv, tab, detection, originPattern);
+        } else {
+          setSiteStatus(statusDiv, 'inactive', 'fas fa-times-circle', 'Not a CivicPlus site');
+        }
+      } catch (scriptError) {
+        setSiteStatus(statusDiv, 'inactive', 'fas fa-times-circle', 'Not a CivicPlus site');
+      }
       return;
     }
     
@@ -163,18 +315,15 @@ async function checkCivicPlusSite() {
       const cachedResult = results[0]?.result;
       
       if (cachedResult !== false) {
-        statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> CivicPlus Site: ' + hostname;
-        statusDiv.className = 'status active';
+        setSiteStatus(statusDiv, 'active', 'fas fa-check-circle', 'CivicPlus Site: ' + hostname);
         return;
       }
 
-      statusDiv.innerHTML = '<i class="fas fa-times-circle"></i> Not a CivicPlus site';
-      statusDiv.className = 'status inactive';
+      setSiteStatus(statusDiv, 'inactive', 'fas fa-times-circle', 'Not a CivicPlus site');
       
     } catch (scriptError) {
       // Can't inject script (restricted page)
-      statusDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> Cannot check this page';
-      statusDiv.className = 'status inactive';
+      setSiteStatus(statusDiv, 'inactive', 'fas fa-exclamation-circle', 'Cannot check this page');
     }
     
   } catch (e) {

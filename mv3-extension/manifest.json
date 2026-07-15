@@ -58,6 +58,9 @@
     "*://cpqa.ninja/*",
     "*://*.cpqa.ninja/*"
   ],
+  "optional_host_permissions": [
+    "https://*/*"
+  ],
   "web_accessible_resources": [
     {
       "resources": [

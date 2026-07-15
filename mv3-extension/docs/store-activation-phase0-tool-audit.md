@@ -1,6 +1,6 @@
 # Store Activation Phase 0 Tool Audit
 
-Last updated: 2026-07-14
+Last updated: 2026-07-15
 
 Purpose: preserve the per-tool activation audit from the Claude artifact `Phase 0 Tool Audit - Handoff for George.mhtml` in a tracked repo document.
 
@@ -160,4 +160,17 @@ Implementation branch `codex/security-multi-skins-data-validation` added detecto
 - Full toolkit activation is top-frame only and excludes `custom-css-deployer`, `adfs`, and `remember-image-picker-state` because each has its own narrower lane.
 - `custom-css-deployer` activates as a minimal top-frame all-pages CP-host CSS lane.
 - `remember-image-picker-state` activates only in selected image-picker frames.
-- Vanity-domain optional permission flow is still pending.
+- Vanity-domain optional permission flow is implemented for exact HTTPS Admin/DesignCenter origins after popup detector success.
+
+## Optional Vanity-Origin Checkpoint
+
+Implementation branch `codex/security-multi-skins-data-validation` added the first optional vanity-origin flow on 2026-07-15:
+
+- `manifest.json` declares `optional_host_permissions: ["https://*/*"]`.
+- The popup does not probe arbitrary sites with the legacy Mystique `HEAD` check.
+- On unknown HTTPS `/Admin` or `/DesignCenter` hosts, the popup injects only the tiny DOM detector under `activeTab`.
+- If detector lanes include `admin`, `live-edit`, or `identity`, the popup offers `Trust this domain`.
+- The permission request is exact-origin only, such as `https://coz.org/*`.
+- The service worker verifies the granted origin with `chrome.permissions.contains()` before registering detector/bootstrap scripts or activating the current tab.
+- Script selection still comes from `CPToolkitInjectionRegistry`; neither the popup nor page content can choose script paths.
+- Current limitation: public vanity pages outside admin/design paths do not auto-activate all-pages custom CSS in this checkpoint.

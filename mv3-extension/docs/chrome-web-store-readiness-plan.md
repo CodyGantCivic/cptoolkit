@@ -1,6 +1,6 @@
 # Chrome Web Store Readiness Plan
 
-Last updated: 2026-07-14
+Last updated: 2026-07-15
 
 Purpose: preserve the Chrome Web Store / MV3 action plan in the repo so future work does not depend on Codex task history.
 
@@ -30,9 +30,11 @@ The extension is MV3. As of the 2026-07-14 activation checkpoint, the manifest n
   - `js/content/toolkit-activation-bootstrap.js`
 - `permissions`: `activeTab` has been added for user-invoked surfaces.
 - `host_permissions`: narrowed to the same enumerated CivicPlus platform/identity host list.
+- `optional_host_permissions`: `https://*/*`, used only to request exact customer vanity origins such as `https://coz.org/*` after user approval.
 - `web_accessible_resources.matches`: narrowed to the same enumerated host list.
 - jQuery and the automatic on-load toolkit files are now delayed until the detector activates a specific lane.
 - `js/popup.js` no longer runs the legacy Mystique `HEAD` probe on arbitrary active tabs, which prevents SPA/fallback 200 false positives such as `reddit.com`.
+- Vanity Admin/DesignCenter domains use a user-gesture flow: the popup runs the tiny DOM detector under `activeTab` only on admin/design-looking HTTPS URLs, then offers `Trust this domain` if CMS markers pass.
 
 The legacy CP-site gate is still present in `js/detect_cp_site.js`, which performs a `HEAD` request to:
 
@@ -109,9 +111,20 @@ Activation orchestration checkpoint as of 2026-07-14:
 - `identity` activation injects only `adfs.js`.
 - `image-picker-frame` activation injects only `remember-image-picker-state.js` into selected image-picker frames.
 - Duplicate injection is guarded per frame with an extension-world marker.
-- Vanity-domain optional permissions are not implemented yet; public vanity URLs will not auto-run until that flow exists.
+- Vanity-domain optional permissions are implemented for HTTPS Admin/DesignCenter-style URLs. Public vanity URLs without admin/design paths still do not auto-run.
 
-Prior review conclusion: earlier PR work did not add new permissions, host permissions, or web-accessible-resource exposure, and it did not add remote code execution patterns. The activation checkpoint directly addresses the biggest residual Chrome Store/internal-vetting issue by removing required `*://*/*` from content-script matching, host permissions, and WAR exposure. Remaining review work is focused on optional vanity-domain permission flow, manual CMS QA, dead legacy probe cleanup, and permission/behavior justification.
+Vanity-domain optional permission checkpoint as of 2026-07-15:
+
+- `manifest.json` declares optional HTTPS host access without adding required all-sites access.
+- On unknown HTTPS `/Admin` or `/DesignCenter` hosts, the popup uses `activeTab` to inject only `cp-dom-detector.js` and run bounded DOM detection.
+- If detector lanes include `admin`, `live-edit`, or `identity`, the popup shows `Trust this domain`.
+- The trust button requests only the current exact origin pattern, for example `https://coz.org/*`.
+- After grant, the service worker verifies `chrome.permissions.contains()`, stores the trusted origin, registers detector/bootstrap content scripts for future navigations on that origin, and activates the current tab through the registry-controlled injection path.
+- The service worker accepts content-script activation from unknown hosts only when the exact origin permission is already granted.
+- No script path is accepted from the popup or page; script selection remains centralized in `CPToolkitInjectionRegistry`.
+- Current limitation: all-pages custom CSS on non-admin public vanity pages is not auto-activated by this first optional-origin flow.
+
+Prior review conclusion: earlier PR work did not add new permissions, host permissions, or web-accessible-resource exposure, and it did not add remote code execution patterns. The activation checkpoint directly addresses the biggest residual Chrome Store/internal-vetting issue by removing required `*://*/*` from content-script matching, host permissions, and WAR exposure. Remaining review work is focused on manual CMS QA, dead legacy probe cleanup, resource-list pruning, and permission/behavior justification.
 
 ## Cody Architecture Verdict
 
@@ -143,18 +156,19 @@ Hard constraint: zero-click auto-detection on arbitrary customer vanity domains 
    - Request origin-specific grants only after a user action and positive detector result.
    - Example shape: request `https://city.gov/*`, not blanket `*://*/*`.
    - Do not request all-sites as a normal activation path.
+   - Status: implemented for exact HTTPS Admin/DesignCenter vanity origins.
 
 4. Split detector from toolkit activation.
    - Manifest-declared content scripts should be tiny and detector-only on known CP domains.
    - Full toolkit scripts load only after detection passes.
    - Use `chrome.scripting.executeScript` for current-tab activation.
    - Current checkpoint uses `chrome.scripting.executeScript` for detector-triggered activation.
-   - Future optional-permission work may use `chrome.scripting.registerContentScripts` for approved vanity origins.
+   - Optional vanity-origin work uses `chrome.scripting.registerContentScripts` for approved origins.
 
 5. Replace the network `HEAD` probe with DOM-marker detection.
    - Prefer path plus DOM shell markers over probing a Mystique asset.
    - This improves privacy and avoids the Evolve SPA false positive.
-   - Detector module added; the current runtime has not been switched over yet.
+   - Detector module added and wired into the current runtime.
 
 6. Rework `web_accessible_resources`.
    - Previous `matches: ["*://*/*"]` was too broad.
@@ -226,7 +240,7 @@ Candidate marker categories:
    - Replace `*://*/*` in `host_permissions`. Status: implemented for required hosts.
    - Narrow `content_scripts.matches`. Status: implemented for static detector bootstrap.
    - Narrow or remove broad `web_accessible_resources.matches`. Status: matches narrowed; resource list still needs pruning.
-   - Add `activeTab` and `optional_host_permissions`. Status: `activeTab` added; optional vanity-origin permissions still pending.
+   - Add `activeTab` and `optional_host_permissions`. Status: implemented; optional requests are exact HTTPS origins after detector success.
 
 5. Service worker audit
    - Recheck any broad tab queries or messaging loops, especially prevent-timeout alarm behavior.
@@ -259,9 +273,9 @@ Candidate marker categories:
 5. Create a detector module with weighted DOM markers and bounded observation. Status: implemented on `codex/security-multi-skins-data-validation`, pending review/merge.
 6. Add activation orchestration in the service worker. Status: implemented with lane-only messages and fixed registry-selected files.
 7. Split manifest loading so only tiny detector lanes are declared up front. Status: implemented for enumerated CP hosts.
-8. Move full toolkit injection to ordered `chrome.scripting.executeScript` calls / dynamic registered content scripts. Status: implemented with `executeScript`; dynamic registered content scripts deferred for optional vanity-origin work.
+8. Move full toolkit injection to ordered `chrome.scripting.executeScript` calls / dynamic registered content scripts. Status: implemented with `executeScript`; dynamic detector/bootstrap registration implemented for trusted vanity origins.
 9. Preserve the ADFS static lane. Status: implemented as a detector-triggered identity lane with jQuery-free `adfs.js`; manual timing QA required.
-10. Add per-origin optional permission request flow for vanity domains.
+10. Add per-origin optional permission request flow for vanity domains. Status: implemented for exact HTTPS Admin/DesignCenter vanity origins.
 11. Narrow web-accessible resources. Status: broad matches narrowed; resource list pruning remains.
 12. Remove dead legacy HEAD probe code, starting with `mini-ide.js`.
 13. Add/ratchet guardrails for broad matches and WAR exposure.
@@ -279,6 +293,8 @@ After reloading the unpacked extension from this branch, test these before Store
 6. Image picker: folder state restore still works inside `/DocumentCenter/FolderForModal` or `/Admin/DocumentCenter` frames.
 7. On-demand context menus: user-invoked tools still run under `activeTab` without required all-sites host permission.
 8. Non-CP site: no jQuery/toolkit on-load scripts are injected.
+9. Vanity Admin/DesignCenter host such as `https://coz.org/Admin/...`: popup should show the trust-domain prompt, request only that exact origin, activate the current tab after approval, and continue activating after reload.
+10. Unknown non-admin host such as `https://www.reddit.com/`: popup should show `Not a CivicPlus site` without a permission prompt.
 
 ## EOW Submission Track
 
@@ -296,7 +312,7 @@ Recommended scope for this week:
    - separate ADFS identity lane;
    - service worker ordered toolkit injection;
    - no broad WAR matches.
-   - Current status: all above are implemented except optional vanity-origin permissions; WAR matches are narrowed, but resource list pruning remains.
+   - Current status: all above are implemented; WAR matches are narrowed, but resource list pruning remains.
 4. Fix `copy-multiple-skins.js` stored component-data validation before packaging. This is smaller than the manifest refactor and removes a clear security-review finding. Status: implemented on `codex/security-multi-skins-data-validation`, pending review/merge.
 5. Defer nice-to-have management UI if needed, but do not defer the permission model.
 6. Package as the next patch version if `1.1.4` is already in review.
