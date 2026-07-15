@@ -113,10 +113,11 @@
 
   function getCategory(template, isCustom) {
     var meta = getMetadata(template);
+    var flat = isPlainObject(template) ? template : {};
     var category = normalizeText(
       meta.category ||
-      template.libraryCategory ||
-      template.category
+      flat.libraryCategory ||
+      flat.category
     );
 
     if (category) return category;
@@ -125,22 +126,25 @@
 
   function getSourceSite(template) {
     var meta = getMetadata(template);
+    var flat = isPlainObject(template) ? template : {};
     return normalizeText(
       meta.sourceSite ||
-      template.sourceSite ||
-      template.site ||
+      flat.sourceSite ||
+      flat.site ||
       ""
     );
   }
 
   function getSavedAt(template) {
     var meta = getMetadata(template);
-    return normalizeText(meta.savedAt || template.savedAt || "");
+    var flat = isPlainObject(template) ? template : {};
+    return normalizeText(meta.savedAt || flat.savedAt || "");
   }
 
   function getUpdatedAt(template) {
     var meta = getMetadata(template);
-    return normalizeText(meta.updatedAt || template.updatedAt || "");
+    var flat = isPlainObject(template) ? template : {};
+    return normalizeText(meta.updatedAt || flat.updatedAt || "");
   }
 
   function setMetadata(template, metadata) {

@@ -470,6 +470,15 @@
           return html;
         }
 
+        function escapeTemplateHtml(value) {
+          return String(value == null ? "" : value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+        }
+
         function createImportModal() {
           // Remove existing modal if any
           var existing = document.getElementById("cp-toolkit-import-modal");
@@ -1196,15 +1205,6 @@
           var grid = modal.querySelector("#cp-template-grid");
           var allTemplates = {};
           var templateSource = {};
-
-          function escapeTemplateHtml(value) {
-            return String(value == null ? "" : value)
-              .replace(/&/g, "&amp;")
-              .replace(/</g, "&lt;")
-              .replace(/>/g, "&gt;")
-              .replace(/"/g, "&quot;")
-              .replace(/'/g, "&#39;");
-          }
 
           function buildTemplateEntries() {
             var entries = [];

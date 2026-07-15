@@ -297,6 +297,8 @@ After reloading the unpacked extension from this branch, test these before Store
 8. Non-CP site: no jQuery/toolkit on-load scripts are injected.
 9. Vanity Admin/DesignCenter host such as `https://coz.org/Admin/...`: popup should show the trust-domain prompt, request only that exact origin, activate the current tab after approval, and continue activating after reload.
 10. Unknown non-admin host such as `https://www.reddit.com/`: popup should show `Not a CivicPlus site` without a permission prompt.
+11. Graphic Links fancy button library: saving a button under a brand-new library name should create the entry without a `savedAt` console error.
+12. Fancy button Socials import: opening folder lookup should list Document Center folders, or show the manual-entry fallback only on a real load timeout.
 
 ## EOW Submission Track
 
