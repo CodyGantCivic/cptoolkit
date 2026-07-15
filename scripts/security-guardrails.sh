@@ -81,6 +81,136 @@ check_broad_matches() {
   return 0
 }
 
+# ---- Check 2b: manifest scope stays narrowed ---------------------------
+# This ratchets the Store-readiness permission model:
+#   - no all-HTTPS/all-HTTP required host permissions or static content scripts
+#   - optional vanity access remains runtime-only via optional_host_permissions
+#   - broad HTTPS web_accessible_resources entries are limited to the two
+#     explicitly reviewed vanity-domain asset sets
+check_manifest_scope() {
+  node <<'NODE'
+const fs = require('fs');
+const manifest = JSON.parse(fs.readFileSync('mv3-extension/manifest.json', 'utf8'));
+const failures = [];
+const broadRequired = new Set(['*://*/*', 'https://*/*', 'http://*/*']);
+
+function list(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function sameSet(actual, expected) {
+  const a = list(actual).slice().sort();
+  const b = list(expected).slice().sort();
+  return a.length === b.length && a.every((value, index) => value === b[index]);
+}
+
+function diffMessage(actual, expected) {
+  const a = new Set(list(actual));
+  const b = new Set(list(expected));
+  const extra = Array.from(a).filter(value => !b.has(value)).sort();
+  const missing = Array.from(b).filter(value => !a.has(value)).sort();
+  const parts = [];
+  if (extra.length) parts.push('extra: ' + extra.join(', '));
+  if (missing.length) parts.push('missing: ' + missing.join(', '));
+  return parts.join('; ');
+}
+
+list(manifest.host_permissions).forEach(pattern => {
+  if (broadRequired.has(pattern)) {
+    failures.push('host_permissions contains broad required pattern ' + pattern);
+  }
+});
+
+list(manifest.content_scripts).forEach((script, index) => {
+  list(script.matches).forEach(pattern => {
+    if (broadRequired.has(pattern)) {
+      failures.push('content_scripts[' + index + '].matches contains broad required pattern ' + pattern);
+    }
+  });
+});
+
+const optionalHosts = list(manifest.optional_host_permissions);
+if (!sameSet(optionalHosts, ['https://*/*'])) {
+  failures.push('optional_host_permissions must stay exactly https://*/* for runtime vanity-origin grants');
+}
+
+const expectedDynamicVanityResources = [
+  'data/fancy-button-library.json',
+  'data/link-replacement-text.json',
+  'data/modules.json',
+  'data/snippets.json',
+  'data/social-icons.json',
+  'images/templates/*',
+  'images/wordmark.png',
+  'socials/*',
+  'js/tools/on-load/helpers/copied-skins-helper.js',
+  'js/tools/on-load/helpers/fix-copied-skin-references-helper.js',
+  'js/tools/on-load/helpers/widget-skin-change-handler.js',
+  'js/tools/on-load/helpers/widget-skin-default-override-helper.js'
+];
+
+const expectedStaticFontAwesomeResources = [
+  'css/external/fontawesome-all.min.css',
+  'css/external/fontawesome-fonts/fa-brands-400.eot',
+  'css/external/fontawesome-fonts/fa-brands-400.svg',
+  'css/external/fontawesome-fonts/fa-brands-400.ttf',
+  'css/external/fontawesome-fonts/fa-brands-400.woff',
+  'css/external/fontawesome-fonts/fa-brands-400.woff2',
+  'css/external/fontawesome-fonts/fa-regular-400.eot',
+  'css/external/fontawesome-fonts/fa-regular-400.svg',
+  'css/external/fontawesome-fonts/fa-regular-400.ttf',
+  'css/external/fontawesome-fonts/fa-regular-400.woff',
+  'css/external/fontawesome-fonts/fa-regular-400.woff2',
+  'css/external/fontawesome-fonts/fa-solid-900.eot',
+  'css/external/fontawesome-fonts/fa-solid-900.svg',
+  'css/external/fontawesome-fonts/fa-solid-900.ttf',
+  'css/external/fontawesome-fonts/fa-solid-900.woff',
+  'css/external/fontawesome-fonts/fa-solid-900.woff2'
+];
+
+let dynamicVanityCount = 0;
+let staticFontAwesomeCount = 0;
+
+list(manifest.web_accessible_resources).forEach((entry, index) => {
+  const matches = list(entry.matches);
+  if (matches.includes('*://*/*') || matches.includes('http://*/*')) {
+    failures.push('web_accessible_resources[' + index + '] contains disallowed broad match');
+  }
+
+  if (!matches.includes('https://*/*')) return;
+
+  if (entry.use_dynamic_url === true) {
+    dynamicVanityCount += 1;
+    if (!sameSet(entry.resources, expectedDynamicVanityResources)) {
+      failures.push('dynamic vanity WAR resources changed (' + diffMessage(entry.resources, expectedDynamicVanityResources) + ')');
+    }
+    return;
+  }
+
+  staticFontAwesomeCount += 1;
+  if (!sameSet(entry.resources, expectedStaticFontAwesomeResources)) {
+    failures.push('static HTTPS WAR resources must stay limited to Font Awesome assets (' + diffMessage(entry.resources, expectedStaticFontAwesomeResources) + ')');
+  }
+});
+
+if (dynamicVanityCount !== 1) {
+  failures.push('expected exactly one dynamic https://*/* vanity WAR entry, found ' + dynamicVanityCount);
+}
+
+if (staticFontAwesomeCount !== 1) {
+  failures.push('expected exactly one static https://*/* Font Awesome WAR entry, found ' + staticFontAwesomeCount);
+}
+
+if (failures.length) {
+  console.log('[guardrail:manifest-scope] FAIL: manifest scope ratchet violated');
+  failures.forEach(failure => console.log('  ' + failure));
+  process.exit(1);
+}
+
+console.log('[guardrail:manifest-scope] PASS: required hosts are enumerated and broad vanity WAR entries are ratcheted');
+NODE
+}
+
 # ---- Check 3: storage-bridge listener files include the whitelist guard
 # Any file that *listens* for cp-toolkit-storage-{get,set} events must
 # contain both ALLOWED_STORAGE_KEYS (the key whitelist) and hasOwn.call
@@ -217,12 +347,13 @@ check_no_remote_assets() {
 exit_code=0
 check_no_eval_or_function || exit_code=1
 check_broad_matches       || exit_code=1
+check_manifest_scope      || exit_code=1
 check_storage_bridge      || exit_code=1
 check_no_server           || exit_code=1
 check_no_remote_assets    || exit_code=1
 
 if [ "$exit_code" -eq 0 ]; then
-  echo "[guardrails] All 5 checks PASS."
+  echo "[guardrails] All 6 checks PASS."
 else
   echo "[guardrails] One or more checks FAILED. See above."
 fi

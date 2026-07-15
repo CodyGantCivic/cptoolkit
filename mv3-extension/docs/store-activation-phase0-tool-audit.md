@@ -72,7 +72,7 @@ These tools need extra care when moved from static `document_start` injection to
 | `adfs` | High | Early identity/SAML redirect race; deliberately skips CP-site detection. |
 | `remember-image-picker-state` | High | Runs in image-picker iframe; breaks if injection is top-frame-only. |
 | `graphic-link-advanced-style-helper` | Medium | `.insertFancy` handler is observer-driven and can miss an existing button unless it scans existing DOM first. |
-| `mini-ide` | Medium | Some handlers watch future mutations; also has a dead legacy HEAD probe. |
+| `mini-ide` | Medium | Some handlers watch future mutations; legacy private HEAD probe removed after centralized detector activation. |
 | `custom-css-deployer` | Medium | Needs all-pages lane; may flash before CSS applies if injected late. |
 | `widget-skin-*` / `fix-copied-skin-references` | Medium | MAIN-world helpers and workflows may already be in progress. |
 
@@ -96,7 +96,7 @@ These tools need extra care when moved from static `document_start` injection to
 | `graphic-link-advanced-style-helper` | admin | maybe | top | observer can miss existing `.insertFancy` |
 | `option-set-importer` | admin | no | top | Widget Manager only |
 | `css-snippets` | admin | no | top | preserve order |
-| `mini-ide` | admin | maybe | top | future-mutation handlers; remove HEAD probe |
+| `mini-ide` | admin | maybe | top | future-mutation handlers; private HEAD probe removed |
 | `custom-css-deployer` | all-pages/admin | maybe | top | F1 and possible CSS flash |
 | `prevent-timeout` | either | no | top | low |
 | `graphic-link-autofill` | admin | no | top | low |
@@ -124,7 +124,7 @@ Lane meanings:
 
 - Current `manifest.json` injects only `js/content/cp-dom-detector.js` and `js/content/toolkit-activation-bootstrap.js` at `document_start` on enumerated CivicPlus platform/identity hosts. The full on-load toolkit chain is now detector-triggered from the service worker.
 - `adfs.js` self-gates on `/admin/saml/logonrequest`, `account.civicplus.com`, and `identityserver.cpqa.ninja`.
-- `mini-ide.js` still contains its own `isCivicPlusSite()` HEAD probe to the Mystique module tile path.
+- `mini-ide.js` no longer contains its own `isCivicPlusSite()` HEAD probe to the Mystique module tile path; it relies on the centralized detector and compatibility `detect_if_cp_site()` shim.
 - `graphic-link-advanced-style-helper.js` calls `setupInsertButtonHandler()`, but that function only binds `.insertFancy` from a `MutationObserver` callback. It should also scan existing DOM when initialized.
 - Manifest order currently has `helpers/advanced-styles-limits.js` before `enforce-advanced-styles-text-limits.js`, and `css-snippets.js` before `mini-ide.js`. Preserve those dependencies in the injection manifest/list.
 

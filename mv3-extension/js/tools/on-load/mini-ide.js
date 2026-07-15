@@ -112,20 +112,6 @@
         // Note: Theme is now applied to each editor as it's created (see createCSSEditor)
     }
 
-    // ==================== SITE DETECTION ====================
-    async function isCivicPlusSite() {
-        // console.log(TOOLKIT_NAME + ' Detecting if this site is a CivicPlus site. If not, a 404 error below is normal.'); // Phase 3: Reduced logging
-        return new Promise((resolve) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open('HEAD', '/Assets/Mystique/Shared/Components/ModuleTiles/Templates/cp-Module-Tile.html');
-            xhr.onload = function() {
-                resolve(xhr.status === 200);
-            };
-            xhr.onerror = () => resolve(false);
-            xhr.send();
-        });
-    }
-
     function pageMatches(patterns) {
         const url = window.location.href.toLowerCase();
         const pathname = window.location.pathname.toLowerCase();
@@ -5497,11 +5483,6 @@
     // ==================== MAIN INITIALIZATION ====================
     async function initialize() {
         // console.log(TOOLKIT_NAME + ' Starting initialization...'); // Phase 3: Reduced logging
-        const isCivicPlus = await isCivicPlusSite();
-        if (!isCivicPlus) {
-            console.log(TOOLKIT_NAME + ' Not a CivicPlus site. Script will not run.');
-            return;
-        }
         // console.log(TOOLKIT_NAME + ' CivicPlus site detected! Initializing CSS editor enhancement...'); // Phase 3: Reduced logging
         injectStyles();
         startObserving();

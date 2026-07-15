@@ -43,7 +43,7 @@ The legacy CP-site gate is still present in `js/detect_cp_site.js`, which perfor
 /Assets/Mystique/Shared/Components/ModuleTiles/Templates/cp-Module-Tile.html
 ```
 
-That legacy gate is no longer part of the static content-script chain, but dead references still need cleanup in later work (`mini-ide.js` still has its own copy of the HEAD probe). The old probe has a known false-positive class on some `*.civicplus.pro` Evolve SPA routes that return a 200 HTML shell for missing paths.
+That legacy gate is no longer part of the static content-script chain. `mini-ide.js` previously had its own copy of the same `HEAD` probe, but that redundant check was removed on 2026-07-15 after central detector activation landed. The old probe has a known false-positive class on some `*.civicplus.pro` Evolve SPA routes that return a 200 HTML shell for missing paths.
 
 The Phase 0 audit adds one important correction to the simple two-lane model: the toolkit has three activation contexts, not two:
 
@@ -279,8 +279,8 @@ Candidate marker categories:
 9. Preserve the ADFS static lane. Status: implemented as a detector-triggered identity lane with jQuery-free `adfs.js`; manual timing QA required.
 10. Add per-origin optional permission request flow for vanity domains. Status: implemented for exact HTTPS Admin/DesignCenter vanity origins.
 11. Narrow web-accessible resources. Status: broad matches narrowed; resource list pruning remains.
-12. Remove dead legacy HEAD probe code, starting with `mini-ide.js`.
-13. Add/ratchet guardrails for broad matches and WAR exposure.
+12. Remove dead legacy HEAD probe code, starting with `mini-ide.js`. Status: `mini-ide.js` probe removed; legacy `js/detect_cp_site.js` remains only for compatibility cleanup.
+13. Add/ratchet guardrails for broad matches and WAR exposure. Status: implemented in `scripts/security-guardrails.sh` with manifest-scope checks for required hosts, optional vanity access, and HTTPS WAR asset lists.
 14. Run manual QA on known CP domains, vanity domains, Live Edit, ADFS, Widget Manager, Theme Manager, Graphic Links, image-picker iframe behavior, custom CSS all-pages behavior, and on-demand context-menu tools.
 
 ## Manual CMS QA Needed

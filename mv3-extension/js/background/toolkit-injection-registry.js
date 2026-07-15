@@ -274,7 +274,7 @@
       world: WORLDS.ISOLATED,
       jquery: JQUERY.REQUIRED,
       timingRisk: TIMING_RISK.MEDIUM,
-      notes: ['Remove dead legacy HEAD probe when centralized detection lands.']
+      notes: ['Runs only after centralized detector activation.']
     },
     {
       id: 'custom-css-deployer',
