@@ -83,6 +83,28 @@
         "*://cpqa.ninja/*",
         "*://*.cpqa.ninja/*"
       ]
+    },
+    {
+      "resources": [
+        "data/fancy-button-library.json",
+        "data/link-replacement-text.json",
+        "data/modules.json",
+        "data/snippets.json",
+        "data/social-icons.json",
+        "images/templates/*",
+        "images/wordmark.png",
+        "socials/*",
+        "js/tools/on-load/helpers/copied-skins-helper.js",
+        "js/tools/on-load/helpers/fix-copied-skin-references-helper.js",
+        "js/tools/on-load/helpers/widget-skin-change-handler.js",
+        "js/tools/on-load/helpers/widget-skin-default-override-helper.js",
+        "css/external/fontawesome-all.min.css",
+        "css/external/fontawesome-fonts/*"
+      ],
+      "matches": [
+        "https://*/*"
+      ],
+      "use_dynamic_url": true
     }
   ]
 }
