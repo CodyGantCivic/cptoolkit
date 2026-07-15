@@ -191,6 +191,15 @@ body {
   margin: 4px 0 12px;
 }
 
+.filter-popover-check input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  margin: 0;
+  accent-color: #af282f;
+}
+
 .filter-popover-actions {
   display: flex;
   justify-content: flex-end;

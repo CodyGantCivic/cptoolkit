@@ -154,7 +154,7 @@ body {
 }
 
 #snippet-library-search,
-.library-search-wrap input {
+.library-search-wrap > input {
   width: 260px;
   height: 36px;
   padding: 8px 10px;
@@ -166,7 +166,7 @@ body {
 }
 
 #snippet-library-search:focus,
-.library-search-wrap input:focus {
+.library-search-wrap > input:focus {
   outline: none;
   border-color: #af282f;
   box-shadow: 0 0 0 2px rgba(175, 40, 47, 0.1);
@@ -239,7 +239,12 @@ body {
   font-size: 13px;
 }
 
-.library-filter-check input {
+.library-filter-check input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  margin: 0;
   accent-color: #af282f;
 }
 

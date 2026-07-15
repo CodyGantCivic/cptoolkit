@@ -1372,7 +1372,11 @@
                     cursor: pointer;
                 }
                 .snippets-filter-check input {
-                    width: auto;
+                    flex: 0 0 auto;
+                    width: 16px;
+                    height: 16px;
+                    min-width: 16px;
+                    margin: 0;
                     accent-color: #af282f;
                 }
                 .snippets-filter-reset {
