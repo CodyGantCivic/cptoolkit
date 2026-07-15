@@ -241,6 +241,24 @@
     };
   }
 
+  function getErrorMessage(error) {
+    return error && error.message ? error.message : String(error || '');
+  }
+
+  function isTransientInjectionTargetError(error) {
+    var message = getErrorMessage(error);
+    return /No tab with id|No frame with id|Frame with ID .* was removed|The tab was closed|The frame was removed|Cannot find frame/i.test(message);
+  }
+
+  function skippedTransientTarget(error, files) {
+    return {
+      injected: false,
+      skipped: 'target-unavailable',
+      message: getErrorMessage(error),
+      files: files || []
+    };
+  }
+
   function markInjected(injectionKey) {
     var globalRoot = typeof globalThis !== 'undefined' ? globalThis : window;
     globalRoot.__cpToolkitInjectedKeys = globalRoot.__cpToolkitInjectedKeys || {};
@@ -277,6 +295,11 @@
       }).then(function() {
         return { injected: true, files: files };
       });
+    }).catch(function(error) {
+      if (isTransientInjectionTargetError(error)) {
+        return skippedTransientTarget(error, files);
+      }
+      throw error;
     });
   }
 
@@ -406,6 +429,15 @@
           'trusted-origin-bootstrap',
           registry.currentStaticBootstrap.slice()
         ).then(function(bootstrapResult) {
+          if (bootstrapResult && bootstrapResult.skipped === 'target-unavailable') {
+            return {
+              activated: false,
+              skipped: 'target-unavailable',
+              bootstrap: bootstrapResult,
+              message: bootstrapResult.message
+            };
+          }
+
           if (lanes.indexOf(LANES.ADMIN) !== -1 || lanes.indexOf(LANES.LIVE_EDIT) !== -1) {
             activationPromises.push(handleFullToolkit(target, lanes));
             activationPromises.push(handleCssLane(target, [LANES.ALL_PAGES_CP_HOST_CSS]));
@@ -423,6 +455,19 @@
           }
 
           return Promise.all(activationPromises).then(function(results) {
+            var targetUnavailable = results.find(function(result) {
+              return result && result.skipped === 'target-unavailable';
+            });
+            if (targetUnavailable) {
+              return {
+                activated: false,
+                skipped: 'target-unavailable',
+                bootstrap: bootstrapResult,
+                results: results,
+                message: targetUnavailable.message
+              };
+            }
+
             return {
               activated: true,
               bootstrap: bootstrapResult,
@@ -431,6 +476,15 @@
           });
         });
       });
+    }).catch(function(error) {
+      if (isTransientInjectionTargetError(error)) {
+        return {
+          activated: false,
+          skipped: 'target-unavailable',
+          message: getErrorMessage(error)
+        };
+      }
+      throw error;
     });
   }
 
