@@ -1,8 +1,6 @@
 // Popup JavaScript
 
 let toolsData = {};
-const GITHUB_REPO = 'cp-vlasak/cptoolkit';
-const DOWNLOAD_PAGE = 'https://cp-vlasak.github.io/cptoolkit/';
 const KNOWN_PLATFORM_SUFFIXES = [
   '.civicplus.com',
   '.civic.place',
@@ -57,44 +55,6 @@ const categories = {
   "Session & Status": ["prevent-timeout"],
   "Other Tools": ["remember-image-picker-state", "show-changelog"],
 };
-
-// Check for extension updates via GitHub Releases API
-function compareSemver(a, b) {
-  const pa = String(a || '').replace(/^v/i, '').split('.').map(n => parseInt(n, 10) || 0);
-  const pb = String(b || '').replace(/^v/i, '').split('.').map(n => parseInt(n, 10) || 0);
-  const max = Math.max(pa.length, pb.length);
-  for (let i = 0; i < max; i++) {
-    const av = pa[i] || 0;
-    const bv = pb[i] || 0;
-    if (av > bv) return 1;
-    if (av < bv) return -1;
-  }
-  return 0;
-}
-
-async function checkForUpdate() {
-  const updateDiv = document.getElementById('update-status');
-  try {
-    const currentVersion = chrome.runtime.getManifest().version;
-    const resp = await fetch('https://api.github.com/repos/' + GITHUB_REPO + '/releases/latest');
-    if (!resp.ok) return;
-    const release = await resp.json();
-    const latestTag = (release.tag_name || '').replace(/^v/, '');
-    if (latestTag && compareSemver(latestTag, currentVersion) === 1) {
-      updateDiv.textContent = '';
-      const icon = document.createElement('i');
-      icon.className = 'fas fa-arrow-circle-up';
-      updateDiv.appendChild(icon);
-      updateDiv.appendChild(document.createTextNode(' Update available: v' + latestTag + ' (you have v' + currentVersion + '). Click to download.'));
-      updateDiv.style.display = '';
-      updateDiv.addEventListener('click', () => {
-        chrome.tabs.create({ url: DOWNLOAD_PAGE });
-      });
-    }
-  } catch (e) {
-    // Silently ignore — network errors, rate limits, etc.
-  }
-}
 
 function normalizeHostname(hostname) {
   return String(hostname || '').toLowerCase().replace(/\.$/, '');
@@ -510,6 +470,5 @@ document.getElementById('open-options').addEventListener('click', () => {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
   checkCivicPlusSite();
-  checkForUpdate();
   loadToolsAndSettings();
 });

@@ -251,7 +251,7 @@ Candidate marker categories:
 6. Store/release readiness
    - Confirm whether publishing will use a CivicPlus account or an approved personal account.
    - Prepare privacy/security justification for remaining permissions.
-   - Decide whether GitHub update checks and external release links are still appropriate once distributed through the Chrome Web Store.
+   - Decide whether GitHub update checks and external release links are still appropriate once distributed through the Chrome Web Store. Status: GitHub release checks and GitHub Pages links removed; no replacement popup update UI is planned because Chrome Web Store distribution handles update checks and installs automatically.
    - Run existing guardrails and add a new guardrail for broad permission ratcheting once the manifest is narrowed.
    - If version `1.1.4` is already in Chrome Web Store review, do not withdraw it only to swap in this larger refactor. Build the refactor as `1.1.5` and use it as the proactive next submission or the resubmission if review pushes back on host scope.
 
@@ -264,7 +264,7 @@ Candidate marker categories:
 - Which tools must run in iframes, and can frame matching be narrowed by URL/path?
 - Should public Live Edit support be automatic on known CP domains only, or optional on vanity domains?
 - What Chrome warning text appears for path-restricted broad matches versus host-scoped optional grants?
-- Should the Chrome Web Store version continue checking GitHub releases, or should update messaging change for Store distribution?
+- Should the Chrome Web Store version continue checking GitHub releases, or should update messaging change for Store distribution? Answer: no GitHub release checks or replacement popup update banner for the Store build.
 
 ## Implementation Order
 

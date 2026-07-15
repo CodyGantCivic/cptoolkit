@@ -21,10 +21,9 @@ you add a remote reference, add the host to the correct bucket in
 These are loaded, fetched, or navigated to by the extension at runtime
 (`ALLOWED_REMOTE_HOSTS`).
 
-| Host | Used by | Purpose | Why it can't be vendored |
-|------|---------|---------|--------------------------|
-| `api.github.com` | `js/popup.js` | Checks the latest published release tag to tell the user when a newer toolkit version is available (popup update banner). | It's a live status query against the release repo, not a static asset. |
-| `cp-vlasak.github.io` | `js/popup.js` | The toolkit's download / landing page, opened in a new tab when the user clicks the update banner. | A destination URL the user navigates to, not a loaded asset. |
+None. The Chrome Web Store build relies on Chrome's automatic extension update
+flow and does not call GitHub release APIs, external download pages, or Store
+listing pages from the popup.
 
 ## Hosts in markup the toolkit emits into customer sites
 

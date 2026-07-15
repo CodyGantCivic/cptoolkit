@@ -28,7 +28,7 @@ ALLOWED_BROAD_MATCHES=0
 # */external/ are out of scope (see check_no_remote_assets).
 #
 # Hosts the EXTENSION itself contacts (fetch / link-inject / navigate):
-ALLOWED_REMOTE_HOSTS="api.github.com cp-vlasak.github.io"
+ALLOWED_REMOTE_HOSTS=""
 # Hosts that only appear in markup the toolkit EMITS into customer sites
 # (clipboard snippets, inserted HTML, SVG namespace) — not loaded by the
 # extension itself, but still tracked so new third parties surface in review:
