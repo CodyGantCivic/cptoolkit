@@ -173,5 +173,5 @@ Implementation branch `codex/security-multi-skins-data-validation` added the fir
 - The permission request is exact-origin only, such as `https://coz.org/*`.
 - The service worker verifies the granted origin with `chrome.permissions.contains()` before registering detector/bootstrap scripts or activating the current tab.
 - Script selection still comes from `CPToolkitInjectionRegistry`; neither the popup nor page content can choose script paths.
-- Activated vanity-domain tools need selected extension assets (`data/*.json`, template/social SVGs, Font Awesome, and MAIN-world helper scripts). These are exposed through a separate dynamic `web_accessible_resources` entry for HTTPS origins; this does not grant script execution by itself.
+- Activated vanity-domain tools need selected extension assets (`data/*.json`, template/social SVGs, Font Awesome, and MAIN-world helper scripts). JSON/images/helper scripts are exposed through a dynamic `web_accessible_resources` entry for HTTPS origins; Font Awesome CSS/fonts use a separate static HTTPS entry because the stylesheet loads its fonts by relative URL. This does not grant script execution by itself.
 - Current limitation: public vanity pages outside admin/design paths do not auto-activate all-pages custom CSS in this checkpoint.

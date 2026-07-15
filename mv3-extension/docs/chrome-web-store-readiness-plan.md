@@ -31,8 +31,8 @@ The extension is MV3. As of the 2026-07-14 activation checkpoint, the manifest n
 - `permissions`: `activeTab` has been added for user-invoked surfaces.
 - `host_permissions`: narrowed to the same enumerated CivicPlus platform/identity host list.
 - `optional_host_permissions`: `https://*/*`, used only to request exact customer vanity origins such as `https://coz.org/*` after user approval.
-- `web_accessible_resources.matches`: narrowed to the same enumerated host list.
-- A second dynamic WAR entry exposes only the runtime assets needed by activated tools on HTTPS vanity domains. It uses `use_dynamic_url: true` and does not make content scripts themselves run on arbitrary sites.
+- `web_accessible_resources.matches`: the primary asset entry is narrowed to the same enumerated host list.
+- Vanity-domain assets are split into a dynamic HTTPS entry for selected JSON/images/helper scripts and a static HTTPS entry for the public vendored Font Awesome CSS/font files that page-injected stylesheets must load by relative URL.
 - jQuery and the automatic on-load toolkit files are now delayed until the detector activates a specific lane.
 - `js/popup.js` no longer runs the legacy Mystique `HEAD` probe on arbitrary active tabs, which prevents SPA/fallback 200 false positives such as `reddit.com`.
 - Vanity Admin/DesignCenter domains use a user-gesture flow: the popup runs the tiny DOM detector under `activeTab` only on admin/design-looking HTTPS URLs, then offers `Trust this domain` if CMS markers pass.
@@ -123,7 +123,7 @@ Vanity-domain optional permission checkpoint as of 2026-07-15:
 - After grant, the service worker verifies `chrome.permissions.contains()`, stores the trusted origin, registers detector/bootstrap content scripts for future navigations on that origin, and activates the current tab through the registry-controlled injection path.
 - The service worker accepts content-script activation from unknown hosts only when the exact origin permission is already granted.
 - No script path is accepted from the popup or page; script selection remains centralized in `CPToolkitInjectionRegistry`.
-- Runtime assets used by activated tools on trusted vanity domains are exposed through a separate dynamic `web_accessible_resources` entry. This is required because optional host permission does not by itself make bundled extension JSON/images/fonts/helper scripts loadable by a webpage origin.
+- Runtime assets used by activated tools on trusted vanity domains are exposed through separate `web_accessible_resources` entries. Selected JSON/images/helper scripts remain behind `use_dynamic_url: true`; Font Awesome CSS/font files are listed separately without `use_dynamic_url` so CSS-relative font URLs resolve on activated vanity pages. This is required because optional host permission does not by itself make bundled extension assets loadable by a webpage origin.
 - Current limitation: all-pages custom CSS on non-admin public vanity pages is not auto-activated by this first optional-origin flow.
 
 Prior review conclusion: earlier PR work did not add new permissions, host permissions, or web-accessible-resource exposure, and it did not add remote code execution patterns. The activation checkpoint directly addresses the biggest residual Chrome Store/internal-vetting issue by removing required `*://*/*` from content-script matching, host permissions, and WAR exposure. Remaining review work is focused on manual CMS QA, dead legacy probe cleanup, resource-list pruning, and permission/behavior justification.
