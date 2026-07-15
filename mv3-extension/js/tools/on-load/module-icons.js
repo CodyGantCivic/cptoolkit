@@ -93,8 +93,60 @@
               var urlOfModule = modules[moduleClass][moduleName].url;
               $(".cp-Tabs-panel")
                 .find(".cp-ModuleList-itemLink[href*='" + urlOfModule + "']")
-                .prepend('<i class="' + faClass + '"></i>&nbsp;&nbsp;&nbsp;')
-                .css("font-weight", "bold");
+                .each(function() {
+                  var link = this;
+                  var $link = $(link);
+
+                  if (!moduleLinkAlreadyHasIcon(link)) {
+                    var icon = document.createElement("i");
+                    icon.className = faClass + " cp-toolkit-module-icon";
+                    icon.setAttribute("aria-hidden", "true");
+                    icon.setAttribute("data-cp-toolkit-module-icon", "true");
+
+                    var spacer = document.createTextNode("\u00a0\u00a0\u00a0");
+                    link.insertBefore(spacer, link.firstChild);
+                    link.insertBefore(icon, spacer);
+                  }
+
+                  $link.css("font-weight", "bold");
+                });
+            }
+
+            function moduleLinkAlreadyHasIcon(link) {
+              if ($(link).children(".cp-toolkit-module-icon, [data-cp-toolkit-module-icon='true']").length) {
+                return true;
+              }
+
+              var childNodes = link.childNodes || [];
+              for (var i = 0; i < childNodes.length; i++) {
+                var node = childNodes[i];
+                if (node.nodeType === Node.TEXT_NODE) {
+                  if (node.nodeValue.replace(/[\s\u00a0]/g, "") === "") {
+                    continue;
+                  }
+                  return false;
+                }
+
+                if (node.nodeType !== Node.ELEMENT_NODE) {
+                  continue;
+                }
+
+                return isIconElement(node);
+              }
+
+              return false;
+            }
+
+            function isIconElement(node) {
+              var tagName = node.tagName.toLowerCase();
+              var className = String(node.getAttribute("class") || "").toLowerCase();
+
+              return tagName === "svg" ||
+                tagName === "img" ||
+                (tagName === "i" && (className.indexOf("fa") !== -1 || className.indexOf("icon") !== -1)) ||
+                className.indexOf("icon") !== -1 ||
+                className.indexOf("moduleicon") !== -1 ||
+                className.indexOf("module-icon") !== -1;
             }
             $(document).ready(function() {
               checkIfTabsPanel();
