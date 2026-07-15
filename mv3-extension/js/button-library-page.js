@@ -453,11 +453,6 @@
     name.title = entry.name;
     metaTop.appendChild(name);
 
-    var badge = document.createElement("span");
-    badge.className = "cp-template-card-type " + (isCustom ? "custom" : "builtin");
-    badge.textContent = entry.typeLabel;
-    metaTop.appendChild(badge);
-
     meta.appendChild(metaTop);
 
     var metaPills = document.createElement("div");

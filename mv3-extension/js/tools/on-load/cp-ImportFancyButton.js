@@ -762,6 +762,79 @@
               .cp-filter-reset button {
                 padding: 5px 10px !important;
               }
+              #cp-template-edit-popover {
+                position: fixed;
+                width: 300px;
+                padding: 12px;
+                background: #fff;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+                z-index: 2147483647;
+                color: #333;
+                box-sizing: border-box;
+              }
+              #cp-template-edit-popover label {
+                display: block;
+                margin: 0 0 4px;
+                color: #555;
+                font-size: 12px;
+                font-weight: 600;
+              }
+              #cp-template-edit-popover input,
+              #cp-template-edit-popover select,
+              #cp-template-edit-text {
+                width: 100%;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                padding: 7px 8px;
+                font-size: 12px;
+                box-sizing: border-box;
+              }
+              #cp-template-edit-popover input,
+              #cp-template-edit-popover select {
+                margin-bottom: 10px;
+              }
+              #cp-template-edit-custom-category {
+                display: none;
+              }
+              #cp-template-edit-text {
+                min-height: 68px;
+                max-height: 130px;
+                overflow: auto;
+                outline: none;
+                line-height: 1.35;
+                margin-bottom: 10px;
+              }
+              #cp-template-edit-text:focus,
+              #cp-template-edit-popover input:focus,
+              #cp-template-edit-popover select:focus {
+                border-color: #af282f;
+                box-shadow: 0 0 0 2px rgba(175,40,47,0.12);
+              }
+              .cp-template-edit-actions {
+                display: flex;
+                justify-content: flex-end;
+                gap: 8px;
+              }
+              .cp-template-edit-actions button {
+                border: none;
+                border-radius: 4px;
+                padding: 7px 11px;
+                cursor: pointer;
+                font-size: 12px;
+                font-weight: 600;
+                line-height: normal !important;
+                width: auto !important;
+              }
+              #cp-template-edit-cancel {
+                background: #e0e0e0;
+                color: #333;
+              }
+              #cp-template-edit-save {
+                background: #af282f;
+                color: #fff;
+              }
               .cp-template-section-header {
                 grid-column: 1 / -1;
                 width: 100%;
@@ -811,29 +884,22 @@
                 overflow: hidden;
               }
               .cp-template-card-meta {
-                display: flex;
+                display: block;
                 align-items: center;
-                justify-content: space-between;
-                gap: 8px;
-                padding: 7px 8px 0;
+                padding: 9px 58px 0 10px;
                 color: #333;
                 font-size: 12px;
                 font-weight: 600;
+                min-height: 31px;
               }
               .cp-template-card-name {
-                min-width: 0;
+                display: -webkit-box;
                 overflow: hidden;
                 text-overflow: ellipsis;
-                white-space: nowrap;
-              }
-              .cp-template-card-pill {
-                color: #555;
-                background: #f0f0f0;
-                border-radius: 999px;
-                padding: 1px 6px;
-                font-size: 10px;
-                font-weight: 600;
-                white-space: nowrap;
+                white-space: normal;
+                line-height: 1.25;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
               }
               .cp-template-card-btns {
                 position: absolute;
@@ -873,16 +939,6 @@
               }
               .cp-template-delete:hover {
                 color: #cc0000;
-              }
-              .cp-template-preview.cp-editing .cpText {
-                pointer-events: auto;
-                cursor: text;
-                outline: 2px dashed #af282f;
-                outline-offset: 2px;
-                min-height: 1em;
-              }
-              .cp-template-preview.cp-editing {
-                pointer-events: auto;
               }
               .cp-template-preview.cp-preview-dark {
                 background: #2a2a2a;
@@ -1062,7 +1118,7 @@
                       <div class="cp-library-search-wrap">
                         <input id="cp-template-search" type="text" placeholder="Search buttons...">
                         <button id="cp-template-filter" title="Filter buttons">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><line x1="21" y1="4" x2="14" y2="4"></line><line x1="10" y1="4" x2="3" y2="4"></line><line x1="21" y1="12" x2="12" y2="12"></line><line x1="8" y1="12" x2="3" y2="12"></line><line x1="21" y1="20" x2="16" y2="20"></line><line x1="12" y1="20" x2="3" y2="20"></line><line x1="14" y1="2" x2="14" y2="6"></line><line x1="8" y1="10" x2="8" y2="14"></line><line x1="16" y1="18" x2="16" y2="22"></line></svg>
                         </button>
                         <div id="cp-template-filter-popover"></div>
                       </div>
@@ -1343,7 +1399,201 @@
               });
           }
 
+          function getCustomTemplateCategoryOptions(currentCategory) {
+            var entries = Object.keys(customButtonLibrary || {}).map(function (key) {
+              return buttonLibraryUtils.normalizeEntry(
+                key,
+                customButtonLibrary[key],
+                true,
+              );
+            });
+            var categories = buttonLibraryUtils.getCategoryOptions(entries);
+            if (currentCategory && categories.indexOf(currentCategory) === -1) {
+              categories.push(currentCategory);
+            }
+            if (categories.length === 0) {
+              categories.push(buttonLibraryUtils.DEFAULT_CATEGORY);
+            }
+            return buttonLibraryUtils.getCategoryOptions(
+              categories.map(function (category) {
+                return { category: category };
+              }),
+            );
+          }
+
+          function closeTemplateEditPopover() {
+            var existing = modal.querySelector("#cp-template-edit-popover");
+            if (existing) existing.remove();
+          }
+
+          function positionTemplateEditPopover(popover, trigger) {
+            var rect = trigger.getBoundingClientRect();
+            var popRect = popover.getBoundingClientRect();
+            var top = rect.bottom + 8;
+            var left = rect.right - popRect.width;
+
+            if (top + popRect.height > window.innerHeight - 12) {
+              top = rect.top - popRect.height - 8;
+            }
+            left = Math.max(12, Math.min(left, window.innerWidth - popRect.width - 12));
+            top = Math.max(12, Math.min(top, window.innerHeight - popRect.height - 12));
+
+            popover.style.left = left + "px";
+            popover.style.top = top + "px";
+          }
+
+          function openTemplateEditPopover(key, template, trigger) {
+            var rawKey = key.replace(/^custom:/, "");
+            var existingTemplate = customButtonLibrary[rawKey];
+            if (!existingTemplate) return;
+
+            closeTemplateEditPopover();
+
+            var currentName = rawKey.replace(/_/g, " ");
+            var currentCategory = buttonLibraryUtils.getCategory(existingTemplate, true);
+            var categories = getCustomTemplateCategoryOptions(currentCategory);
+            var popover = document.createElement("div");
+            popover.id = "cp-template-edit-popover";
+            popover.innerHTML =
+              '<label for="cp-template-edit-name">Button name</label>' +
+              '<input id="cp-template-edit-name" type="text">' +
+              '<label for="cp-template-edit-category">Category</label>' +
+              '<select id="cp-template-edit-category"></select>' +
+              '<input id="cp-template-edit-custom-category" type="text" placeholder="New category name">' +
+              '<label for="cp-template-edit-text">Button text</label>' +
+              '<div id="cp-template-edit-text" contenteditable="true"></div>' +
+              '<div class="cp-template-edit-actions">' +
+                '<button id="cp-template-edit-cancel" type="button">Cancel</button>' +
+                '<button id="cp-template-edit-save" type="button">Save</button>' +
+              "</div>";
+
+            modal.appendChild(popover);
+
+            var nameInput = popover.querySelector("#cp-template-edit-name");
+            var categorySelect = popover.querySelector("#cp-template-edit-category");
+            var customCategoryInput = popover.querySelector(
+              "#cp-template-edit-custom-category",
+            );
+            var textEditor = popover.querySelector("#cp-template-edit-text");
+
+            nameInput.value = currentName;
+            categories.forEach(function (category) {
+              var opt = document.createElement("option");
+              opt.value = category;
+              opt.textContent = category;
+              categorySelect.appendChild(opt);
+            });
+            var customOpt = document.createElement("option");
+            customOpt.value = "__custom__";
+            customOpt.textContent = "Create new category...";
+            categorySelect.appendChild(customOpt);
+            categorySelect.value = currentCategory;
+            textEditor.innerHTML = buttonLibraryUtils.sanitizeButtonTextHtml(
+              existingTemplate.buttonText || "Button",
+            );
+
+            function syncCustomCategoryInput() {
+              customCategoryInput.style.display =
+                categorySelect.value === "__custom__" ? "block" : "none";
+              if (categorySelect.value === "__custom__") {
+                customCategoryInput.focus();
+              }
+            }
+
+            function saveTemplateEdit() {
+              var newName = nameInput.value.trim();
+              if (!newName) {
+                nameInput.style.borderColor = "#cc0000";
+                nameInput.focus();
+                return;
+              }
+
+              var nextKey = buttonLibraryUtils.makeStorageKey(newName);
+              if (!nextKey) {
+                nameInput.style.borderColor = "#cc0000";
+                nameInput.focus();
+                return;
+              }
+              if (nextKey !== rawKey && customButtonLibrary[nextKey]) {
+                alert('A saved button named "' + newName + '" already exists.');
+                nameInput.style.borderColor = "#cc0000";
+                nameInput.focus();
+                return;
+              }
+
+              var category =
+                categorySelect.value === "__custom__"
+                  ? customCategoryInput.value.trim()
+                  : categorySelect.value;
+              if (!category) {
+                customCategoryInput.style.borderColor = "#cc0000";
+                customCategoryInput.focus();
+                return;
+              }
+
+              var cleanText = buttonLibraryUtils.sanitizeButtonTextHtml(
+                textEditor.innerHTML,
+              );
+              if (!cleanText) cleanText = existingTemplate.buttonText || "Button";
+
+              var updated = buttonLibraryUtils.cloneTemplate(existingTemplate);
+              updated.buttonText = cleanText;
+              buttonLibraryUtils.setMetadata(updated, {
+                category: category,
+                sourceSite: buttonLibraryUtils.getSourceSite(existingTemplate),
+                savedAt: buttonLibraryUtils.getSavedAt(existingTemplate),
+              });
+
+              if (nextKey !== rawKey) {
+                delete customButtonLibrary[rawKey];
+                if (Object.prototype.hasOwnProperty.call(darkBgToggles, key)) {
+                  darkBgToggles["custom:" + nextKey] = darkBgToggles[key];
+                  delete darkBgToggles[key];
+                }
+                if (selectedTemplate === key) {
+                  selectedTemplate = "custom:" + nextKey;
+                }
+              }
+              customButtonLibrary[nextKey] = updated;
+
+              chrome.storage.local.set(
+                {
+                  "cp-customButtonLibrary": customButtonLibrary,
+                  "cp-darkBgToggles": darkBgToggles,
+                },
+                function () {
+                  closeTemplateEditPopover();
+                  renderTemplateGrid();
+                  updateSubmitButton();
+                },
+              );
+            }
+
+            categorySelect.addEventListener("change", syncCustomCategoryInput);
+            popover
+              .querySelector("#cp-template-edit-cancel")
+              .addEventListener("click", closeTemplateEditPopover);
+            popover
+              .querySelector("#cp-template-edit-save")
+              .addEventListener("click", saveTemplateEdit);
+            popover.addEventListener("keydown", function (e) {
+              if (e.key === "Escape") closeTemplateEditPopover();
+              if (e.key === "Enter" && e.ctrlKey) saveTemplateEdit();
+            });
+            popover.addEventListener("click", function (e) {
+              e.stopPropagation();
+            });
+            syncCustomCategoryInput();
+
+            requestAnimationFrame(function () {
+              positionTemplateEditPopover(popover, trigger);
+              nameInput.focus();
+              nameInput.select();
+            });
+          }
+
           function renderTemplateGrid() {
+            closeTemplateEditPopover();
             grid.innerHTML = "";
             allTemplates = {};
             templateSource = {};
@@ -1448,11 +1698,6 @@
                 '">' +
                 escapeTemplateHtml(displayName) +
                 "</span>" +
-                '<span class="cp-template-card-pill">' +
-                escapeTemplateHtml(
-                  entry ? entry.typeLabel : isCustom ? "Saved" : "Built-in",
-                ) +
-                "</span>" +
               "</div>" +
               '<div class="cp-template-preview' +
               (isDark ? " cp-preview-dark" : "") +
@@ -1461,7 +1706,7 @@
               "</div>" +
               '<div class="cp-template-card-btns">' +
               (isCustom
-                ? '<button class="cp-template-edit" title="Edit button text">&#9998;</button>'
+                ? '<button class="cp-template-edit" title="Edit saved button">&#9998;</button>'
                 : "") +
               '<button class="cp-template-darkbg' +
               (isDark ? " active" : "") +
@@ -1483,56 +1728,18 @@
               chrome.storage.local.set({ "cp-darkBgToggles": darkBgToggles });
             });
 
-            // Edit text toggle (custom buttons only)
+            // Edit saved button details (custom buttons only)
             var editBtn = card.querySelector(".cp-template-edit");
             if (editBtn) editBtn.addEventListener("click", function (e) {
               e.stopPropagation();
-              var previewEl = card.querySelector(".cp-template-preview");
-              var cpText = previewEl.querySelector(".cpText");
-              if (!cpText) return;
-              var isEditing = previewEl.classList.contains("cp-editing");
-              if (isEditing) {
-                // Save and exit edit mode
-                previewEl.classList.remove("cp-editing");
-                editBtn.classList.remove("active");
-                cpText.contentEditable = "false";
-                // Update the template's buttonText
-                var cleanText = buttonLibraryUtils.sanitizeButtonTextHtml(cpText.innerHTML);
-                cpText.innerHTML = cleanText;
-                template.buttonText = cleanText;
-                // Persist if custom
-                if (isCustom) {
-                  var rawKey = key.replace(/^custom:/, "");
-                  customButtonLibrary[rawKey].buttonText = cleanText;
-                  buttonLibraryUtils.setMetadata(customButtonLibrary[rawKey], {
-                    category: buttonLibraryUtils.getCategory(
-                      customButtonLibrary[rawKey],
-                      true,
-                    ),
-                    sourceSite: buttonLibraryUtils.getSourceSite(
-                      customButtonLibrary[rawKey],
-                    ),
-                    savedAt: buttonLibraryUtils.getSavedAt(
-                      customButtonLibrary[rawKey],
-                    ),
-                  });
-                  chrome.storage.local.set({ "cp-customButtonLibrary": customButtonLibrary });
-                }
-              } else {
-                // Enter edit mode
-                previewEl.classList.add("cp-editing");
-                editBtn.classList.add("active");
-                cpText.contentEditable = "true";
-                cpText.focus();
-              }
+              openTemplateEditPopover(key, template, editBtn);
             });
 
             card.addEventListener("click", function (e) {
               if (
                 e.target.classList.contains("cp-template-delete") ||
                 e.target.classList.contains("cp-template-darkbg") ||
-                e.target.classList.contains("cp-template-edit") ||
-                e.target.closest(".cp-editing")
+                e.target.classList.contains("cp-template-edit")
               )
                 return;
               grid.querySelectorAll(".cp-template-card").forEach(function (c) {

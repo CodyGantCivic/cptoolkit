@@ -1127,7 +1127,7 @@
                     <div class="snippets-sidebar-search-row">
                         <input type="text" placeholder="Search snippets and skins..." />
                         <button class="snippets-filter-btn" title="Filters">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="4" x2="14" y2="4"></line><line x1="10" y1="4" x2="3" y2="4"></line><line x1="21" y1="12" x2="12" y2="12"></line><line x1="8" y1="12" x2="3" y2="12"></line><line x1="21" y1="20" x2="16" y2="20"></line><line x1="12" y1="20" x2="3" y2="20"></line><line x1="14" y1="2" x2="14" y2="6"></line><line x1="8" y1="10" x2="8" y2="14"></line><line x1="16" y1="18" x2="16" y2="22"></line></svg>
                         </button>
                     </div>
                     <div class="snippets-filter-popover"></div>
@@ -1299,8 +1299,8 @@
                     border-color: #af282f;
                 }
                 #cp-toolkit-snippets-sidebar .snippets-filter-btn {
-                    width: 38px;
-                    height: 38px;
+                    width: 40px;
+                    height: 40px;
                     padding: 0;
                     border: 1px solid #ccc;
                     border-radius: 4px;
@@ -1313,8 +1313,8 @@
                     flex-shrink: 0;
                 }
                 #cp-toolkit-snippets-sidebar .snippets-filter-btn svg {
-                    width: 16px;
-                    height: 16px;
+                    width: 18px;
+                    height: 18px;
                 }
                 #cp-toolkit-snippets-sidebar .snippets-filter-btn:hover,
                 #cp-toolkit-snippets-sidebar .snippets-filter-btn.active {

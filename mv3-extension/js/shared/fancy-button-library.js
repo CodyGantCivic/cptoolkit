@@ -382,6 +382,7 @@
     getSavedAt: getSavedAt,
     getUpdatedAt: getUpdatedAt,
     setMetadata: setMetadata,
+    cloneTemplate: cloneTemplate,
     stripLibraryMetadata: stripLibraryMetadata,
     normalizeEntry: normalizeEntry,
     filterEntries: filterEntries,

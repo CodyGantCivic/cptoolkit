@@ -122,6 +122,11 @@ body {
   justify-content: center;
 }
 
+#btn-filter-buttons.icon-only {
+  width: 31px;
+  height: 31px;
+}
+
 #search-input {
   padding: 7px 12px;
   border: 1px solid #ccc;
@@ -446,26 +451,6 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.cp-template-card-type {
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 4px;
-  text-transform: uppercase;
-  flex-shrink: 0;
-  margin-left: 8px;
-}
-
-.cp-template-card-type.builtin {
-  color: #1976d2;
-  background: rgba(25, 118, 210, 0.08);
-}
-
-.cp-template-card-type.custom {
-  color: #af282f;
-  background: rgba(175, 40, 47, 0.08);
 }
 
 .cp-template-card-pills {
