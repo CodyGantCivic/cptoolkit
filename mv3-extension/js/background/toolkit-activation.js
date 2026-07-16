@@ -250,6 +250,11 @@
     return /No tab with id|No frame with id|Frame with ID .* was removed|The tab was closed|The frame was removed|Cannot find frame/i.test(message);
   }
 
+  function isInjectionAccessError(error) {
+    var message = getErrorMessage(error);
+    return /Cannot access contents of the page|Extension manifest must request permission|Cannot access a chrome:|The extensions gallery cannot be scripted|Cannot script a chrome/i.test(message);
+  }
+
   function skippedTransientTarget(error, files) {
     return {
       injected: false,
@@ -257,6 +262,31 @@
       message: getErrorMessage(error),
       files: files || []
     };
+  }
+
+  function skippedMissingHostPermission(error, files) {
+    return {
+      injected: false,
+      skipped: 'missing-host-permission',
+      message: getErrorMessage(error),
+      files: files || []
+    };
+  }
+
+  function skippedActivationError(error) {
+    if (isTransientInjectionTargetError(error)) {
+      return {
+        skipped: 'target-unavailable',
+        message: getErrorMessage(error)
+      };
+    }
+    if (isInjectionAccessError(error)) {
+      return {
+        skipped: 'missing-host-permission',
+        message: getErrorMessage(error)
+      };
+    }
+    return null;
   }
 
   function markInjected(injectionKey) {
@@ -298,6 +328,9 @@
     }).catch(function(error) {
       if (isTransientInjectionTargetError(error)) {
         return skippedTransientTarget(error, files);
+      }
+      if (isInjectionAccessError(error)) {
+        return skippedMissingHostPermission(error, files);
       }
       throw error;
     });
@@ -437,6 +470,14 @@
               message: bootstrapResult.message
             };
           }
+          if (bootstrapResult && bootstrapResult.skipped === 'missing-host-permission') {
+            return {
+              activated: false,
+              skipped: 'missing-host-permission',
+              bootstrap: bootstrapResult,
+              message: bootstrapResult.message
+            };
+          }
 
           if (lanes.indexOf(LANES.ADMIN) !== -1 || lanes.indexOf(LANES.LIVE_EDIT) !== -1) {
             activationPromises.push(handleFullToolkit(target, lanes));
@@ -467,6 +508,18 @@
                 message: targetUnavailable.message
               };
             }
+            var missingHostPermission = results.find(function(result) {
+              return result && result.skipped === 'missing-host-permission';
+            });
+            if (missingHostPermission) {
+              return {
+                activated: false,
+                skipped: 'missing-host-permission',
+                bootstrap: bootstrapResult,
+                results: results,
+                message: missingHostPermission.message
+              };
+            }
 
             return {
               activated: true,
@@ -481,6 +534,13 @@
         return {
           activated: false,
           skipped: 'target-unavailable',
+          message: getErrorMessage(error)
+        };
+      }
+      if (isInjectionAccessError(error)) {
+        return {
+          activated: false,
+          skipped: 'missing-host-permission',
           message: getErrorMessage(error)
         };
       }
@@ -528,6 +588,12 @@
         log('handled ' + logName, result);
         sendResponse({ result: result });
       }).catch(function(error) {
+        var skipped = skippedActivationError(error);
+        if (skipped) {
+          log('skipped ' + logName, skipped);
+          sendResponse({ result: skipped });
+          return;
+        }
         console.error('[CP Toolkit] Activation failed:', error);
         sendResponse({ error: error && error.message ? error.message : String(error) });
       });
