@@ -160,7 +160,7 @@ Implementation branch `codex/security-multi-skins-data-validation` added detecto
 - Full toolkit activation is top-frame only and excludes `custom-css-deployer`, `adfs`, and `remember-image-picker-state` because each has its own narrower lane.
 - `custom-css-deployer` activates as a minimal top-frame all-pages CP-host CSS lane.
 - `remember-image-picker-state` activates only in selected image-picker frames.
-- Vanity-domain optional permission flow is implemented for exact HTTPS Admin/DesignCenter origins after popup detector success.
+- Vanity-domain optional permission flow is implemented for exact HTTPS origins after popup detector success, including public Live Edit/editor pages with CMS markers.
 
 ## Optional Vanity-Origin Checkpoint
 
@@ -168,10 +168,10 @@ Implementation branch `codex/security-multi-skins-data-validation` added the fir
 
 - `manifest.json` declares `optional_host_permissions: ["https://*/*"]`.
 - The popup does not probe arbitrary sites with the legacy Mystique `HEAD` check.
-- On unknown HTTPS `/Admin` or `/DesignCenter` hosts, the popup injects only the tiny DOM detector under `activeTab`.
+- On unknown HTTPS hosts, the popup injects only the tiny DOM detector under `activeTab` and relies on DOM markers instead of path-only gating.
 - If detector lanes include `admin`, `live-edit`, or `identity`, the popup offers `Trust this domain`.
 - The permission request is exact-origin only, such as `https://coz.org/*`.
 - The service worker verifies the granted origin with `chrome.permissions.contains()` before registering detector/bootstrap scripts or activating the current tab.
 - Script selection still comes from `CPToolkitInjectionRegistry`; neither the popup nor page content can choose script paths.
 - Activated vanity-domain tools need selected extension assets (`data/*.json`, template/social SVGs, Font Awesome, and MAIN-world helper scripts). JSON/images/helper scripts are exposed through a dynamic `web_accessible_resources` entry for HTTPS origins; Font Awesome CSS/fonts use a separate static HTTPS entry because the stylesheet loads its fonts by relative URL. This does not grant script execution by itself.
-- Current limitation: public vanity pages outside admin/design paths do not auto-activate all-pages custom CSS in this checkpoint.
+- Current limitation: non-editor public vanity pages do not auto-activate all-pages custom CSS in this checkpoint.

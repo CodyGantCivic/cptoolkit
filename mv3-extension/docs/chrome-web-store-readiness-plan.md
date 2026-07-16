@@ -35,7 +35,7 @@ The extension is MV3. As of the 2026-07-14 activation checkpoint, the manifest n
 - Vanity-domain assets are split into a dynamic HTTPS entry for selected JSON/images/helper scripts and a static HTTPS entry for the public vendored Font Awesome CSS/font files that page-injected stylesheets must load by relative URL.
 - jQuery and the automatic on-load toolkit files are now delayed until the detector activates a specific lane.
 - `js/popup.js` no longer runs the legacy Mystique `HEAD` probe on arbitrary active tabs, which prevents SPA/fallback 200 false positives such as `reddit.com`.
-- Vanity Admin/DesignCenter domains use a user-gesture flow: the popup runs the tiny DOM detector under `activeTab` only on admin/design-looking HTTPS URLs, then offers `Trust this domain` if CMS markers pass.
+- Vanity domains use a user-gesture flow: the popup runs the tiny DOM detector under `activeTab` on the current HTTPS tab, then offers `Trust this domain` only if CMS/admin/Live Edit markers pass.
 
 The legacy CP-site gate is still present in `js/detect_cp_site.js`, which performs a `HEAD` request to:
 
@@ -112,19 +112,19 @@ Activation orchestration checkpoint as of 2026-07-14:
 - `identity` activation injects only `adfs.js`.
 - `image-picker-frame` activation injects only `remember-image-picker-state.js` into selected image-picker frames.
 - Duplicate injection is guarded per frame with an extension-world marker.
-- Vanity-domain optional permissions are implemented for HTTPS Admin/DesignCenter-style URLs. Public vanity URLs without admin/design paths still do not auto-run.
+- Vanity-domain optional permissions are implemented for HTTPS pages after positive DOM detection. Public vanity Live Edit pages can be trusted from the popup; ordinary public vanity pages without editor/CMS markers still do not auto-run.
 
 Vanity-domain optional permission checkpoint as of 2026-07-15:
 
 - `manifest.json` declares optional HTTPS host access without adding required all-sites access.
-- On unknown HTTPS `/Admin` or `/DesignCenter` hosts, the popup uses `activeTab` to inject only `cp-dom-detector.js` and run bounded DOM detection.
+- On unknown HTTPS hosts, the popup uses `activeTab` to inject only `cp-dom-detector.js` and run bounded DOM detection on the active tab. It does not use the URL path alone as proof.
 - If detector lanes include `admin`, `live-edit`, or `identity`, the popup shows `Trust this domain`.
 - The trust button requests only the current exact origin pattern, for example `https://coz.org/*`.
 - After grant, the service worker verifies `chrome.permissions.contains()`, stores the trusted origin, registers detector/bootstrap content scripts for future navigations on that origin, and activates the current tab through the registry-controlled injection path.
 - The service worker accepts content-script activation from unknown hosts only when the exact origin permission is already granted.
 - No script path is accepted from the popup or page; script selection remains centralized in `CPToolkitInjectionRegistry`.
 - Runtime assets used by activated tools on trusted vanity domains are exposed through separate `web_accessible_resources` entries. Selected JSON/images/helper scripts remain behind `use_dynamic_url: true`; Font Awesome CSS/font files are listed separately without `use_dynamic_url` so CSS-relative font URLs resolve on activated vanity pages. This is required because optional host permission does not by itself make bundled extension assets loadable by a webpage origin.
-- Current limitation: all-pages custom CSS on non-admin public vanity pages is not auto-activated by this first optional-origin flow.
+- Current limitation: all-pages custom CSS on non-editor public vanity pages is not auto-activated by this optional-origin flow.
 
 Prior review conclusion: earlier PR work did not add new permissions, host permissions, or web-accessible-resource exposure, and it did not add remote code execution patterns. The activation checkpoint directly addresses the biggest residual Chrome Store/internal-vetting issue by removing required `*://*/*` from content-script matching, host permissions, and WAR exposure. Remaining review work is focused on manual CMS QA, dead legacy probe cleanup, resource-list pruning, and permission/behavior justification.
 
@@ -158,7 +158,7 @@ Hard constraint: zero-click auto-detection on arbitrary customer vanity domains 
    - Request origin-specific grants only after a user action and positive detector result.
    - Example shape: request `https://city.gov/*`, not blanket `*://*/*`.
    - Do not request all-sites as a normal activation path.
-   - Status: implemented for exact HTTPS Admin/DesignCenter vanity origins.
+   - Status: implemented for exact HTTPS vanity origins after positive admin, identity, or Live Edit DOM detection.
 
 4. Split detector from toolkit activation.
    - Manifest-declared content scripts should be tiny and detector-only on known CP domains.
@@ -200,7 +200,7 @@ Hard constraint: zero-click auto-detection on arbitrary customer vanity domains 
 The detector should be bounded and multi-signal:
 
 - `document_start` is too early for reliable CMS markers.
-- Use a path prefilter for `/Admin`, `/DesignCenter`, and known Live Edit/editor routes.
+- Use path markers for `/Admin`, `/DesignCenter`, and known editor routes, but do not path-prefilter away public Live Edit pages.
 - Use a bounded `MutationObserver`.
 - Observe `documentElement` until `body` exists.
 - Watch `body.class`, head link/script additions, and key shell nodes.
@@ -211,7 +211,7 @@ The detector should be bounded and multi-signal:
 
 Candidate marker categories:
 
-- Path class: `/Admin`, `/DesignCenter`, SAML login, Live Edit/editor paths.
+- Path class: `/Admin`, `/DesignCenter`, SAML login, known editor paths.
 - CMS shell DOM: admin wrappers, editor shell nodes, live-edit body classes.
 - CP asset/script/link markers: first-party CMS script/link URLs, known CMS bundles.
 - Hidden form inputs: ASP.NET/CMS form fields that appear in the admin shell.
@@ -277,7 +277,7 @@ Candidate marker categories:
 7. Split manifest loading so only tiny detector lanes are declared up front. Status: implemented for enumerated CP hosts.
 8. Move full toolkit injection to ordered `chrome.scripting.executeScript` calls / dynamic registered content scripts. Status: implemented with `executeScript`; dynamic detector/bootstrap registration implemented for trusted vanity origins.
 9. Preserve the ADFS static lane. Status: implemented as a detector-triggered identity lane with jQuery-free `adfs.js`; manual timing QA required.
-10. Add per-origin optional permission request flow for vanity domains. Status: implemented for exact HTTPS Admin/DesignCenter vanity origins.
+10. Add per-origin optional permission request flow for vanity domains. Status: implemented for exact HTTPS vanity origins after positive admin, identity, or Live Edit DOM detection.
 11. Narrow web-accessible resources. Status: broad matches narrowed; resource list pruning remains.
 12. Remove dead legacy HEAD probe code, starting with `mini-ide.js`. Status: `mini-ide.js` probe removed; legacy `js/detect_cp_site.js` remains only for compatibility cleanup.
 13. Add/ratchet guardrails for broad matches and WAR exposure. Status: implemented in `scripts/security-guardrails.sh` with manifest-scope checks for required hosts, optional vanity access, and HTTPS WAR asset lists.
@@ -296,9 +296,10 @@ After reloading the unpacked extension from this branch, test these before Store
 7. On-demand context menus: user-invoked tools still run under `activeTab` without required all-sites host permission.
 8. Non-CP site: no jQuery/toolkit on-load scripts are injected.
 9. Vanity Admin/DesignCenter host such as `https://coz.org/Admin/...`: popup should show the trust-domain prompt, request only that exact origin, activate the current tab after approval, and continue activating after reload.
-10. Unknown non-admin host such as `https://www.reddit.com/`: popup should show `Not a CivicPlus site` without a permission prompt.
-11. Graphic Links fancy button library: saving a button under a brand-new library name should create the entry without a `savedAt` console error.
-12. Fancy button Socials import: opening folder lookup should list Document Center folders, or show the manual-entry fallback only on a real load timeout.
+10. Vanity public Live Edit page such as a customer homepage with the CMS editor chrome visible: popup should show the trust-domain prompt, request only that exact origin, activate the current tab after approval, and continue activating after reload.
+11. Unknown non-admin host such as `https://www.reddit.com/`: popup should show `Not a CivicPlus site` without a permission prompt.
+12. Graphic Links fancy button library: saving a button under a brand-new library name should create the entry without a `savedAt` console error.
+13. Fancy button Socials import: opening folder lookup should list Document Center folders, or show the manual-entry fallback only on a real load timeout.
 
 ## EOW Submission Track
 

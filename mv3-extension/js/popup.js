@@ -78,11 +78,6 @@ function getHttpsOriginPattern(urlString) {
   }
 }
 
-function isVanityAdminCandidate(url) {
-  const pathname = String(url.pathname || '');
-  return /^\/(?:admin|designcenter)(?:\/|$)/i.test(pathname);
-}
-
 function getActivatingLanes(lanes) {
   if (!Array.isArray(lanes)) return [];
   return lanes.filter(lane => lane === 'admin' || lane === 'live-edit' || lane === 'identity');
@@ -176,7 +171,11 @@ async function renderVanityTrustPrompt(statusDiv, tab, detection, originPattern)
   const icon = document.createElement('i');
   icon.className = 'fas fa-exclamation-circle';
   statusDiv.appendChild(icon);
-  statusDiv.appendChild(document.createTextNode(' CivicPlus admin detected on this domain.'));
+  statusDiv.appendChild(document.createTextNode(
+    lanes.includes('live-edit')
+      ? ' CivicPlus editor detected on this domain.'
+      : ' CivicPlus admin detected on this domain.'
+  ));
 
   const button = document.createElement('button');
   button.type = 'button';
@@ -226,7 +225,7 @@ async function checkCivicPlusSite() {
 
     if (!isKnownPlatformHost(hostname)) {
       const originPattern = getHttpsOriginPattern(tab.url);
-      if (!originPattern || !isVanityAdminCandidate(url)) {
+      if (!originPattern) {
         setSiteStatus(statusDiv, 'inactive', 'fas fa-times-circle', 'Not a CivicPlus site');
         return;
       }

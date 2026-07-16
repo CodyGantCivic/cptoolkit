@@ -35,18 +35,40 @@
     '#adminHeader',
     '.cp-AdminWrap',
     '.cp-Toolbar',
+    '[class*="cp-Toolbar"]',
     '.cp-Toolbar-menu',
     '.cp-AdminMenu',
+    '.cp-ModuleList',
+    '.cp-ModuleList-item',
+    '.cp-ModuleList-itemLink',
+    '.cp-Tabs-panel',
+    '.cp-UserMenu',
+    '.cp-ActionBar',
     '.wayfinder',
     '.cp-UIMessage'
   ];
 
-  var LIVE_EDIT_SELECTORS = [
+  var LIVE_EDIT_STRONG_SELECTORS = [
     'body.liveEditOn',
     '#LiveEditCSS',
     '#liveEditToolbar',
+    '#LiveEditToolbar',
+    '#liveEditStatus',
+    '[id*="liveEdit"]',
+    '[id*="LiveEdit"]',
     '.liveEditOn',
+    '.LiveEditOn',
     '.liveEditToolbar',
+    '.LiveEditToolbar',
+    '.cp-LiveEdit',
+    '.cp-LiveEditToolbar',
+    '.cp-EditToolbar',
+    '.cp-EditBar',
+    '[class*="liveEdit"]',
+    '[class*="LiveEdit"]'
+  ];
+
+  var LIVE_EDIT_CONTENT_SELECTORS = [
     '[data-cprole]'
   ];
 
@@ -215,6 +237,7 @@
     var hasAsset = hasCategory(result, 'asset');
     var hasForm = hasCategory(result, 'form');
     var hasLiveEdit = hasCategory(result, 'liveEdit');
+    var hasLiveEditContent = hasCategory(result, 'liveEditContent');
     var adminPath = locationInfo.isAdminPath || locationInfo.isDesignCenterPath;
     var identityPath = locationInfo.isSamlLoginPath || locationInfo.isIdentityPath;
 
@@ -226,6 +249,8 @@
 
     var liveEditScore = 0;
     if (hasLiveEdit) liveEditScore += 4;
+    if (hasLiveEditContent) liveEditScore += 1;
+    if (hasShell) liveEditScore += 3;
     if (hasAsset) liveEditScore += 2;
     if (locationInfo.isKnownPlatformHost) liveEditScore += 1;
     if (hasForm) liveEditScore += 1;
@@ -239,7 +264,19 @@
     if (adminPath && hasPath && (hasShell || hasAsset || hasForm) && adminScore >= 5) {
       addLane(result, LANES.ADMIN);
     }
-    if (hasLiveEdit && (hasAsset || hasForm || locationInfo.isKnownPlatformHost) && liveEditScore >= 5) {
+    var hasStrongLiveEditEvidence = (
+      hasLiveEdit &&
+      (hasShell || hasAsset || hasForm || locationInfo.isKnownPlatformHost) &&
+      liveEditScore >= 5
+    );
+    var hasWeakLiveEditEvidence = (
+      hasLiveEditContent &&
+      hasShell &&
+      (hasAsset || locationInfo.isKnownPlatformHost) &&
+      liveEditScore >= 6
+    );
+
+    if (hasStrongLiveEditEvidence || hasWeakLiveEditEvidence) {
       addLane(result, LANES.LIVE_EDIT);
     }
     if (locationInfo.isKnownPlatformHost) addLane(result, LANES.ALL_PAGES_CP_HOST_CSS);
@@ -268,7 +305,8 @@
 
     addPathAndHostMarkers(result, locationInfo);
     collectSelectorMarkers(result, doc, 'shell', SHELL_SELECTORS);
-    collectSelectorMarkers(result, doc, 'liveEdit', LIVE_EDIT_SELECTORS);
+    collectSelectorMarkers(result, doc, 'liveEdit', LIVE_EDIT_STRONG_SELECTORS);
+    collectSelectorMarkers(result, doc, 'liveEditContent', LIVE_EDIT_CONTENT_SELECTORS);
     collectSelectorMarkers(result, doc, 'form', FORM_SELECTORS);
     collectAssetMarkers(result, doc);
     calculateLanes(result, locationInfo);
@@ -335,7 +373,7 @@
           attributes: true,
           childList: true,
           subtree: true,
-          attributeFilter: ['class', 'id', 'src', 'href']
+          attributeFilter: ['class', 'id', 'src', 'href', 'data-cprole']
         });
       }
 
@@ -351,7 +389,7 @@
   }
 
   root.CPToolkitDomDetector = Object.freeze({
-    version: '2026-07-14',
+    version: '2026-07-15',
     lanes: LANES,
     defaultTimeoutMs: DEFAULT_TIMEOUT_MS,
     knownPlatformHosts: KNOWN_PLATFORM_HOSTS.slice(),
