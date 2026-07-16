@@ -74,10 +74,13 @@
           }
         });
         
-        // Cleanup on page unload
-        $(window).on('unload.cpToolkit', function() {
+        function cleanupKeyboardShortcuts(event) {
+          if (event && event.persisted) return;
           $(window).off('.cpToolkit');
-        });
+          window.__cpToolkitKeyboardShortcutsLoaded = false;
+        }
+
+        window.addEventListener("pagehide", cleanupKeyboardShortcuts, { once: true });
       } else {
         // console.log("[CP Toolkit] ○ Skipping " + thisTool + " (disabled in settings)");
       }
