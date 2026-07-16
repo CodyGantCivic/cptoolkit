@@ -773,7 +773,7 @@ body {
 }
 
 .form-group label {
-  display: block;
+  display: flex;
   font-size: 13px;
   font-weight: 500;
   color: #333;
@@ -851,12 +851,12 @@ body {
   gap: 8px;
 }
 
-.component-checkbox-label {
+#snippet-component-grid .component-checkbox-label {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
-  gap: 8px;
+  gap: 7px;
   min-width: 0;
   min-height: 36px;
   padding: 8px 9px;
@@ -870,22 +870,27 @@ body {
   cursor: pointer;
 }
 
-.component-checkbox-label:hover {
+#snippet-component-grid .component-checkbox-label:hover {
   background: #f0f0f0;
   border-color: #ccc;
 }
 
-.component-checkbox-label input[type="checkbox"] {
-  flex: 0 0 16px;
+#snippet-component-grid .component-checkbox-label input[type="checkbox"] {
+  flex: 0 0 auto;
   width: 16px;
   height: 16px;
+  min-width: 16px;
   margin: 0;
+  padding: 0;
+  border: 1px solid #888;
+  border-radius: 2px;
   accent-color: #af282f;
 }
 
-.component-checkbox-label span {
+#snippet-component-grid .component-checkbox-label span {
   flex: 1 1 auto;
   min-width: 0;
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
