@@ -853,15 +853,20 @@ body {
 
 .component-checkbox-label {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 7px;
+  justify-content: flex-start;
+  gap: 8px;
   min-width: 0;
+  min-height: 36px;
   padding: 8px 9px;
   border: 1px solid #ddd;
   border-radius: 6px;
   background: #f8f8f8;
   color: #444;
   font-size: 13px;
+  line-height: 1.25;
+  text-align: left;
   cursor: pointer;
 }
 
@@ -870,12 +875,16 @@ body {
   border-color: #ccc;
 }
 
-.component-checkbox-label input {
-  flex-shrink: 0;
+.component-checkbox-label input[type="checkbox"] {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  margin: 0;
   accent-color: #af282f;
 }
 
 .component-checkbox-label span {
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;

@@ -129,7 +129,7 @@ async function detectCurrentTabWithDomDetector(tabId) {
   return results[0]?.result || { detected: false, lanes: [] };
 }
 
-async function registerAndActivateTrustedOrigin(statusDiv, tab, originPattern, lanes) {
+async function ensureTrustedOriginRegistration(originPattern) {
   const registerResponse = await chrome.runtime.sendMessage({
     action: 'cp-toolkit-register-trusted-origin',
     originPattern: originPattern
@@ -138,6 +138,21 @@ async function registerAndActivateTrustedOrigin(statusDiv, tab, originPattern, l
   if (!registerResult || registerResult.registered !== true) {
     throw new Error(registerResult && registerResult.skipped ? registerResult.skipped : 'Origin registration failed');
   }
+
+  return registerResult;
+}
+
+function setTrustedInactiveStatus(statusDiv, tab) {
+  setSiteStatus(
+    statusDiv,
+    'inactive',
+    'fas fa-check-circle',
+    'Trusted CivicPlus domain: ' + normalizeHostname(new URL(tab.url).hostname) + ' (no editor on this page)'
+  );
+}
+
+async function registerAndActivateTrustedOrigin(statusDiv, tab, originPattern, lanes) {
+  await ensureTrustedOriginRegistration(originPattern);
 
   const activateResponse = await chrome.runtime.sendMessage({
     action: 'cp-toolkit-activate-trusted-tab',
@@ -233,15 +248,27 @@ async function checkCivicPlusSite() {
       statusDiv.textContent = 'Checking site...';
       statusDiv.className = 'status inactive';
 
+      const hasTrustedOriginPermission = await chrome.permissions.contains({ origins: [originPattern] });
+
       try {
+        if (hasTrustedOriginPermission) {
+          await ensureTrustedOriginRegistration(originPattern);
+        }
+
         const detection = await detectCurrentTabWithDomDetector(tab.id);
         if (detection && detection.detected) {
           await renderVanityTrustPrompt(statusDiv, tab, detection, originPattern);
+        } else if (hasTrustedOriginPermission) {
+          setTrustedInactiveStatus(statusDiv, tab);
         } else {
           setSiteStatus(statusDiv, 'inactive', 'fas fa-times-circle', 'Not a CivicPlus site');
         }
       } catch (scriptError) {
-        setSiteStatus(statusDiv, 'inactive', 'fas fa-times-circle', 'Not a CivicPlus site');
+        if (hasTrustedOriginPermission) {
+          setTrustedInactiveStatus(statusDiv, tab);
+        } else {
+          setSiteStatus(statusDiv, 'inactive', 'fas fa-times-circle', 'Not a CivicPlus site');
+        }
       }
       return;
     }
