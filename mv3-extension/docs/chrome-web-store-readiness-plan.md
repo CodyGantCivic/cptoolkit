@@ -1,6 +1,6 @@
 # Chrome Web Store Readiness Plan
 
-Last updated: 2026-07-15
+Last updated: 2026-07-16
 
 Purpose: preserve the Chrome Web Store / MV3 action plan in the repo so future work does not depend on Codex task history.
 
@@ -36,14 +36,7 @@ The extension is MV3. As of the 2026-07-14 activation checkpoint, the manifest n
 - jQuery and the automatic on-load toolkit files are now delayed until the detector activates a specific lane.
 - `js/popup.js` no longer runs the legacy Mystique `HEAD` probe on arbitrary active tabs, which prevents SPA/fallback 200 false positives such as `reddit.com`.
 - Vanity domains use a user-gesture flow: the popup runs the tiny DOM detector under `activeTab` on the current HTTPS tab, then offers `Trust this domain` only if CMS/admin/Live Edit markers pass.
-
-The legacy CP-site gate is still present in `js/detect_cp_site.js`, which performs a `HEAD` request to:
-
-```text
-/Assets/Mystique/Shared/Components/ModuleTiles/Templates/cp-Module-Tile.html
-```
-
-That legacy gate is no longer part of the static content-script chain. `mini-ide.js` previously had its own copy of the same `HEAD` probe, but that redundant check was removed on 2026-07-15 after central detector activation landed. The old probe has a known false-positive class on some `*.civicplus.pro` Evolve SPA routes that return a 200 HTML shell for missing paths.
+- The legacy `js/detect_cp_site.js` file and its Mystique `HEAD` probe were removed on 2026-07-16. The only supported compatibility path is now `js/content/toolkit-activation-bootstrap.js`, which exposes `detect_if_cp_site()` after centralized detector activation.
 
 The Phase 0 audit adds one important correction to the simple two-lane model: the toolkit has three activation contexts, not two:
 
@@ -127,7 +120,16 @@ Vanity-domain optional permission checkpoint as of 2026-07-15:
 - Runtime assets used by activated tools on trusted vanity domains are exposed through separate `web_accessible_resources` entries. Selected JSON/images/helper scripts remain behind `use_dynamic_url: true`; Font Awesome CSS/font files are listed separately without `use_dynamic_url` so CSS-relative font URLs resolve on activated vanity pages. This is required because optional host permission does not by itself make bundled extension assets loadable by a webpage origin.
 - Current limitation: all-pages custom CSS on non-editor public vanity pages is not auto-activated by this optional-origin flow.
 
-Prior review conclusion: earlier PR work did not add new permissions, host permissions, or web-accessible-resource exposure, and it did not add remote code execution patterns. The activation checkpoint directly addresses the biggest residual Chrome Store/internal-vetting issue by removing required `*://*/*` from content-script matching, host permissions, and WAR exposure. Remaining review work is focused on manual CMS QA, dead legacy probe cleanup, resource-list pruning, and permission/behavior justification.
+Pre-upload audit checkpoint as of 2026-07-16:
+
+- `node --check` passes for all 67 on-load/on-demand JS files.
+- The security guardrail script passes, including no `eval()`/`new Function()` and no manifest `*://*/*` required scope.
+- The prevent-timeout service-worker alarm no longer queries every HTTP(S) tab. It now messages only enumerated CivicPlus platform hosts and exact HTTPS vanity origins already trusted through optional host permission.
+- `js/background/context-menus.js` now derives its menu registry version from `manifest.json` instead of a stale hard-coded version.
+- `js/tools/on-demand/*` was removed from `web_accessible_resources` because context-menu tools run through `chrome.scripting.executeScript()` and do not need to be page-loadable resources.
+- Store packaging prep started on 2026-07-16 with manifest version bumped to `1.1.5` for the MV3/Web Store readiness submission.
+
+Prior review conclusion: earlier PR work did not add new permissions, host permissions, or web-accessible-resource exposure, and it did not add remote code execution patterns. The activation checkpoint directly addresses the biggest residual Chrome Store/internal-vetting issue by removing required `*://*/*` from content-script matching, host permissions, and WAR exposure. Remaining review work is focused on manual CMS QA, resource-list pruning, and permission/behavior justification.
 
 ## Cody Architecture Verdict
 
@@ -177,6 +179,7 @@ Hard constraint: zero-click auto-detection on arbitrary customer vanity domains 
    - Previous `matches: ["*://*/*"]` was too broad.
    - Content scripts usually do not need files to be web-accessible.
    - Current checkpoint restricts matches to approved origins.
+   - On-demand tool files are no longer web-accessible; they are service-worker-injected from fixed local paths.
    - A narrow `https://*/*` dynamic-resource entry exists for vanity-origin runtime assets after user trust; keep that list specific and do not add scripts/tools casually.
 
 7. Handle `adfs.js` separately.
@@ -242,19 +245,20 @@ Candidate marker categories:
 4. Manifest audit
    - Replace `*://*/*` in `host_permissions`. Status: implemented for required hosts.
    - Narrow `content_scripts.matches`. Status: implemented for static detector bootstrap.
-   - Narrow or remove broad `web_accessible_resources.matches`. Status: matches narrowed; resource list still needs pruning.
+   - Narrow or remove broad `web_accessible_resources.matches`. Status: matches narrowed; on-demand script exposure pruned; remaining broad HTTPS entries are selected vanity runtime assets and Font Awesome CSS/fonts.
    - Add `activeTab` and `optional_host_permissions`. Status: implemented; optional requests are exact HTTPS origins after detector success.
 
 5. Service worker audit
    - Recheck any broad tab queries or messaging loops, especially prevent-timeout alarm behavior.
    - Avoid scanning or messaging every HTTP(S) tab when only approved CP origins should be active.
+   - Status: prevent-timeout now targets enumerated CP platform hosts plus stored exact trusted vanity HTTPS origins.
 
 6. Store/release readiness
    - Confirm whether publishing will use a CivicPlus account or an approved personal account.
    - Prepare privacy/security justification for remaining permissions.
    - Decide whether GitHub update checks and external release links are still appropriate once distributed through the Chrome Web Store. Status: GitHub release checks and GitHub Pages links removed; no replacement popup update UI is planned because Chrome Web Store distribution handles update checks and installs automatically.
    - Run existing guardrails and add a new guardrail for broad permission ratcheting once the manifest is narrowed.
-   - If version `1.1.4` is already in Chrome Web Store review, do not withdraw it only to swap in this larger refactor. Build the refactor as `1.1.5` and use it as the proactive next submission or the resubmission if review pushes back on host scope.
+   - If version `1.1.4` is already in Chrome Web Store review, do not withdraw it only to swap in this larger refactor. Build the refactor as `1.1.5` and use it as the proactive next submission or the resubmission if review pushes back on host scope. Status: `manifest.json` is now `1.1.5`.
 
 ## Open Questions
 
@@ -279,8 +283,8 @@ Candidate marker categories:
 8. Move full toolkit injection to ordered `chrome.scripting.executeScript` calls / dynamic registered content scripts. Status: implemented with `executeScript`; dynamic detector/bootstrap registration implemented for trusted vanity origins.
 9. Preserve the ADFS static lane. Status: implemented as a detector-triggered identity lane with jQuery-free `adfs.js`; manual timing QA required.
 10. Add per-origin optional permission request flow for vanity domains. Status: implemented for exact HTTPS vanity origins after positive admin, identity, or Live Edit DOM detection.
-11. Narrow web-accessible resources. Status: broad matches narrowed; resource list pruning remains.
-12. Remove dead legacy HEAD probe code, starting with `mini-ide.js`. Status: `mini-ide.js` probe removed; legacy `js/detect_cp_site.js` remains only for compatibility cleanup.
+11. Narrow web-accessible resources. Status: broad matches narrowed and on-demand script exposure removed; remaining broad HTTPS entries are selected vanity runtime assets and Font Awesome CSS/fonts.
+12. Remove dead legacy HEAD probe code, starting with `mini-ide.js`. Status: complete; `mini-ide.js` probe and legacy `js/detect_cp_site.js` were removed, and compatibility is provided by `toolkit-activation-bootstrap.js`.
 13. Add/ratchet guardrails for broad matches and WAR exposure. Status: implemented in `scripts/security-guardrails.sh` with manifest-scope checks for required hosts, optional vanity access, and HTTPS WAR asset lists.
 14. Run manual QA on known CP domains, vanity domains, Live Edit, ADFS, Widget Manager, Theme Manager, Graphic Links, image-picker iframe behavior, custom CSS all-pages behavior, and on-demand context-menu tools.
 
@@ -321,7 +325,7 @@ Recommended scope for this week:
    - Current status: all above are implemented; WAR matches are narrowed, but resource list pruning remains.
 4. Fix `copy-multiple-skins.js` stored component-data validation before packaging. This is smaller than the manifest refactor and removes a clear security-review finding. Status: implemented on `codex/security-multi-skins-data-validation`, pending review/merge.
 5. Defer nice-to-have management UI if needed, but do not defer the permission model.
-6. Package as the next patch version if `1.1.4` is already in review.
+6. Package as the next patch version if `1.1.4` is already in review. Status: packaging target is `1.1.5`.
 
 ## Working Standard
 

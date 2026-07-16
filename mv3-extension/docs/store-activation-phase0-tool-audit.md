@@ -1,6 +1,6 @@
 # Store Activation Phase 0 Tool Audit
 
-Last updated: 2026-07-15
+Last updated: 2026-07-16
 
 Purpose: preserve the per-tool activation audit from the Claude artifact `Phase 0 Tool Audit - Handoff for George.mhtml` in a tracked repo document.
 
@@ -125,6 +125,7 @@ Lane meanings:
 - Current `manifest.json` injects only `js/content/cp-dom-detector.js` and `js/content/toolkit-activation-bootstrap.js` at `document_start` on enumerated CivicPlus platform/identity hosts. The full on-load toolkit chain is now detector-triggered from the service worker.
 - `adfs.js` self-gates on `/admin/saml/logonrequest`, `account.civicplus.com`, and `identityserver.cpqa.ninja`.
 - `mini-ide.js` no longer contains its own `isCivicPlusSite()` HEAD probe to the Mystique module tile path; it relies on the centralized detector and compatibility `detect_if_cp_site()` shim.
+- Legacy `js/detect_cp_site.js` was removed on 2026-07-16. The activation bootstrap is now the only supported compatibility provider for `detect_if_cp_site()`.
 - `graphic-link-advanced-style-helper.js` calls `setupInsertButtonHandler()`, but that function only binds `.insertFancy` from a `MutationObserver` callback. It should also scan existing DOM when initialized.
 - Manifest order currently has `helpers/advanced-styles-limits.js` before `enforce-advanced-styles-text-limits.js`, and `css-snippets.js` before `mini-ide.js`. Preserve those dependencies in the injection manifest/list.
 
@@ -175,3 +176,15 @@ Implementation branch `codex/security-multi-skins-data-validation` added the fir
 - Script selection still comes from `CPToolkitInjectionRegistry`; neither the popup nor page content can choose script paths.
 - Activated vanity-domain tools need selected extension assets (`data/*.json`, template/social SVGs, Font Awesome, and MAIN-world helper scripts). JSON/images/helper scripts are exposed through a dynamic `web_accessible_resources` entry for HTTPS origins; Font Awesome CSS/fonts use a separate static HTTPS entry because the stylesheet loads its fonts by relative URL. This does not grant script execution by itself.
 - Current limitation: non-editor public vanity pages do not auto-activate all-pages custom CSS in this checkpoint.
+
+## Pre-Upload Audit Checkpoint
+
+2026-07-16 review of the on-load/on-demand files and manifest found no syntax failures, remote-code execution primitives, or new required all-sites manifest access.
+
+Cleanup completed during this checkpoint:
+
+- Removed dead legacy `js/detect_cp_site.js` and its Mystique `HEAD` probe.
+- Narrowed the prevent-timeout service-worker alarm so it messages only enumerated CP platform hosts and exact HTTPS vanity origins already trusted through optional host permission.
+- Replaced the hard-coded context-menu registry version with `chrome.runtime.getManifest().version`.
+- Removed `js/tools/on-demand/*` from `web_accessible_resources`; context-menu tools are injected by the service worker and do not need page-loadable exposure.
+- Bumped `manifest.json` to `1.1.5` for the MV3/Web Store readiness submission.

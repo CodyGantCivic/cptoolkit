@@ -9,7 +9,7 @@ const STORAGE_KEY = 'cp-toolkit-tools-registry';
 
 // PHASE 3: Track initialization by version to prevent duplicate menu creation
 const MENUS_VERSION_KEY = 'cp-toolkit-menus-version';
-const CURRENT_VERSION = '2.17.0'; // Must match manifest.json
+const CURRENT_VERSION = chrome.runtime.getManifest().version;
 
 // In-memory cache for performance (will be repopulated from storage if needed)
 let loadedTools = {};
@@ -289,4 +289,3 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 // onStartup: Use version check to avoid duplicates within same install
 chrome.runtime.onInstalled.addListener(() => initializeContextMenus(true));  // Force recreate
 chrome.runtime.onStartup.addListener(() => initializeContextMenus(false));   // Use version check
-

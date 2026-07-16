@@ -11,6 +11,30 @@ importScripts('toolkit-activation.js');
 
 console.log('[CP Toolkit] Service worker initialized');
 
+const TRUSTED_VANITY_ORIGINS_KEY = 'cp-toolkit-trusted-vanity-origins';
+const PREVENT_TIMEOUT_PLATFORM_PATTERNS = Object.freeze([
+  '*://civicplus.com/*',
+  '*://*.civicplus.com/*',
+  '*://civic.place/*',
+  '*://*.civic.place/*',
+  '*://civicplus.pro/*',
+  '*://*.civicplus.pro/*',
+  '*://cpqa.ninja/*',
+  '*://*.cpqa.ninja/*'
+]);
+
+function isExactHttpsOriginPattern(originPattern) {
+  return typeof originPattern === 'string' && /^https:\/\/[^/*?#]+\/\*$/.test(originPattern);
+}
+
+function getPreventTimeoutTabUrlPatterns(settings) {
+  var trustedOrigins = Array.isArray(settings && settings[TRUSTED_VANITY_ORIGINS_KEY])
+    ? settings[TRUSTED_VANITY_ORIGINS_KEY].filter(isExactHttpsOriginPattern)
+    : [];
+
+  return Array.from(new Set(PREVENT_TIMEOUT_PLATFORM_PATTERNS.concat(trustedOrigins)));
+}
+
 function getFirstExecutionResult(results) {
   return results && results[0] ? results[0].result : null;
 }
@@ -315,10 +339,13 @@ chrome.runtime.onInstalled.addListener((details) => {
 // Content scripts check for the Session Timeout modal and click "Refresh Session" if visible.
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'cp-prevent-timeout') {
-    chrome.storage.local.get('prevent-timeout', (settings) => {
+    chrome.storage.local.get(['prevent-timeout', TRUSTED_VANITY_ORIGINS_KEY], (settings) => {
       if (settings['prevent-timeout'] === false) return;
 
-      chrome.tabs.query({ url: ['http://*/*', 'https://*/*'] }, (tabs) => {
+      var urlPatterns = getPreventTimeoutTabUrlPatterns(settings);
+      if (urlPatterns.length === 0) return;
+
+      chrome.tabs.query({ url: urlPatterns }, (tabs) => {
         for (const tab of tabs) {
           if (!tab.id || tab.id === chrome.tabs.TAB_ID_NONE) continue;
           chrome.tabs.sendMessage(tab.id, { action: 'cp-check-timeout' }).catch(() => {});
@@ -338,7 +365,7 @@ chrome.alarms.get('cp-prevent-timeout', (existing) => {
 
 // Keep service worker alive (MV3 best practice)
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('[CP Toolkit] Message received:', message);
+  console.log('[CP Toolkit] Message received:', message && message.action ? message.action : message);
 
   if (self.CPToolkitActivation && self.CPToolkitActivation.handleMessage(message, sender, sendResponse)) {
     return true;
