@@ -11,6 +11,7 @@ Purpose: keep the upload/review notes for the MV3 Web Store readiness submission
 - Source folder: `mv3-extension`
 - Production build folder: `mv3-extension-prod`
 - Upload artifact: `dist/civicplus-internal-toolkit-1.1.5.zip`
+- Privacy policy URL: `https://cp-vlasak.github.io/cptoolkit/privacy.html`
 - Submission type: existing Chrome Web Store item update if the old listing can be recovered; otherwise new item submission using the same package.
 
 ## Single Purpose
@@ -51,6 +52,8 @@ Web-accessible resources are limited to assets that activated tools must load in
 ## Privacy Practices Draft
 
 Recommended disclosure: no sale or transfer of user data. Data is stored locally in Chrome extension storage for employee workflow preferences and reusable snippets/skins/buttons. The extension does not send browsing data or saved toolkit data to CivicPlus or third-party analytics.
+
+Public policy page: `https://cp-vlasak.github.io/cptoolkit/privacy.html`
 
 If the dashboard asks for data categories, review carefully with the final privacy owner. The working assumption is local extension storage only, not external collection.
 
