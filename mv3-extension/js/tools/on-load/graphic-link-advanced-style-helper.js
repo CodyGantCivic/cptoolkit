@@ -234,13 +234,22 @@
       ));
     }
 
-    function setConvertButtonState(btn, enabled, label, title) {
+    // tone: 'ok' (green outline), 'needs' (red outline), or 'idle' (neutral).
+    const CONVERT_TONES = {
+      ok: { border: '#2e9e55', bg: '#f3fbf5', color: '#1b6b3a' },
+      needs: { border: '#af282f', bg: '#fdf4f4', color: '#af282f' },
+      idle: { border: '#b8c0cc', bg: '#f6f7f9', color: '#6b7685' }
+    };
+
+    function setConvertButtonState(btn, enabled, label, title, tone) {
+      const colors = CONVERT_TONES[tone] || CONVERT_TONES.idle;
       btn.disabled = !enabled;
       btn.textContent = label;
       btn.title = title;
-      btn.style.setProperty('background', enabled ? '#af282f' : '#9aa5b1', 'important');
-      btn.style.setProperty('opacity', enabled ? '1' : '0.6', 'important');
-      btn.style.setProperty('cursor', enabled ? 'pointer' : 'not-allowed', 'important');
+      btn.style.setProperty('border', '1px solid ' + colors.border, 'important');
+      btn.style.setProperty('background', colors.bg, 'important');
+      btn.style.setProperty('color', colors.color, 'important');
+      btn.style.setProperty('cursor', enabled ? 'pointer' : 'default', 'important');
     }
 
     function getTextareasNeedingConversion(modal, buttonId, portable) {
@@ -263,7 +272,7 @@
         btn.type = 'button';
         btn.className = CONVERT_BTN_CLASS;
         btn.style.cssText = 'display:inline-block!important;width:auto!important;margin:0 0 0 8px!important;' +
-          'padding:2px 10px!important;border:none!important;border-radius:999px!important;color:#fff!important;' +
+          'padding:2px 10px!important;border-radius:999px!important;box-shadow:none!important;' +
           'font-size:12px!important;font-weight:600!important;font-family:Arial,sans-serif!important;' +
           'line-height:1.4!important;vertical-align:middle;';
         btn.addEventListener('click', handleConvertSelectorsClick);
@@ -278,19 +287,19 @@
 
       if (!buttonId || buttonId === '1') {
         setConvertButtonState(btn, false, 'Update selectors',
-          'Save this button first so it has a permanent ID, then selectors can be updated.');
+          'Save this button first so it has a permanent ID, then selectors can be updated.', 'idle');
       } else if (!portable || typeof portable.cssNeedsPortableConversion !== 'function') {
         setConvertButtonState(btn, false, 'Update selectors',
-          'Turn on Mini IDE to check and update selectors.');
+          'Turn on Mini IDE to check and update selectors.', 'idle');
       } else {
         const needing = getTextareasNeedingConversion(modal, buttonId, portable);
         if (needing.length > 0) {
           setConvertButtonState(btn, true, 'Update selectors',
             'Old selector format found in ' + needing.length + ' style box' + (needing.length === 1 ? '' : 'es') +
-            '. Click to add the missing .fancyButton1 / .fancyButton' + buttonId + ' selector. Nothing is saved until you save the button.');
+            '. Click to add the missing .fancyButton1 / .fancyButton' + buttonId + ' selector. Nothing is saved until you save the button.', 'needs');
         } else {
           setConvertButtonState(btn, false, '✓ Selectors up to date',
-            'Every style box already has both .fancyButton1 and .fancyButton' + buttonId + '.');
+            'Every style box already has both .fancyButton1 and .fancyButton' + buttonId + '.', 'ok');
         }
       }
     }
@@ -323,7 +332,8 @@
         updated > 0 ? '✓ Updated – save to keep' : 'Could not update',
         updated > 0
           ? 'Updated ' + updated + ' style box' + (updated === 1 ? '' : 'es') + '. Save the button to keep the changes.'
-          : (skipped > 0 ? 'The selectors in ' + skipped + ' style box(es) could not be updated safely. Use Make Portable to review them.' : ''));
+          : (skipped > 0 ? 'The selectors in ' + skipped + ' style box(es) could not be updated safely. Use Make Portable to review them.' : ''),
+        updated > 0 ? 'ok' : 'needs');
       clearTimeout(convertStatusTimer);
       convertStatusTimer = setTimeout(function() {
         delete btn.dataset.cpJustUpdated;
