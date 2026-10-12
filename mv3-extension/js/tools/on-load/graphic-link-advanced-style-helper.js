@@ -216,6 +216,121 @@
         : 'This button has not been saved yet, so it does not have a permanent ID.';
     }
 
+    // ==================== SELECTOR FORMAT CONVERT BUTTON ====================
+    // Always-present button beside the ID badge. Greyed out unless one of the
+    // style boxes has a rule missing its .fancyButton1 or real-ID selector
+    // (an old-format button); pressing it adds only the missing half using
+    // Mini IDE's Make Portable engine. It edits the textareas only; nothing
+    // is saved until the user saves the button as usual.
+    const CONVERT_BTN_CLASS = 'cpFancyButtonConvertBtn';
+    let convertStatusTimer = null;
+
+    function getStyleTextareas(modal) {
+      return Array.prototype.slice.call(modal.querySelectorAll(
+        'textarea#fancyButtonNormalMiscStyles, ' +
+        'textarea#fancyButtonHoverMiscStyles, ' +
+        'textarea[id^="fancyButton"][id$="MiscStyles"], ' +
+        'textarea.autoUpdate'
+      ));
+    }
+
+    function setConvertButtonState(btn, enabled, label, title) {
+      btn.disabled = !enabled;
+      btn.textContent = label;
+      btn.title = title;
+      btn.style.setProperty('background', enabled ? '#af282f' : '#9aa5b1', 'important');
+      btn.style.setProperty('opacity', enabled ? '1' : '0.6', 'important');
+      btn.style.setProperty('cursor', enabled ? 'pointer' : 'not-allowed', 'important');
+    }
+
+    function getTextareasNeedingConversion(modal, buttonId, portable) {
+      return getStyleTextareas(modal).filter(function(textarea) {
+        return textarea.value && portable.cssNeedsPortableConversion(textarea.value, buttonId);
+      });
+    }
+
+    function updateSelectorConvertButton() {
+      const modal = getVisibleFancyButtonModal();
+      if (!modal) return;
+
+      const titleEl = modal.querySelector('h3.modalTitle');
+      const titleLeft = titleEl && titleEl.parentElement;
+      if (!titleLeft) return;
+
+      let btn = titleLeft.querySelector('.' + CONVERT_BTN_CLASS);
+      if (!btn) {
+        btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = CONVERT_BTN_CLASS;
+        btn.style.cssText = 'display:inline-block!important;width:auto!important;margin:0 0 0 8px!important;' +
+          'padding:2px 10px!important;border:none!important;border-radius:999px!important;color:#fff!important;' +
+          'font-size:12px!important;font-weight:600!important;font-family:Arial,sans-serif!important;' +
+          'line-height:1.4!important;vertical-align:middle;';
+        btn.addEventListener('click', handleConvertSelectorsClick);
+        titleLeft.appendChild(btn);
+      }
+
+      // While a "just updated" message is showing, leave the label alone.
+      if (btn.dataset.cpJustUpdated === 'true') return;
+
+      const buttonId = getFancyButtonId();
+      const portable = window.CPToolkit && window.CPToolkit.portable;
+
+      if (!buttonId || buttonId === '1') {
+        setConvertButtonState(btn, false, 'Update selectors',
+          'Save this button first so it has a permanent ID, then selectors can be updated.');
+      } else if (!portable || typeof portable.cssNeedsPortableConversion !== 'function') {
+        setConvertButtonState(btn, false, 'Update selectors',
+          'Turn on Mini IDE to check and update selectors.');
+      } else {
+        const needing = getTextareasNeedingConversion(modal, buttonId, portable);
+        if (needing.length > 0) {
+          setConvertButtonState(btn, true, 'Update selectors',
+            'Old selector format found in ' + needing.length + ' style box' + (needing.length === 1 ? '' : 'es') +
+            '. Click to add the missing .fancyButton1 / .fancyButton' + buttonId + ' selector. Nothing is saved until you save the button.');
+        } else {
+          setConvertButtonState(btn, false, '✓ Selectors up to date',
+            'Every style box already has both .fancyButton1 and .fancyButton' + buttonId + '.');
+        }
+      }
+    }
+
+    function handleConvertSelectorsClick(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const btn = e.currentTarget;
+      const modal = getVisibleFancyButtonModal();
+      const portable = window.CPToolkit && window.CPToolkit.portable;
+      const buttonId = getFancyButtonId();
+      if (!modal || !portable || !buttonId || buttonId === '1' || btn.disabled) return;
+
+      let updated = 0;
+      let skipped = 0;
+      getTextareasNeedingConversion(modal, buttonId, portable).forEach(function(textarea) {
+        const result = portable.transformCssPortable(textarea.value, buttonId, true);
+        if (result.parseError || !result.changed) {
+          skipped += 1;
+          return;
+        }
+        textarea.value = result.output;
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        textarea.dispatchEvent(new Event('change', { bubbles: true }));
+        updated += 1;
+      });
+
+      btn.dataset.cpJustUpdated = 'true';
+      setConvertButtonState(btn, false,
+        updated > 0 ? '✓ Updated – save to keep' : 'Could not update',
+        updated > 0
+          ? 'Updated ' + updated + ' style box' + (updated === 1 ? '' : 'es') + '. Save the button to keep the changes.'
+          : (skipped > 0 ? 'The selectors in ' + skipped + ' style box(es) could not be updated safely. Use Make Portable to review them.' : ''));
+      clearTimeout(convertStatusTimer);
+      convertStatusTimer = setTimeout(function() {
+        delete btn.dataset.cpJustUpdated;
+        updateSelectorConvertButton();
+      }, 4000);
+    }
+
     // ==================== SELECTOR COPY BUTTONS ====================
     // Each Advanced Styles panel (Background outer/inner, Default Text
     // Style, and any number of added Text Styles) is identified by the
@@ -631,9 +746,19 @@
           fixHtmlEncodedStyles();
           fixRenderedFancyButtonStyles();
           injectFancyButtonIdBadge();
+          updateSelectorConvertButton();
           injectSelectorCopyButtons();
         }, 300);
       });
+
+      // Typing doesn't mutate the DOM, so re-check on edits to a style box.
+      let inputTimer = null;
+      document.addEventListener('input', (e) => {
+        const t = e.target;
+        if (!t || t.tagName !== 'TEXTAREA' || !/^fancyButton.*MiscStyles$/.test(t.id || '') && !t.classList.contains('autoUpdate')) return;
+        clearTimeout(inputTimer);
+        inputTimer = setTimeout(updateSelectorConvertButton, 400);
+      }, true);
       
       if (document.body) {
         observer.observe(document.body, { childList: true, subtree: true });
@@ -925,16 +1050,18 @@
         processTextareas();
         fixRenderedFancyButtonStyles();
         injectFancyButtonIdBadge();
+        updateSelectorConvertButton();
         injectSelectorCopyButtons();
         setupInsertButtonHandler();
         setupAutoEstablishRealId();
-        startObserving();
+startObserving();
       });
     } else {
       // console.log(TOOLKIT_NAME + ' Document already loaded, initializing immediately...');
       processTextareas();
       fixRenderedFancyButtonStyles();
       injectFancyButtonIdBadge();
+      updateSelectorConvertButton();
       injectSelectorCopyButtons();
       setupInsertButtonHandler();
       setupAutoEstablishRealId();

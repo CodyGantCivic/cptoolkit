@@ -3940,8 +3940,53 @@
         return parts.join('');
     }
 
+    // A rule "needs conversion" only when one of its fancy-button selectors is
+    // missing its placeholder (.fancyButton1) or real-ID (.fancyButtonN) twin
+    // elsewhere in the same selector list. Rules that are already dual stay
+    // untouched, unlike makeSelectorListPortable, which would re-emit them in
+    // a different order.
+    function portableRuleNeedsConversion(prelude, numOnly) {
+        if (!numOnly || numOnly === '1') return false;
+        const selectors = splitSelectorList(prelude);
+        if (selectors.length === 0) return false;
+        for (const sel of selectors) {
+            if (selectorHasUnsafeFancyButton1(sel).unsafe) return false;
+        }
+        const key = function(s) { return String(s).replace(/\s+/g, ' ').trim(); };
+        const have = new Set(selectors.map(key));
+        for (const sel of selectors) {
+            if (topLevelFancyButtonNums(sel).length === 0) continue;
+            const placeholder = mapTopLevelFancyButtonTokens(sel, function() { return '1'; });
+            const real = mapTopLevelFancyButtonTokens(sel, function() { return numOnly; });
+            if (!have.has(key(placeholder)) || !have.has(key(real))) return true;
+        }
+        return false;
+    }
+
+    function makeSelectorListPortableIfMissing(prelude, uniqueId) {
+        const numOnly = String(uniqueId).replace(/^fancyButton/, '');
+        if (!portableRuleNeedsConversion(prelude, numOnly)) {
+            return { prelude, skipped: false, changed: false };
+        }
+        return makeSelectorListPortable(prelude, uniqueId);
+    }
+
+    // True when any rule in `css` is missing its .fancyButton1 or real-ID twin.
+    function cssNeedsPortableConversion(css, uniqueId) {
+        if (!css || !css.trim()) return false;
+        const numOnly = String(uniqueId).replace(/^fancyButton/, '');
+        let needed = false;
+        walkAndTransform(css, uniqueId, function(prelude) {
+            if (!needed && portableRuleNeedsConversion(prelude, numOnly)) needed = true;
+            return { prelude, skipped: false, changed: false };
+        }, []);
+        return needed;
+    }
+
     // Full "Make portable" transform — dual selectors + safety gates.
-    function transformCssPortable(css, uniqueId) {
+    // With onlyIfMissing, rules that already have both selectors are left
+    // verbatim and only rules missing a twin are converted.
+    function transformCssPortable(css, uniqueId, onlyIfMissing) {
         const before = css.length;
         const stats = { before, after: before, delta: 0 };
 
@@ -3962,7 +4007,12 @@
         }
 
         const skipped = [];
-        const output = walkAndTransform(css, uniqueId, makeSelectorListPortable, skipped);
+        const output = walkAndTransform(
+            css,
+            uniqueId,
+            onlyIfMissing ? makeSelectorListPortableIfMissing : makeSelectorListPortable,
+            skipped
+        );
 
         if (!isFragment) {
             const postflightError = portableNativeParse(output);
@@ -4282,6 +4332,7 @@
         splitSelectorList,
         makeSelectorListPortable,
         transformCssPortable,
+        cssNeedsPortableConversion,
         applyForSave,
         showMakePortableModal,
         // Diagnostic hook for ad-hoc console testing.
