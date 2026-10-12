@@ -1,14 +1,5 @@
 if ($($(".widgetCustomHtml").find("textarea")[0]).length) {
   $($(".widgetCustomHtml").find("textarea")[0]).text(`\
-<style>
-  .cpBylineIconTS {
-    fill: currentColor;
-    width: 39px;
-    height: 26px;
-    display: inline;
-    vertical-align: middle;
-  }
-</style>
 <div class="widgetItem cpBylineTS">
   <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 100 100" class="cpBylineIconTS">
     <path class="c" d="M73.4,23.2h-19v16.7h19c2.8,0,5,2.2,5,5c0,2.8-2.2,5-5,5h-19v28.4h5.5l11.3-11.7h2.2c11.9,0,21.6-9.7,21.6-21.6C95,33,85.3,23.2,73.4,23.2"></path>
