@@ -57,7 +57,6 @@ const categories = {
 };
 
 const VANITY_DISMISSED_KEY = 'cp-toolkit-vanity-dismissed-hosts';
-const VANITY_SNOOZED_KEY = 'cp-toolkit-vanity-snoozed-hosts';
 const VANITY_POPUP_CONTEXT_KEY = 'cp-toolkit-vanity-popup-context';
 const VANITY_ADMIN_PATH = /^\/(?:admin|designcenter)(?:\/|$)/i;
 
@@ -256,23 +255,23 @@ async function renderVanityTrustPrompt(statusDiv, tab, detection, originPattern)
   statusDiv.appendChild(button);
 
   const host = normalizeHostname(new URL(tab.url).hostname);
-  const notNowButton = document.createElement('button');
-  notNowButton.type = 'button';
-  notNowButton.textContent = 'Not now';
-  notNowButton.addEventListener('click', async () => {
-    await addHostToList(chrome.storage.session || chrome.storage.local, VANITY_SNOOZED_KEY, host);
-    window.close();
-  });
-
+  // Closing the popup is "not now": the automatic popup only opens once per
+  // browser session for each site. Clicking the toolbar icon on the site
+  // always shows this prompt again.
   const neverButton = document.createElement('button');
   neverButton.type = 'button';
-  neverButton.textContent = 'Never for this site';
+  neverButton.textContent = "Don't ask again for this site";
+  neverButton.style.cssText = [
+    'display:block', 'width:auto', 'height:auto', 'margin:8px auto 0', 'padding:0',
+    'background:none!important', 'border:none!important', 'box-shadow:none!important',
+    'color:#5f6b7a!important', 'font-size:11px', 'font-weight:normal',
+    'text-decoration:underline', 'cursor:pointer'
+  ].join(';');
   neverButton.addEventListener('click', async () => {
     await addHostToList(chrome.storage.local, VANITY_DISMISSED_KEY, host);
     window.close();
   });
 
-  statusDiv.appendChild(notNowButton);
   statusDiv.appendChild(neverButton);
 }
 

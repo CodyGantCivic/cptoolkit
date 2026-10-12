@@ -49,6 +49,15 @@
     });
   }
 
+  function rememberSnoozed(host) {
+    var storage = chrome.storage.session || chrome.storage.local;
+    return storage.get(SNOOZED_KEY).then(function(settings) {
+      var list = Array.isArray(settings[SNOOZED_KEY]) ? settings[SNOOZED_KEY] : [];
+      if (list.indexOf(host) === -1) list.push(host);
+      return storage.set({ [SNOOZED_KEY]: list });
+    });
+  }
+
   function shouldPrompt(candidate) {
     return chrome.permissions.contains({ origins: [candidate.originPattern] }).then(function(granted) {
       if (granted) return false;
@@ -76,6 +85,10 @@
           [POPUP_CONTEXT_KEY]: { tabId: details.tabId, url: details.url, createdAt: Date.now() }
         }).then(function() {
           return chrome.action.openPopup({ windowId: tab.windowId });
+        }).then(function() {
+          // Auto-open once per browser session per site; the toolbar icon
+          // always shows the prompt again on demand.
+          return rememberSnoozed(candidate.host);
         });
       });
     }).catch(function(error) {
