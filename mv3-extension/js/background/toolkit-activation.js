@@ -724,6 +724,23 @@
     });
   }
 
+  function getAutoOpenedTabUrl(tabId) {
+    var key = 'cp-toolkit-vanity-popup-context';
+    var storage = chrome.storage && chrome.storage.session ? chrome.storage.session : chrome.storage.local;
+    return storage.get(key).then(function(settings) {
+      var context = settings && settings[key];
+      if (
+        context &&
+        context.tabId === tabId &&
+        typeof context.url === 'string' &&
+        Date.now() - Number(context.createdAt || 0) < PENDING_TRUST_TTL_MS
+      ) {
+        return context.url;
+      }
+      return '';
+    }).catch(function() { return ''; });
+  }
+
   function handlePrepareTrustedOrigin(message) {
     var originPattern = typeof message.originPattern === 'string' ? message.originPattern : '';
     var tabId = typeof message.tabId === 'number' ? message.tabId : null;
@@ -741,8 +758,13 @@
       return Promise.resolve({ skipped: 'missing-activating-lane' });
     }
 
-    return chrome.tabs.get(tabId).then(function(tab) {
-      if (getHttpsOriginPattern(tab && tab.url) !== originPattern) {
+    return Promise.all([chrome.tabs.get(tabId), getAutoOpenedTabUrl(tabId)]).then(function(values) {
+      // An automatically opened popup has no activeTab grant, so Chrome hides
+      // the tab URL until access is granted; use the URL recorded when the
+      // popup was opened for this same tab.
+      var tab = values[0];
+      var tabUrl = (tab && tab.url) || values[1];
+      if (getHttpsOriginPattern(tabUrl) !== originPattern) {
         return { skipped: 'tab-origin-mismatch' };
       }
 

@@ -58,6 +58,7 @@ const categories = {
 
 const VANITY_DISMISSED_KEY = 'cp-toolkit-vanity-dismissed-hosts';
 const VANITY_SNOOZED_KEY = 'cp-toolkit-vanity-snoozed-hosts';
+const VANITY_POPUP_CONTEXT_KEY = 'cp-toolkit-vanity-popup-context';
 const VANITY_ADMIN_PATH = /^\/(?:admin|designcenter)(?:\/|$)/i;
 
 function normalizeHostname(hostname) {
@@ -275,6 +276,25 @@ async function renderVanityTrustPrompt(statusDiv, tab, detection, originPattern)
   statusDiv.appendChild(neverButton);
 }
 
+async function getAutoOpenedTabUrl(tabId) {
+  try {
+    const storage = chrome.storage.session || chrome.storage.local;
+    const settings = await storage.get(VANITY_POPUP_CONTEXT_KEY);
+    const context = settings[VANITY_POPUP_CONTEXT_KEY];
+    if (
+      context &&
+      context.tabId === tabId &&
+      typeof context.url === 'string' &&
+      Date.now() - Number(context.createdAt || 0) < 120000
+    ) {
+      return context.url;
+    }
+  } catch (error) {
+    // Fall through to the normal "No active tab" state.
+  }
+  return '';
+}
+
 async function addHostToList(storage, key, host) {
   try {
     const settings = await storage.get(key);
@@ -311,8 +331,16 @@ async function renderUrlBasedTrustPrompt(statusDiv, tab, originPattern) {
 // Check if current tab is a CivicPlus site
 async function checkCivicPlusSite() {
   const statusDiv = document.getElementById('site-status');
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  
+  let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+  // A popup opened automatically (not by a click) has no activeTab grant, so
+  // Chrome hides the tab's URL. The service worker saw the navigation and left
+  // the URL for us.
+  if (tab && !tab.url) {
+    const knownUrl = await getAutoOpenedTabUrl(tab.id);
+    if (knownUrl) tab = Object.assign({}, tab, { url: knownUrl });
+  }
+
   if (!tab || !tab.url) {
     statusDiv.textContent = 'No active tab';
     statusDiv.className = 'status inactive';

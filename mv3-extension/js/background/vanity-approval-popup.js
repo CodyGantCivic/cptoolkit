@@ -9,6 +9,7 @@
 
   var DISMISSED_KEY = 'cp-toolkit-vanity-dismissed-hosts';
   var SNOOZED_KEY = 'cp-toolkit-vanity-snoozed-hosts';
+  var POPUP_CONTEXT_KEY = 'cp-toolkit-vanity-popup-context';
   var ADMIN_PATH = /^\/(?:admin|designcenter)(?:\/|$)/i;
 
   var KNOWN_PLATFORM_SUFFIXES = ['.civicplus.com', '.civic.place', '.civicplus.pro', '.cpqa.ninja'];
@@ -70,7 +71,12 @@
       return chrome.tabs.get(details.tabId).then(function(tab) {
         // openPopup targets the active tab of a window; skip background tabs.
         if (!tab || !tab.active) return null;
-        return chrome.action.openPopup({ windowId: tab.windowId });
+        var contextStorage = chrome.storage.session || chrome.storage.local;
+        return contextStorage.set({
+          [POPUP_CONTEXT_KEY]: { tabId: details.tabId, url: details.url, createdAt: Date.now() }
+        }).then(function() {
+          return chrome.action.openPopup({ windowId: tab.windowId });
+        });
       });
     }).catch(function(error) {
       console.log('[CP Toolkit] Vanity approval popup not opened:', error && error.message ? error.message : error);
