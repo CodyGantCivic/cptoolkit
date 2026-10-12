@@ -9,6 +9,7 @@ importScripts('first-run.js');
 importScripts('toolkit-injection-registry.js');
 importScripts('toolkit-activation.js');
 importScripts('cp-site-icon-cue.js');
+importScripts('vanity-approval-popup.js');
 
 console.log('[CP Toolkit] Service worker initialized');
 

@@ -56,6 +56,10 @@ const categories = {
   "Other Tools": ["remember-image-picker-state", "show-changelog"],
 };
 
+const VANITY_DISMISSED_KEY = 'cp-toolkit-vanity-dismissed-hosts';
+const VANITY_SNOOZED_KEY = 'cp-toolkit-vanity-snoozed-hosts';
+const VANITY_ADMIN_PATH = /^\/(?:admin|designcenter)(?:\/|$)/i;
+
 function normalizeHostname(hostname) {
   return String(hostname || '').toLowerCase().replace(/\.$/, '');
 }
@@ -249,6 +253,59 @@ async function renderVanityTrustPrompt(statusDiv, tab, detection, originPattern)
   });
 
   statusDiv.appendChild(button);
+
+  const host = normalizeHostname(new URL(tab.url).hostname);
+  const notNowButton = document.createElement('button');
+  notNowButton.type = 'button';
+  notNowButton.textContent = 'Not now';
+  notNowButton.addEventListener('click', async () => {
+    await addHostToList(chrome.storage.session || chrome.storage.local, VANITY_SNOOZED_KEY, host);
+    window.close();
+  });
+
+  const neverButton = document.createElement('button');
+  neverButton.type = 'button';
+  neverButton.textContent = 'Never for this site';
+  neverButton.addEventListener('click', async () => {
+    await addHostToList(chrome.storage.local, VANITY_DISMISSED_KEY, host);
+    window.close();
+  });
+
+  statusDiv.appendChild(notNowButton);
+  statusDiv.appendChild(neverButton);
+}
+
+async function addHostToList(storage, key, host) {
+  try {
+    const settings = await storage.get(key);
+    const list = Array.isArray(settings[key]) ? settings[key] : [];
+    if (!list.includes(host)) list.push(host);
+    await storage.set({ [key]: list });
+  } catch (error) {
+    // Dismissal is a convenience; the popup still closes if storage fails.
+  }
+}
+
+async function isHostInList(storage, key, host) {
+  try {
+    const settings = await storage.get(key);
+    return Array.isArray(settings[key]) && settings[key].includes(host);
+  } catch (error) {
+    return false;
+  }
+}
+
+// An automatically opened popup has no page access, so detection can't run.
+// For an unapproved site the URL is the only signal: show the approval prompt
+// for CivicPlus admin / Design Center paths unless the user said no already.
+async function renderUrlBasedTrustPrompt(statusDiv, tab, originPattern) {
+  const url = new URL(tab.url);
+  const host = normalizeHostname(url.hostname);
+  if (!VANITY_ADMIN_PATH.test(url.pathname)) return false;
+  if (await isHostInList(chrome.storage.local, VANITY_DISMISSED_KEY, host)) return false;
+
+  await renderVanityTrustPrompt(statusDiv, tab, { lanes: ['admin'] }, originPattern);
+  return true;
 }
 
 // Check if current tab is a CivicPlus site
@@ -301,7 +358,7 @@ async function checkCivicPlusSite() {
       } catch (scriptError) {
         if (hasTrustedOriginPermission) {
           setTrustedInactiveStatus(statusDiv, tab);
-        } else {
+        } else if (!(await renderUrlBasedTrustPrompt(statusDiv, tab, originPattern))) {
           setSiteStatus(statusDiv, 'inactive', 'fas fa-times-circle', 'Not a CivicPlus site');
         }
       }
