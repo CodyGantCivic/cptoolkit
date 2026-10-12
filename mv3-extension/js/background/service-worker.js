@@ -8,6 +8,7 @@ importScripts('context-menus.js');
 importScripts('first-run.js');
 importScripts('toolkit-injection-registry.js');
 importScripts('toolkit-activation.js');
+importScripts('cp-site-icon-cue.js');
 
 console.log('[CP Toolkit] Service worker initialized');
 

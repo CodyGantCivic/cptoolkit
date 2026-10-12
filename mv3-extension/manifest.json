@@ -46,7 +46,8 @@
     "scripting",
     "alarms",
     "webNavigation",
-    "activeTab"
+    "activeTab",
+    "declarativeContent"
   ],
   "host_permissions": [
     "*://civicplus.com/*",
