@@ -20,6 +20,7 @@ const KNOWN_PLATFORM_HOSTS = [
 const categories = {
   "CSS & Design Tools": [
     "mini-ide",
+    "css-snippets",
     "custom-css-deployer",
     "option-set-importer",
     "widget-skin-advanced-style-helper",
@@ -465,7 +466,15 @@ async function toggleTool(toolId) {
   // Update UI
   const toolDiv = document.getElementById('tool-' + toolId);
   const statusSpan = toolDiv.querySelector('.tool-status');
-  
+
+  if (toolId === 'css-snippets') {
+    const sidebarBtn = toolDiv.querySelector('.tool-snippets-btn');
+    if (sidebarBtn) {
+      sidebarBtn.disabled = !newState;
+      sidebarBtn.title = newState ? 'Open CSS Snippets Sidebar' : 'Enable CSS Snippets first';
+    }
+  }
+
   if (newState) {
     toolDiv.classList.add('enabled');
     statusSpan.className = 'tool-status on';
@@ -539,11 +548,12 @@ function generateToolsUI(settings, activeTab) {
       
       toolDiv.appendChild(nameSpan);
 
-      // Add CSS Snippets icon button next to Mini IDE
-      if (toolId === 'mini-ide') {
+      // Add the Snippets sidebar icon button next to its own CSS Snippets toggle
+      if (toolId === 'css-snippets') {
         const snippetsBtn = document.createElement('button');
         snippetsBtn.className = 'tool-snippets-btn';
-        snippetsBtn.title = 'Open CSS Snippets Sidebar';
+        snippetsBtn.disabled = !isEnabled;
+        snippetsBtn.title = isEnabled ? 'Open CSS Snippets Sidebar' : 'Enable CSS Snippets first';
         snippetsBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>';
         snippetsBtn.addEventListener('click', async (e) => {
           e.stopPropagation();

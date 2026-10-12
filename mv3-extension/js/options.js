@@ -49,6 +49,7 @@ function categorizeTools() {
   const categories = {
     "CSS & Design Tools": [
       "mini-ide",
+      "css-snippets",
       "custom-css-deployer",
       "option-set-importer",
       "widget-skin-advanced-style-helper",
