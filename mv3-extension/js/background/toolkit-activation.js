@@ -17,7 +17,8 @@
   var PENDING_TRUST_RECORDS_KEY = 'cp-toolkit-pending-trusted-origins';
   var TRUSTED_SCRIPT_ID_PREFIX = 'cp-toolkit-vanity-';
   var PENDING_INJECTION_TIMEOUT_MS = 15000;
-  var PENDING_TRUST_TTL_MS = 120000;
+  // How long a Trust click stays valid while Chrome's permission prompt is open.
+  var PENDING_TRUST_TTL_MS = 300000;
   var ACTIVATION_KINDS = Object.freeze({
     FULL_TOOLKIT: 'full-toolkit',
     CSS: 'all-pages-cp-host-css',
@@ -728,16 +729,12 @@
     var key = 'cp-toolkit-vanity-popup-context';
     var storage = chrome.storage && chrome.storage.session ? chrome.storage.session : chrome.storage.local;
     return storage.get(key).then(function(settings) {
-      var context = settings && settings[key];
-      if (
-        context &&
-        context.tabId === tabId &&
-        typeof context.url === 'string' &&
-        Date.now() - Number(context.createdAt || 0) < PENDING_TRUST_TTL_MS
-      ) {
-        return context.url;
-      }
-      return '';
+      // One entry per tab, kept while the tab is open (see
+      // vanity-approval-popup.js); not time-limited, so a slow click on
+      // Trust still finds the URL.
+      var map = settings && settings[key];
+      var context = map && map[String(tabId)];
+      return context && typeof context.url === 'string' ? context.url : '';
     }).catch(function() { return ''; });
   }
 

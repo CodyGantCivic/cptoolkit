@@ -284,14 +284,12 @@ async function renderVanityTrustPrompt(statusDiv, tab, detection, originPattern)
 async function getAutoOpenedTabUrl(tabId) {
   try {
     const storage = chrome.storage.session || chrome.storage.local;
+    // One entry per tab, kept for as long as the tab is open, so waiting a
+    // while before clicking Trust doesn't lose the URL.
     const settings = await storage.get(VANITY_POPUP_CONTEXT_KEY);
-    const context = settings[VANITY_POPUP_CONTEXT_KEY];
-    if (
-      context &&
-      context.tabId === tabId &&
-      typeof context.url === 'string' &&
-      Date.now() - Number(context.createdAt || 0) < 120000
-    ) {
+    const map = settings[VANITY_POPUP_CONTEXT_KEY] || {};
+    const context = map[String(tabId)];
+    if (context && typeof context.url === 'string') {
       return context.url;
     }
   } catch (error) {
