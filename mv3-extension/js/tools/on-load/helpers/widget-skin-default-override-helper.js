@@ -59,47 +59,102 @@
   // in the other content containers. A fixed-duration poll can lose the race
   // against the CMS's own post-save container refresh, so watch for the
   // indicators actually appearing instead.
-  function startNewSkinPreviewCleanup($) {
-    function dismissTemporarySkinIndicators() {
-      $(".widget[class*='skin-'] .remove.widgetSkin").filter(function() {
-        var container = $(this).closest("[data-cprole='mainContentContainer'], [data-cprole='contentContainer']");
-        return container.length > 0 && container.attr('data-cprole') === 'contentContainer';
-      }).click();
+  //
+  // Dismissing a preview makes the CMS close the Manage Widget Skins modal and
+  // can leave its dark backdrop (#mvcModal_backgroundElement, .modalBackground)
+  // behind. Once the page settles, the modal is reopened (copy only) and the
+  // backdrop is released if no modal is on screen.
+  var previewCleanup = null;
+
+  function startNewSkinPreviewCleanup($, options) {
+    var wantsReopen = !!(options && options.reopenManageWidgetSkins);
+    var WINDOW_MS = 15000;
+
+    // A second copy while one cleanup is running extends it instead of
+    // starting a competing observer.
+    if (previewCleanup) {
+      previewCleanup.reopen = previewCleanup.reopen || wantsReopen;
+      previewCleanup.endAt = Date.now() + WINDOW_MS;
+      return;
     }
 
-    // Dismissing the previews makes the CMS re-render containers, and it can
-    // leave its dark modal backdrop (#mvcModal_backgroundElement, class
-    // .modalBackground) showing with nothing on top, blocking the page. Hide
-    // it, but only when no modal is actually on screen.
+    var state = { reopen: wantsReopen, endAt: Date.now() + WINDOW_MS, dismissed: 0 };
+    previewCleanup = state;
+
+    // One scoped selector instead of scanning every widget and walking up to
+    // its container for each match; descendants of the main container are
+    // excluded in a single cheap pass.
+    var INDICATORS = "[data-cprole='contentContainer'] .widget[class*='skin-'] .remove.widgetSkin";
+    var IN_MAIN_CONTAINER = "[data-cprole='mainContentContainer'] *";
+
+    function dismissTemporarySkinIndicators() {
+      var $found = $(INDICATORS).not(IN_MAIN_CONTAINER);
+      if ($found.length === 0) return;
+      state.dismissed += $found.length;
+      $found.click();
+    }
+
+    function isModalShowing() {
+      return $("#mvcModal_mainElement, #popoverModal, .modalContainer, .cpPopOver").filter(":visible").length > 0;
+    }
+
     function releaseOrphanedModalBackdrop() {
       var $backdrop = $("#mvcModal_backgroundElement");
-      if (!$backdrop.length || !$backdrop.is(":visible")) return;
-
-      var modalShowing = $("#mvcModal_mainElement, #popoverModal, .modalContainer, .cpPopOver").filter(":visible").length > 0;
-      if (!modalShowing) $backdrop.hide();
+      if ($backdrop.length && $backdrop.is(":visible") && !isModalShowing()) $backdrop.hide();
     }
 
-    var releaseTimer = null;
-    function scheduleBackdropRelease() {
-      clearTimeout(releaseTimer);
-      releaseTimer = setTimeout(releaseOrphanedModalBackdrop, 800);
+    function reopenManageWidgetSkins() {
+      $("a").filter(function() {
+        return /manage widget skins/i.test($(this).text());
+      }).first().click();
     }
+
+    // Runs once the page has been quiet after at least one dismissal.
+    function settle() {
+      if (state.reopen && state.dismissed > 0) {
+        state.reopen = false;
+        if (!isModalShowing()) reopenManageWidgetSkins();
+      }
+      releaseOrphanedModalBackdrop();
+    }
+
+    var settleTimer = null;
+    function scheduleSettle() {
+      clearTimeout(settleTimer);
+      settleTimer = setTimeout(settle, 800);
+    }
+
+    // The CMS re-renders containers in bursts of many DOM changes. Coalesce
+    // them so the page is scanned a few times a second, not once per change.
+    var scanScheduled = false;
+    function scheduleScan() {
+      if (scanScheduled) return;
+      scanScheduled = true;
+      setTimeout(function() {
+        scanScheduled = false;
+        dismissTemporarySkinIndicators();
+        scheduleSettle();
+      }, 60);
+    }
+
+    var observer = new MutationObserver(scheduleScan);
+    observer.observe(document.body, { childList: true, subtree: true });
 
     dismissTemporarySkinIndicators();
-    scheduleBackdropRelease();
+    scheduleSettle();
 
-    var skinIndicatorObserver = new MutationObserver(function() {
-      dismissTemporarySkinIndicators();
-      scheduleBackdropRelease();
-    });
-    skinIndicatorObserver.observe(document.body, { childList: true, subtree: true });
-
-    setTimeout(function() {
-      skinIndicatorObserver.disconnect();
-      releaseOrphanedModalBackdrop();
-    }, 15000);
+    (function checkWindow() {
+      var remaining = state.endAt - Date.now();
+      if (remaining > 0) {
+        setTimeout(checkWindow, remaining);
+        return;
+      }
+      observer.disconnect();
+      clearTimeout(settleTimer);
+      settle();
+      previewCleanup = null;
+    })();
   }
-
   function hookRefreshFunction() {
     // Store original function
     var originalRefreshContentContainersfn = window.refreshContentContainersAsync;
@@ -177,7 +232,9 @@
       });
 
       if (foundCopy && !foundSkin) {
-        startNewSkinPreviewCleanup($);
+        // The copy leaves the user in Manage Widget Skins, so put them back
+        // there once the previews are cleaned up.
+        startNewSkinPreviewCleanup($, { reopenManageWidgetSkins: true });
       }
 
       if (foundSkin) {
