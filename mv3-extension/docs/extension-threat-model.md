@@ -22,7 +22,7 @@ Reviewed extension version: `1.1.5`.
 
 Positive controls observed:
 
-- Required host access is limited to enumerated CivicPlus platform domains. Unknown HTTPS vanity origins require a user-invoked `activeTab` check and an exact-origin optional permission grant.
+- Required host access is limited to enumerated CivicPlus platform domains. Unknown HTTPS vanity origins never get access automatically. The toolbar popup may open on its own for admin-looking URLs and a passive icon cue marks pages Chrome matches against CivicPlus markers, but nothing runs on the site until the user clicks Trust and approves Chrome's own exact-origin permission prompt. Both signals (URL path, page markers) are reproducible by an attacker, so they only decide whether to ask, never whether to trust.
 - The activation service worker maps detector lanes to a fixed registry of packaged files. A page message cannot supply an arbitrary script path.
 - Activation messages validate the extension sender ID and verify that the sender URL is on an approved origin before full-toolkit injection.
 - `manifest.json` does not declare `externally_connectable`, and the service worker does not register an external-message listener. Ordinary web pages therefore do not have a direct public Chrome messaging endpoint into the extension.

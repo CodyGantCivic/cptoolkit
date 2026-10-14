@@ -39,10 +39,11 @@ Notes:
 - `contextMenus`: provides employee-invoked on-demand tools from the browser context menu.
 - `scripting`: injects bundled toolkit scripts only after CivicPlus CMS/Live Edit/identity detection or a user action.
 - `alarms`: runs the session-timeout check reliably in background tabs without relying on throttled page timers.
-- `webNavigation`: locates specific CMS iframe targets for image picker and upload workflows that require frame-aware behavior.
+- `webNavigation`: locates specific CMS iframe targets for image picker and upload workflows that require frame-aware behavior. It also reports the URL of top-level navigations so the toolbar popup can offer to approve a vanity domain whose address looks like a CivicPlus admin path (`/admin`, `/designcenter`); no script is injected and no page content is read for this.
 - `activeTab`: lets the popup inspect the current tab after a user gesture, especially before requesting an exact-origin vanity-domain permission.
+- `declarativeContent`: lets Chrome itself match a short list of CivicPlus-specific page markers (for example the admin header and Live Edit toolbar) and show a green dot on the toolbar icon. Chrome performs the match; no extension code runs on the page and no page content is read or transmitted. The dot only hints that the user can open the popup and choose whether to trust the site.
 - Required host permissions: limited to enumerated CivicPlus-owned platform and QA hosts so the detector/bootstrap can run on known CivicPlus surfaces.
-- Optional host permissions: `https://*/*` is used only to request the current exact customer vanity origin after user action and positive DOM-marker detection.
+- Optional host permissions: `https://*/*` is used only to request the current exact customer vanity origin after the user clicks Trust in the toolbar popup and approves Chrome's own permission prompt. The popup may open automatically for an admin-looking URL, but it never grants access by itself, and nothing runs on the site until the user approves.
 
 ## Web Accessible Resources Justification
 

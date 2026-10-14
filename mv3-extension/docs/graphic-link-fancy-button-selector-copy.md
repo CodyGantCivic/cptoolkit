@@ -86,6 +86,30 @@ maintaining the extension, not end-user help text (that lives in
   scopes every lookup (`#selectedTab`, the Misc panels, the modal title) to
   the modal whose `offsetParent !== null`.
 
+## Toolbar copy button and "Update selectors" button (2026-10-14)
+
+3. **Copy selector toolbar button** — a button in the Mini IDE toolbar
+   (`.css-copy-selector`, `mini-ide.js`) for Fancy Button style boxes and for
+   widget-skin `MiscellaneousStyles` boxes. It asks whichever helper owns the
+   textarea for a snippet via `getSelectorCopySnippetForTextarea(textarea)`:
+   - `graphicLinkHelper` reuses the base and hover state already stored on the
+     per-panel copy icon beside the box, so both buttons always agree.
+   - `widgetSkinHelper` finds the CMS label above the box (either `.x {` in one
+     node, or the selector and a lone `{` in separate nodes), takes the nearest
+     one and never crosses another textarea, then prefixes `.widget.skinN`.
+     `.widget` itself becomes `.widget.skinN`; anything else becomes a
+     descendant. State (`:hover`, `:active`) comes from the label text.
+4. **Update selectors button** (`.cpFancyButtonConvertBtn`) — beside the ID
+   badge. Green outline when every rule has both `.fancyButton1` and the real
+   ID, red when a rule is missing one half, neutral when it cannot check
+   (unsaved button, or Mini IDE off). It uses
+   `CPToolkit.portable.cssNeedsPortableConversion`, which counts a rule as
+   needing conversion only if one twin is missing, and
+   `transformCssPortable(css, id, true)` to add just the missing half. The
+   plain Make Portable transform would re-emit already-dual rules in a
+   different order, so it is not used to decide state. Nothing is saved until
+   the user saves the button.
+
 ## Maintenance notes
 
 - If you add another per-button interactive affordance to these panels,
