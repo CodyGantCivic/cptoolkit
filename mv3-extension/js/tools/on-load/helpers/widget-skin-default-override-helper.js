@@ -65,26 +65,54 @@
   // behind. Once the page settles, the modal is reopened (copy only) and the
   // backdrop is released if no modal is on screen.
   var previewCleanup = null;
+  var OVERLAY_KEY = 'copy-cleanup';
 
   function startNewSkinPreviewCleanup($, options) {
     var wantsReopen = !!(options && options.reopenManageWidgetSkins);
-    var WINDOW_MS = 15000;
+    var WINDOW_MS = 15000;      // how long to keep watching for late previews
+    var QUIET_MS = 800;         // page must be this quiet before settling
+    var MIN_WORK_MS = 3000;     // wait at least this long if nothing needed dismissing
 
-    // A second copy while one cleanup is running extends it instead of
+    // Cover the page while the CMS re-renders containers, so the previews
+    // flickering in and out are never seen.
+    if (wantsReopen && window.CPToolkitSkinOverlay) {
+      window.CPToolkitSkinOverlay.show(
+        OVERLAY_KEY,
+        'Finishing your skin copy…',
+        'Tidying up the page. This only takes a few seconds.'
+      );
+    }
+
+    // A second copy while one cleanup is running restarts its round instead of
     // starting a competing observer.
     if (previewCleanup) {
       previewCleanup.reopen = previewCleanup.reopen || wantsReopen;
       previewCleanup.endAt = Date.now() + WINDOW_MS;
+      previewCleanup.startedAt = Date.now();
+      previewCleanup.lastActivity = Date.now();
+      previewCleanup.dismissed = 0;
+      previewCleanup.settled = false;
       return;
     }
 
-    var state = { reopen: wantsReopen, endAt: Date.now() + WINDOW_MS, dismissed: 0 };
+    var now = Date.now();
+    var state = {
+      reopen: wantsReopen,
+      endAt: now + WINDOW_MS,
+      startedAt: now,
+      lastActivity: now,
+      dismissed: 0,
+      settled: false,
+      mainHadPreview: false,
+      mainDisappearedLogged: false
+    };
     previewCleanup = state;
 
     // One scoped selector instead of scanning every widget and walking up to
     // its container for each match; descendants of the main container are
     // excluded in a single cheap pass.
     var INDICATORS = "[data-cprole='contentContainer'] .widget[class*='skin-'] .remove.widgetSkin";
+    var MAIN_INDICATORS = "[data-cprole='mainContentContainer'] .widget[class*='skin-'] .remove.widgetSkin";
     var IN_MAIN_CONTAINER = "[data-cprole='mainContentContainer'] *";
 
     function dismissTemporarySkinIndicators() {
@@ -92,6 +120,19 @@
       if ($found.length === 0) return;
       state.dismissed += $found.length;
       $found.click();
+    }
+
+    // Diagnostic only: the toolkit never clicks previews in the main container,
+    // so if one that was showing disappears, something else removed it.
+    function watchMainContainerPreview() {
+      var mainCount = $(MAIN_INDICATORS).length;
+      if (mainCount > 0) {
+        state.mainHadPreview = true;
+      } else if (state.mainHadPreview && !state.mainDisappearedLogged) {
+        state.mainDisappearedLogged = true;
+        console.warn('[CP Toolkit](' + toolName + ') Main container preview disappeared although the toolkit only dismisses ' +
+          'other containers (dismissed so far: ' + state.dismissed + ')');
+      }
     }
 
     function isModalShowing() {
@@ -109,19 +150,33 @@
       }).first().click();
     }
 
-    // Runs once the page has been quiet after at least one dismissal.
+    // Runs once the page has been quiet after the work is done.
     function settle() {
+      state.settled = true;
+      var reopened = false;
+
       if (state.reopen && state.dismissed > 0) {
         state.reopen = false;
-        if (!isModalShowing()) reopenManageWidgetSkins();
+        if (!isModalShowing()) {
+          reopenManageWidgetSkins();
+          reopened = true;
+        }
       }
-      releaseOrphanedModalBackdrop();
-    }
 
-    var settleTimer = null;
-    function scheduleSettle() {
-      clearTimeout(settleTimer);
-      settleTimer = setTimeout(settle, 800);
+      // After reopening, give the modal time to appear before judging whether
+      // a backdrop is orphaned.
+      if (reopened) {
+        setTimeout(releaseOrphanedModalBackdrop, 1500);
+      } else {
+        releaseOrphanedModalBackdrop();
+      }
+
+      console.log('[CP Toolkit](' + toolName + ') Skin preview cleanup settled (dismissed ' + state.dismissed +
+        ', reopened Manage Widget Skins: ' + reopened + ')');
+
+      if (window.CPToolkitSkinOverlay) {
+        setTimeout(function() { window.CPToolkitSkinOverlay.hide(OVERLAY_KEY); }, reopened ? 400 : 0);
+      }
     }
 
     // The CMS re-renders containers in bursts of many DOM changes. Coalesce
@@ -132,8 +187,9 @@
       scanScheduled = true;
       setTimeout(function() {
         scanScheduled = false;
+        state.lastActivity = Date.now();
         dismissTemporarySkinIndicators();
-        scheduleSettle();
+        watchMainContainerPreview();
       }, 60);
     }
 
@@ -141,19 +197,22 @@
     observer.observe(document.body, { childList: true, subtree: true });
 
     dismissTemporarySkinIndicators();
-    scheduleSettle();
+    watchMainContainerPreview();
 
-    (function checkWindow() {
-      var remaining = state.endAt - Date.now();
-      if (remaining > 0) {
-        setTimeout(checkWindow, remaining);
-        return;
+    var poll = setInterval(function() {
+      var current = Date.now();
+      var quiet = current - state.lastActivity >= QUIET_MS;
+      var workDone = state.dismissed > 0 || current - state.startedAt >= MIN_WORK_MS;
+
+      if (!state.settled && quiet && workDone) settle();
+
+      if (current >= state.endAt) {
+        clearInterval(poll);
+        observer.disconnect();
+        if (!state.settled) settle();
+        previewCleanup = null;
       }
-      observer.disconnect();
-      clearTimeout(settleTimer);
-      settle();
-      previewCleanup = null;
-    })();
+    }, 250);
   }
   function hookRefreshFunction() {
     // Store original function
