@@ -4588,15 +4588,15 @@
                 return snippet;
             };
 
-            // A media query wraps the same selector. The CMS closes the box with
-            // one "}", which here closes the @media block, so the user only types
-            // one "}" of their own to close the selector.
+            // A media query wraps the same selector. The snippet closes the
+            // selector itself ("  }"), and the CMS's own closing "}" after the
+            // box closes the @media block, so the pasted text is already balanced.
             const MEDIA_WIDTHS = ['40em', '63em', '2200px'];
             const toMediaSnippet = function(baseSnippet, width) {
                 const match = /^\}\n\n([\s\S]*) \{$/.exec(baseSnippet);
                 if (!match) return null;
                 const selector = match[1].split('\n').map(function(line) { return '  ' + line; }).join('\n');
-                return '}\n\n@media (min-width: ' + width + ') {\n' + selector + ' {\n    ';
+                return '}\n\n@media (min-width: ' + width + ') {\n' + selector + ' {\n    \n  }';
             };
 
             let menuEl = null;
@@ -4670,7 +4670,7 @@
                 addItem('Copy selector', 'Closes this rule and starts a new one', base);
                 MEDIA_WIDTHS.forEach(function(width) {
                     const text = toMediaSnippet(base, width);
-                    if (text) addItem('@media (min-width: ' + width + ')', 'Type one } after your styles to close the selector', text);
+                    if (text) addItem('@media (min-width: ' + width + ')', 'Already closed; type your styles on the blank line', text);
                 });
 
                 document.body.appendChild(menuEl);
