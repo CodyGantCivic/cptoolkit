@@ -124,6 +124,11 @@
   var originalSaveTheme = null;
   var finalizationSaveScheduled = false;
 
+  // Copies repaired since the last completion message, so one save of several
+  // copied skins is announced once, covering all of them.
+  var roundResults = [];
+  var SAVE_OVERLAY_KEY = 'copy-save';
+
   /**
    * Intercept clicks on "Copy Skin" button
    */
@@ -234,7 +239,39 @@
       // with no modal on top of it, blocking the page until a refresh.
       setTimeout(releaseOrphanedModalBackdrop, 2000);
       setTimeout(releaseOrphanedModalBackdrop, 5000);
+      // Give the follow-up save a moment to go through, then announce once.
+      setTimeout(announceCompletedCopies, 2500);
     }, 0);
+  }
+
+  /**
+   * One completion message for everything repaired in this round.
+   */
+  function announceCompletedCopies() {
+    var results = roundResults.splice(0);
+    if (results.length === 0) return;
+
+    var lines = results.map(function(result) {
+      return result.name + ' (skin' + result.fromId + ' → skin' + result.toId + ')';
+    });
+    var title = results.length === 1
+      ? '1 copied skin was fixed and saved'
+      : results.length + ' copied skins were fixed and saved';
+    var problems = results.filter(function(result) { return !result.regenerated; }).length;
+    var detail = problems > 0
+      ? problems + ' skin(s) had components that could not be regenerated; review the console.'
+      : 'Their styles were updated to the new skin IDs and saved.';
+
+    if (window.CPToolkitSkinOverlay) {
+      window.CPToolkitSkinOverlay.complete(SAVE_OVERLAY_KEY, {
+        title: title,
+        detail: detail,
+        lines: lines,
+        autoHideMs: 6000
+      });
+    } else {
+      showSummaryToast(title, detail, lines);
+    }
   }
 
   /**
@@ -356,20 +393,39 @@
         var regenerated = regenerateSkinCSS(skin.WidgetSkinID);
         if (regenerated) finalizedCopies++;
 
-        showNotification(
-          skin.Name,
-          pendingCopy.sourceSkinId,
-          skin.WidgetSkinID,
-          changes,
-          skin.Components.length,
-          regenerated
-        );
+        roundResults.push({
+          name: skin.Name,
+          fromId: pendingCopy.sourceSkinId,
+          toId: skin.WidgetSkinID,
+          changes: changes,
+          components: skin.Components.length,
+          regenerated: regenerated
+        });
       }
     });
 
     // Retain unresolved names for the scheduled five-second retry.
     newSkinsBeforeSave = unresolvedSkins;
-    if (finalizedCopies > 0) scheduleFinalizationSave();
+    if (finalizedCopies > 0) {
+      if (window.CPToolkitSkinOverlay) {
+        window.CPToolkitSkinOverlay.update(
+          SAVE_OVERLAY_KEY,
+          'Applying skin fixes…',
+          'Updating the copied skins’ styles and saving once more.'
+        );
+      }
+      scheduleFinalizationSave();
+    }
+  }
+
+  /**
+   * Called after the last scheduled check. If nothing was repaired and no
+   * follow-up save is pending, there is nothing to announce, so the overlay
+   * must not be left covering the page.
+   */
+  function endSaveOverlayIfIdle() {
+    if (finalizationSaveScheduled || roundResults.length > 0) return;
+    if (window.CPToolkitSkinOverlay) window.CPToolkitSkinOverlay.hide(SAVE_OVERLAY_KEY);
   }
 
   /**
@@ -429,6 +485,17 @@
           console.log('[CP Toolkit](' + thisTool + ') Found', newSkinsBeforeSave.length, 'new skin(s) before save:',
             newSkinsBeforeSave.map(function(s) { return s.name; }).join(', '));
         }
+
+        // Cover the page while copied skins are saved and repaired, so the
+        // CMS re-rendering and the follow-up save are not seen half-done.
+        var boundCopies = newSkinsBeforeSave.filter(function(s) { return !!s.pendingCopy; }).length;
+        if (boundCopies > 0 && window.CPToolkitSkinOverlay) {
+          window.CPToolkitSkinOverlay.show(
+            SAVE_OVERLAY_KEY,
+            boundCopies === 1 ? 'Saving your copied skin…' : 'Saving ' + boundCopies + ' copied skins…',
+            'Please keep this tab open. Several skins can take a little while.'
+          );
+        }
       }
 
       // Call original save
@@ -436,7 +503,10 @@
 
       // After save completes, check for new skin IDs
       setTimeout(checkForNewSkinIds, 2000);
-      setTimeout(checkForNewSkinIds, 5000); // Retry in case first check was too early
+      setTimeout(function() {
+        checkForNewSkinIds(); // Retry in case first check was too early
+        endSaveOverlayIfIdle();
+      }, 5000);
 
       return result;
     };
@@ -448,8 +518,10 @@
   // USER NOTIFICATION
   // ============================================================================
 
-  function showNotification(skinName, fromId, toId, changesCount, componentCount, regenerated) {
-    // Create a notification element
+  /**
+   * Fallback completion message, used only if the shared overlay is missing.
+   */
+  function showSummaryToast(title, detail, lines) {
     var notification = document.createElement('div');
     notification.style.cssText =
       'position: fixed;' +
@@ -460,56 +532,25 @@
       'padding: 16px 24px;' +
       'border-radius: 8px;' +
       'box-shadow: 0 4px 12px rgba(0,0,0,0.3);' +
-      'z-index: 999999;' +
+      'z-index: 2147483001;' +
       'font-family: Arial, sans-serif;' +
       'font-size: 14px;' +
-      'max-width: 400px;' +
-      'animation: cpToolkitSlideIn 0.3s ease-out;';
+      'max-width: 400px;';
+
+    function esc(value) {
+      return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
 
     notification.innerHTML =
-      '<div style="font-weight: bold; margin-bottom: 8px;">' +
-      '  &#10003; Skin Copy Fixed' +
-      '</div>' +
-      '<div style="font-size: 13px;">' +
-      '  Regenerated ' + componentCount + ' advanced-style component(s) in "' + skinName + '"<br>' +
-      '  <span style="opacity: 0.9;">(skin' + fromId + ' &rarr; skin' + toId + ')</span>' +
-      '</div>' +
-      '<div style="font-size: 12px; margin-top: 8px; opacity: 0.9;">' +
-      (changesCount > 0 ? '  Updated ' + changesCount + ' copied skin-ID reference(s).<br>' : '') +
-      (regenerated ? '  The regenerated styles will be saved automatically.' : '  Some component styles could not be regenerated; review the console.') +
-      '</div>';
-
-    // Add animation keyframes
-    if (!document.getElementById('cp-toolkit-fix-copied-skin-styles')) {
-      var style = document.createElement('style');
-      style.id = 'cp-toolkit-fix-copied-skin-styles';
-      style.textContent =
-        '@keyframes cpToolkitSlideIn {' +
-        '  from { transform: translateX(100%); opacity: 0; }' +
-        '  to { transform: translateX(0); opacity: 1; }' +
-        '}' +
-        '@keyframes cpToolkitSlideOut {' +
-        '  from { transform: translateX(0); opacity: 1; }' +
-        '  to { transform: translateX(100%); opacity: 0; }' +
-        '}';
-      document.head.appendChild(style);
-    }
+      '<div style="font-weight: bold; margin-bottom: 8px;">&#10003; ' + esc(title) + '</div>' +
+      '<div style="font-size: 13px;">' + lines.map(esc).join('<br>') + '</div>' +
+      '<div style="font-size: 12px; margin-top: 8px; opacity: 0.9;">' + esc(detail) + '</div>';
 
     document.body.appendChild(notification);
 
-    // Remove after 8 seconds
-    setTimeout(function() {
-      notification.style.animation = 'cpToolkitSlideOut 0.3s ease-in forwards';
-      setTimeout(function() { notification.remove(); }, 300);
-    }, 8000);
-
-    // Click to dismiss
-    notification.addEventListener('click', function() {
-      notification.style.animation = 'cpToolkitSlideOut 0.3s ease-in forwards';
-      setTimeout(function() { notification.remove(); }, 300);
-    });
+    setTimeout(function() { notification.remove(); }, 8000);
+    notification.addEventListener('click', function() { notification.remove(); });
   }
-
   // ============================================================================
   // INITIALIZATION
   // ============================================================================

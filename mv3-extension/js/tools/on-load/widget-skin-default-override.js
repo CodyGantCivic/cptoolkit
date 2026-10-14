@@ -19,6 +19,11 @@
         try {
           // CSP FIX: Use external helper file instead of inline script
           // The helper runs in MAIN world to access page's refreshContentContainersAsync function
+          // Shared full-page overlay used while a copied skin's previews are cleaned up
+          var overlayScript = document.createElement('script');
+          overlayScript.src = chrome.runtime.getURL('js/tools/on-load/helpers/skin-operation-overlay-helper.js');
+          (document.head || document.documentElement).appendChild(overlayScript);
+
           var script = document.createElement('script');
           script.src = chrome.runtime.getURL('js/tools/on-load/helpers/widget-skin-default-override-helper.js');
           (document.head || document.documentElement).appendChild(script);
