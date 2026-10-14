@@ -213,17 +213,32 @@
     // can be started at the cursor: "}" closes the box's own rule, then the
     // full selector opens a new one. Any state in the label (:hover, :active)
     // is carried through as-is.
+    // The label comes in two shapes: one node reading ".widgetItem {", or the
+    // selector in one node (".widget a:link") with a lone "{" node after it.
+    // The nearest label wins, and the search never crosses into another
+    // textarea's area, so a box can't pick up a neighbouring box's selector.
     function findSelectorLabel(textarea) {
       const clean = (text) => String(text || '').replace(/\s+/g, ' ').trim();
-      const isOpener = (text) => text.length > 1 && text.length <= 200 &&
-        text.charAt(text.length - 1) === '{' && text.indexOf('{') === text.length - 1;
+      const looksLikeSelector = (text) => text.length > 0 && text.length <= 200 &&
+        text.indexOf('{') === -1 && text.indexOf('}') === -1 && /[.#:\[]/.test(text);
+      const isOpener = (text) => text.length > 1 && text.charAt(text.length - 1) === '{' &&
+        text.indexOf('{') === text.length - 1 && looksLikeSelector(text.slice(0, -1));
 
-      let node = textarea.closest('.css-editor-wrapper') || textarea;
+      const ownArea = textarea.closest('.css-editor-wrapper') || textarea;
+      let sawLoneBrace = false;
+      let node = ownArea;
       for (let depth = 0; depth < 4 && node && node !== document.body; depth++) {
         let sibling = node.previousSibling;
-        for (let seen = 0; sibling && seen < 6; seen++, sibling = sibling.previousSibling) {
+        for (let seen = 0; sibling && seen < 8; seen++, sibling = sibling.previousSibling) {
+          if (sibling.nodeType === 1 && sibling.querySelector && sibling.querySelector('textarea')) {
+            return null; // reached another box
+          }
           const text = clean(sibling.textContent);
+          if (!text) continue;
+          if (text === '{') { sawLoneBrace = true; continue; }
           if (isOpener(text)) return text.slice(0, -1).trim();
+          if (sawLoneBrace && looksLikeSelector(text)) return text;
+          if (sawLoneBrace) return null; // text before "{" isn't a selector
         }
         node = node.parentElement;
       }
