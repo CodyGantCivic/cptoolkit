@@ -18,21 +18,6 @@
     const THEMES = ['light', 'dark', 'no-styles'];
     const THEME_STORAGE_KEY = 'css-editor-theme';
     const DEFAULT_THEME = 'light';
-    const PSEUDO_MODE_STORAGE_KEY = 'theme-manager-enhancer-pseudo-mode';
-    const PSEUDO_MODE_DEFAULT = 'legacy-fix';
-    const PSEUDO_MODES = ['legacy-fix', 'cms-default', 'off'];
-    const PSEUDO_MODE_LABELS = {
-        'legacy-fix': 'Safe layout bounds',
-        'cms-default': 'CMS default bounds',
-        'off': 'Override off'
-    };
-    const PSEUDO_MODE_SHORT_LABELS = {
-        'legacy-fix': '::0',
-        'cms-default': '::-2',
-        'off': '::x'
-    };
-    let pseudoModeCache = null;
-    let pseudoModeStorageListenerBound = false;
 
     /**
      * Get saved theme from localStorage or return default
@@ -110,147 +95,6 @@
         const savedTheme = getSavedTheme();
         // console.log(TOOLKIT_NAME + ' Theme system initialized. Saved theme:', savedTheme); // Phase 3: Reduced logging
         // Note: Theme is now applied to each editor as it's created (see createCSSEditor)
-    }
-
-    function pageMatches(patterns) {
-        const url = window.location.href.toLowerCase();
-        const pathname = window.location.pathname.toLowerCase();
-        return patterns.some(pattern => {
-            const regex = new RegExp(pattern.replace(/\*/g, '.*'), 'i');
-            return regex.test(url) || regex.test(pathname);
-        });
-    }
-
-    function isThemeManagerPage() {
-        return pageMatches(['/designcenter/themes/']);
-    }
-
-    function sanitizePseudoMode(mode) {
-        return PSEUDO_MODES.includes(mode) ? mode : PSEUDO_MODE_DEFAULT;
-    }
-
-    function getNextPseudoMode(mode) {
-        const normalizedMode = sanitizePseudoMode(mode);
-        const currentIndex = PSEUDO_MODES.indexOf(normalizedMode);
-        const nextIndex = (currentIndex + 1) % PSEUDO_MODES.length;
-        return PSEUDO_MODES[nextIndex];
-    }
-
-    function applyPseudoModeToButton(button, mode) {
-        if (!button) return;
-
-        const normalizedMode = sanitizePseudoMode(mode);
-        const modeLabel = PSEUDO_MODE_LABELS[normalizedMode] || PSEUDO_MODE_LABELS[PSEUDO_MODE_DEFAULT];
-        const shortLabel = PSEUDO_MODE_SHORT_LABELS[normalizedMode] || PSEUDO_MODE_SHORT_LABELS[PSEUDO_MODE_DEFAULT];
-        const labelNode = button.querySelector('.pseudo-label');
-
-        button.setAttribute('data-mode', normalizedMode);
-        button.setAttribute('title', 'Pseudo override: ' + modeLabel + ' (click to cycle)');
-        button.setAttribute('aria-label', 'Pseudo override: ' + modeLabel + '. Click to cycle.');
-
-        if (labelNode) {
-            labelNode.textContent = shortLabel;
-        }
-    }
-
-    function updateAllPseudoModeButtons(mode) {
-        document.querySelectorAll('.css-pseudo-toggle').forEach((button) => {
-            applyPseudoModeToButton(button, mode);
-        });
-    }
-
-    function bindPseudoModeStorageListener() {
-        if (pseudoModeStorageListenerBound || !chrome.storage || !chrome.storage.onChanged) {
-            return;
-        }
-
-        chrome.storage.onChanged.addListener((changes, areaName) => {
-            if (areaName !== 'local' || !changes[PSEUDO_MODE_STORAGE_KEY]) {
-                return;
-            }
-
-            pseudoModeCache = sanitizePseudoMode(changes[PSEUDO_MODE_STORAGE_KEY].newValue);
-            updateAllPseudoModeButtons(pseudoModeCache);
-        });
-
-        pseudoModeStorageListenerBound = true;
-    }
-
-    function readPseudoModeFromStorage(callback) {
-        if (!chrome.storage || !chrome.storage.local || !chrome.runtime?.id) {
-            callback(PSEUDO_MODE_DEFAULT);
-            return;
-        }
-
-        try {
-            chrome.storage.local.get(PSEUDO_MODE_STORAGE_KEY, (settings) => {
-                if (chrome.runtime.lastError) {
-                    console.warn(TOOLKIT_NAME + ' Failed to read pseudo mode:', chrome.runtime.lastError);
-                    callback(PSEUDO_MODE_DEFAULT);
-                    return;
-                }
-
-                callback(sanitizePseudoMode(settings[PSEUDO_MODE_STORAGE_KEY]));
-            });
-        } catch (err) {
-            // Extension context invalidated (e.g. the extension was reloaded while
-            // this page's content script was still running) — fall back quietly.
-            console.warn(TOOLKIT_NAME + ' Extension context unavailable, using default pseudo mode:', err);
-            callback(PSEUDO_MODE_DEFAULT);
-        }
-    }
-
-    function initializePseudoToggle(button) {
-        if (!button || !isThemeManagerPage()) {
-            return;
-        }
-
-        bindPseudoModeStorageListener();
-
-        const applyMode = (mode) => {
-            pseudoModeCache = sanitizePseudoMode(mode);
-            updateAllPseudoModeButtons(pseudoModeCache);
-        };
-
-        if (pseudoModeCache) {
-            applyMode(pseudoModeCache);
-        } else {
-            readPseudoModeFromStorage(applyMode);
-        }
-
-        const cyclePseudoMode = (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-
-            const currentMode = sanitizePseudoMode(button.getAttribute('data-mode') || pseudoModeCache || PSEUDO_MODE_DEFAULT);
-            const nextMode = getNextPseudoMode(currentMode);
-            const settings = {};
-
-            pseudoModeCache = nextMode;
-            updateAllPseudoModeButtons(nextMode);
-            settings[PSEUDO_MODE_STORAGE_KEY] = nextMode;
-
-            if (!chrome.runtime?.id) {
-                return;
-            }
-
-            try {
-                chrome.storage.local.set(settings, () => {
-                    if (chrome.runtime.lastError) {
-                        console.warn(TOOLKIT_NAME + ' Failed to save pseudo mode:', chrome.runtime.lastError);
-                    }
-                });
-            } catch (err) {
-                console.warn(TOOLKIT_NAME + ' Extension context unavailable, could not save pseudo mode:', err);
-            }
-        };
-
-        button.addEventListener('click', cyclePseudoMode);
-        button.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-                cyclePseudoMode(event);
-            }
-        });
     }
 
     // ==================== CSS INJECTION ====================
@@ -4478,15 +4322,6 @@
         const validationIndicator = document.createElement('div');
         validationIndicator.className = 'css-validation-indicator valid';
 
-        const showPseudoToggle = isThemeManagerPage();
-        const pseudoToggleMarkup = showPseudoToggle
-            ? `
-            <button class="css-pseudo-toggle" title="Pseudo override" aria-label="Pseudo override" type="button" data-mode="legacy-fix">
-                <span class="pseudo-label">::0</span>
-            </button>
-            `
-            : '';
-
         // "Make portable" button is only relevant for fancy-button CSS
         // (graphic link advanced styles + the fancy button builder tabs).
         const taId = textarea && textarea.id ? textarea.id : '';
@@ -4528,7 +4363,6 @@
                 </svg>
             </button>
             ${makePortableMarkup}
-            ${pseudoToggleMarkup}
             <div class="css-snippet-wrapper" style="position: relative;">
                 <button class="css-code-toggle" title="CSS Snippets" aria-label="CSS Snippets" type="button">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -4570,12 +4404,6 @@
                     showMakePortableModal(textarea);
                 }
             });
-        }
-
-        // Initialize pseudo override toggle (Theme Manager only)
-        const pseudoToggle = validationIndicator.querySelector('.css-pseudo-toggle');
-        if (pseudoToggle) {
-            initializePseudoToggle(pseudoToggle);
         }
 
         // Initialize CSS Snippets (handled by css-snippets.js)
@@ -5411,9 +5239,7 @@
             // Check if wrapper exists AND is properly initialized (has theme toggle button)
             const wrapper = textarea.closest('.css-editor-wrapper');
             const hasThemeToggle = !!(wrapper && wrapper.querySelector('.css-theme-toggle'));
-            const hasPseudoToggle = !!(wrapper && wrapper.querySelector('.css-pseudo-toggle'));
-            const requiresPseudoToggle = isThemeManagerPage();
-            const isProperlyEnhanced = isWrapped && hasThemeToggle && (!requiresPseudoToggle || hasPseudoToggle);
+            const isProperlyEnhanced = isWrapped && hasThemeToggle;
 
             // Phase 3: Commented out verbose debug logging
             // if (textarea.id && textarea.id.includes('fancyButton')) {
@@ -5470,10 +5296,8 @@
                             textareas.forEach(textarea => {
                                 const wrapper = textarea.closest('.css-editor-wrapper');
                                 const hasThemeToggle = !!(wrapper?.querySelector('.css-theme-toggle'));
-                                const hasPseudoToggle = !!(wrapper?.querySelector('.css-pseudo-toggle'));
-                                const requiresPseudoToggle = isThemeManagerPage();
-                                
-                                if (wrapper && hasThemeToggle && (!requiresPseudoToggle || hasPseudoToggle)) {
+
+                                if (wrapper && hasThemeToggle) {
                                     // Test if event listeners are actually working
                                     let listenerWorks = false;
                                     const testHandler = () => { listenerWorks = true; };
