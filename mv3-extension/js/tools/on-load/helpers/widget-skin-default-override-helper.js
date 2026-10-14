@@ -53,6 +53,32 @@
     }
   }
 
+  // After a skin is created or copied, the CMS previews it on the widgets in
+  // every content container with a temporary "remove skin" indicator. Keep the
+  // preview in the main content container, where it is useful, and dismiss it
+  // in the other content containers. A fixed-duration poll can lose the race
+  // against the CMS's own post-save container refresh, so watch for the
+  // indicators actually appearing instead.
+  function startNewSkinPreviewCleanup($) {
+    function dismissTemporarySkinIndicators() {
+      $(".widget[class*='skin-'] .remove.widgetSkin").filter(function() {
+        var container = $(this).closest("[data-cprole='mainContentContainer'], [data-cprole='contentContainer']");
+        return container.length > 0 && container.attr('data-cprole') === 'contentContainer';
+      }).click();
+    }
+
+    dismissTemporarySkinIndicators();
+
+    var skinIndicatorObserver = new MutationObserver(function() {
+      dismissTemporarySkinIndicators();
+    });
+    skinIndicatorObserver.observe(document.body, { childList: true, subtree: true });
+
+    setTimeout(function() {
+      skinIndicatorObserver.disconnect();
+    }, 15000);
+  }
+
   function hookRefreshFunction() {
     // Store original function
     var originalRefreshContentContainersfn = window.refreshContentContainersAsync;
@@ -64,6 +90,7 @@
 
       // Check for newly created widget skins (negative IDs indicate unsaved)
       var foundSkin = false;
+      var foundCopy = false;
 
       if (!window.DesignCenter || !window.DesignCenter.themeJSON || !window.DesignCenter.themeJSON.WidgetSkins) {
         return;
@@ -100,6 +127,7 @@
             // References then repairs every copy's CSS in one pass.
             if (lastSkinAction === 'copy') {
               copiedUnsavedSkins.push(this);
+              foundCopy = true;
             }
             lastSkinAction = null;
             return true; // continue to next skin
@@ -127,6 +155,10 @@
         }
       });
 
+      if (foundCopy && !foundSkin) {
+        startNewSkinPreviewCleanup($);
+      }
+
       if (foundSkin) {
         // Close modal and remove the backdrop.
         // The CMS close handler crashes on "ga is not defined" (Google Analytics),
@@ -146,25 +178,7 @@
           $("#mvcModal_mainElement").hide();
         }, 500);
 
-        // Dismiss the CMS's temporary "new skin" indicator on every widget.
-        // A fixed-duration poll can lose the race against the CMS's own
-        // post-save content-container refresh, which can take longer than a
-        // few seconds on a real page - watch for the indicators actually
-        // appearing instead of blindly polling for a fixed window.
-        function dismissTemporarySkinIndicators() {
-          $(".widget[class*='skin-'] .remove.widgetSkin").click();
-        }
-
-        dismissTemporarySkinIndicators();
-
-        var skinIndicatorObserver = new MutationObserver(function() {
-          dismissTemporarySkinIndicators();
-        });
-        skinIndicatorObserver.observe(document.body, { childList: true, subtree: true });
-
-        setTimeout(function() {
-          skinIndicatorObserver.disconnect();
-        }, 15000);
+        startNewSkinPreviewCleanup($);
 
         // NOTE: Previously we reopened the manage dialog here after 5s,
         // but saveTheme()'s completion callback already does that,
