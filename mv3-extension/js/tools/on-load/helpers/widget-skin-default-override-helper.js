@@ -67,15 +67,36 @@
       }).click();
     }
 
+    // Dismissing the previews makes the CMS re-render containers, and it can
+    // leave its dark modal backdrop (#mvcModal_backgroundElement, class
+    // .modalBackground) showing with nothing on top, blocking the page. Hide
+    // it, but only when no modal is actually on screen.
+    function releaseOrphanedModalBackdrop() {
+      var $backdrop = $("#mvcModal_backgroundElement");
+      if (!$backdrop.length || !$backdrop.is(":visible")) return;
+
+      var modalShowing = $("#mvcModal_mainElement, #popoverModal, .modalContainer, .cpPopOver").filter(":visible").length > 0;
+      if (!modalShowing) $backdrop.hide();
+    }
+
+    var releaseTimer = null;
+    function scheduleBackdropRelease() {
+      clearTimeout(releaseTimer);
+      releaseTimer = setTimeout(releaseOrphanedModalBackdrop, 800);
+    }
+
     dismissTemporarySkinIndicators();
+    scheduleBackdropRelease();
 
     var skinIndicatorObserver = new MutationObserver(function() {
       dismissTemporarySkinIndicators();
+      scheduleBackdropRelease();
     });
     skinIndicatorObserver.observe(document.body, { childList: true, subtree: true });
 
     setTimeout(function() {
       skinIndicatorObserver.disconnect();
+      releaseOrphanedModalBackdrop();
     }, 15000);
   }
 
