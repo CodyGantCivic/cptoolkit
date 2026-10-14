@@ -13,6 +13,9 @@
   // Track whether the last skin action was "Add" (not "Copy")
   var lastSkinAction = null;
 
+  // Skins created by "Copy Skin" that haven't been saved yet.
+  var copiedUnsavedSkins = [];
+
   // Watch for clicks on Create Skin vs Copy Skin
   // "Add Widget Skin" opens a name input, then "Create Skin" (a.createNew) actually creates it
   // "Copy Widget Skin" opens a name input, then "Copy Skin" (a.createCopy) actually creates it
@@ -76,6 +79,12 @@
 
       $.each(allSkins, function() {
         if (this.WidgetSkinID < 0) {
+          // A skin that was copied earlier and is still unsaved stays unsaved
+          // until the user saves, so it must not be treated as a new skin here.
+          if (copiedUnsavedSkins.indexOf(this) !== -1) {
+            return true; // continue to next skin
+          }
+
           // Check if another tool has requested to skip the override prompt
           // (e.g., apply-figma-styles.js when creating base skins in bulk)
           if (window.cpToolkitSkipSkinDefaultOverride === true) {
@@ -85,10 +94,12 @@
 
           // Only apply default overrides for "Add Widget Skin", not "Copy Widget Skin"
           if (lastSkinAction !== 'add') {
-            console.log('[CP Toolkit](' + toolName + ') Skin created via ' + (lastSkinAction || 'unknown action') + ' - saving theme without overrides');
-            // Still save the theme for copied skins
-            if (lastSkinAction === 'copy' && typeof window.saveTheme === 'function') {
-              window.saveTheme();
+            console.log('[CP Toolkit](' + toolName + ') Skin created via ' + (lastSkinAction || 'unknown action') + ' - no overrides applied');
+            // A copied skin is left unsaved so several skins can be copied in a
+            // row. The next Save assigns real IDs, and Fix Copied Skin
+            // References then repairs every copy's CSS in one pass.
+            if (lastSkinAction === 'copy') {
+              copiedUnsavedSkins.push(this);
             }
             lastSkinAction = null;
             return true; // continue to next skin

@@ -148,17 +148,61 @@
       console.log('[CP Toolkit](' + thisTool + ') Copy initiated for skin', sourceSkinId);
 
       // Track this copy operation
-      pendingCopies.push({
+      var pendingCopy = {
         sourceSkinId: sourceSkinId,
-        timestamp: Date.now()
-      });
+        timestamp: Date.now(),
+        skin: null
+      };
+      pendingCopies.push(pendingCopy);
+      bindCopyToNewSkin(pendingCopy);
 
-      // Clean up old entries (older than 5 minutes)
+      // Clean up old entries (older than 5 minutes). A copy whose skin is still
+      // unsaved is kept however long it takes to finish copying other skins.
       var fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
-      while (pendingCopies.length > 0 && pendingCopies[0].timestamp < fiveMinutesAgo) {
-        pendingCopies.shift();
+      for (var i = 0; i < pendingCopies.length;) {
+        var entry = pendingCopies[i];
+        if (entry.timestamp < fiveMinutesAgo && !isStillUnsaved(entry.skin)) {
+          pendingCopies.splice(i, 1);
+        } else {
+          i++;
+        }
       }
     }, true); // Use capture to intercept before other handlers
+  }
+
+  function isTemporarySkin(skin) {
+    return !!(skin && (
+      skin.WidgetSkinID === -1 ||
+      (window.DesignCenter && DesignCenter.recordStatus && skin.RecordStatus === DesignCenter.recordStatus.New)
+    ));
+  }
+
+  function isStillUnsaved(skin) {
+    return !!skin && isTemporarySkin(skin) &&
+      !!(window.DesignCenter && DesignCenter.themeJSON && DesignCenter.themeJSON.WidgetSkins &&
+        DesignCenter.themeJSON.WidgetSkins.indexOf(skin) !== -1);
+  }
+
+  /**
+   * Remember which unsaved skin this copy created, so several copies can be
+   * made before a single save and each one still gets its own fix afterwards.
+   * The CMS adds the copied skin shortly after the click, so look a few times.
+   */
+  function bindCopyToNewSkin(pendingCopy) {
+    [300, 1500, 4000].forEach(function(delay) {
+      setTimeout(function() {
+        if (pendingCopy.skin) return;
+        if (!window.DesignCenter || !DesignCenter.themeJSON || !DesignCenter.themeJSON.WidgetSkins) return;
+
+        var claimed = pendingCopies.map(function(pc) { return pc.skin; });
+        var candidates = DesignCenter.themeJSON.WidgetSkins.filter(function(skin) {
+          return isTemporarySkin(skin) && claimed.indexOf(skin) === -1;
+        });
+        // Bind only when exactly one new unsaved skin exists; anything else is
+        // ambiguous and falls back to the count-based matching at save time.
+        if (candidates.length === 1) pendingCopy.skin = candidates[0];
+      }, delay);
+    });
   }
 
   // ============================================================================
@@ -186,7 +230,32 @@
       } finally {
         finalizationSaveScheduled = false;
       }
+      // Two saves in a row can leave the CMS's dark modal backdrop showing
+      // with no modal on top of it, blocking the page until a refresh.
+      setTimeout(releaseOrphanedModalBackdrop, 2000);
+      setTimeout(releaseOrphanedModalBackdrop, 5000);
     }, 0);
+  }
+
+  /**
+   * Hide the CMS modal backdrop (#mvcModal_backgroundElement, class
+   * .modalBackground) only when its modal container is not showing, so a
+   * legitimately open modal is never affected.
+   */
+  function releaseOrphanedModalBackdrop() {
+    var backdrop = document.getElementById('mvcModal_backgroundElement');
+    if (!backdrop) return;
+
+    var modal = document.getElementById('mvcModal_mainElement');
+    var modalVisible = false;
+    if (modal) {
+      var display = modal.style && modal.style.display;
+      if (typeof window.getComputedStyle === 'function') {
+        display = window.getComputedStyle(modal).display;
+      }
+      modalVisible = display !== 'none';
+    }
+    if (!modalVisible) backdrop.style.display = 'none';
   }
 
   /**
@@ -325,10 +394,20 @@
           .filter(function(s) {
             return s.WidgetSkinID === -1 || s.RecordStatus === DesignCenter.recordStatus.New;
           });
-        var copyBindings = temporarySkins.length === pendingCopies.length
-          ? pendingCopies.slice()
-          : [];
-        if (temporarySkins.length !== pendingCopies.length) {
+        // Prefer the copy bound to each unsaved skin when it was made, so
+        // several copies (or a copy mixed with a brand-new skin) all resolve
+        // correctly. Without any such binding, fall back to matching by count.
+        var identityBindings = temporarySkins.map(function(skin) {
+          for (var p = 0; p < pendingCopies.length; p++) {
+            if (pendingCopies[p].skin === skin) return pendingCopies[p];
+          }
+          return null;
+        });
+        var hasIdentityBindings = identityBindings.some(function(binding) { return !!binding; });
+        var copyBindings = hasIdentityBindings
+          ? identityBindings
+          : (temporarySkins.length === pendingCopies.length ? pendingCopies.slice() : []);
+        if (!hasIdentityBindings && temporarySkins.length !== pendingCopies.length) {
           console.warn(
             '[CP Toolkit](' + thisTool + ') Copy/new-skin counts are ambiguous; ' +
             'advanced-style finalization will not target an unbound skin'
