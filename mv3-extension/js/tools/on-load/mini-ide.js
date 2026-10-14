@@ -4197,6 +4197,63 @@
         }
     };
 
+    // ==================== COPY SELECTOR FOR CONTAINERS, MENUS, SITE STYLES ====================
+    // Content/structural container boxes (.containerStyle), navigation menu
+    // boxes such as flyouts and the left-nav accordion (.menu), and the
+    // site-wide default boxes (#MiscStyles, .sitestyleupdate) have no skin or
+    // button ID to add. The CMS already prints the selector the box sits in
+    // just above it, so the snippet is that selector as-is.
+    function isGenericSelectorContext(textarea) {
+        if (!textarea) return false;
+        const classList = textarea.classList;
+        return !!(
+            textarea.id === 'MiscStyles' ||
+            (classList && (
+                classList.contains('containerStyle') ||
+                classList.contains('menu') ||
+                classList.contains('sitestyleupdate')
+            ))
+        );
+    }
+
+    // The label comes in two shapes: one node reading ".headline {", or the
+    // selector in one node with a lone "{" node after it. The nearest label
+    // wins, and the search never crosses into another textarea's area.
+    function findSelectorLabelText(textarea) {
+        const clean = (text) => String(text || '').replace(/\s+/g, ' ').trim();
+        const looksLikeSelector = (text) => text.length > 0 && text.length <= 200 &&
+            text.indexOf('{') === -1 && text.indexOf('}') === -1 && /[.#:\[]|^[a-z][a-z0-9]*(\s|$|,)/.test(text);
+        const isOpener = (text) => text.length > 1 && text.charAt(text.length - 1) === '{' &&
+            text.indexOf('{') === text.length - 1 && looksLikeSelector(text.slice(0, -1).trim());
+
+        let node = textarea.closest('.css-editor-wrapper') || textarea;
+        let sawLoneBrace = false;
+        for (let depth = 0; depth < 4 && node && node !== document.body; depth++) {
+            let sibling = node.previousSibling;
+            for (let seen = 0; sibling && seen < 8; seen++, sibling = sibling.previousSibling) {
+                if (sibling.nodeType === 1 && sibling.querySelector && sibling.querySelector('textarea')) {
+                    return null; // reached another box
+                }
+                const text = clean(sibling.textContent);
+                if (!text) continue;
+                if (text === '{') { sawLoneBrace = true; continue; }
+                if (isOpener(text)) return text.slice(0, -1).trim();
+                if (sawLoneBrace && looksLikeSelector(text)) return text;
+                if (sawLoneBrace) return null;
+            }
+            node = node.parentElement;
+        }
+        return null;
+    }
+
+    function getGenericSelectorCopySnippet(textarea) {
+        const label = findSelectorLabelText(textarea);
+        if (!label) return null;
+        const selector = label.split(',').map(function(part) { return part.trim(); })
+            .filter(Boolean).join(',\n');
+        return selector ? '}\n\n' + selector + ' {' : null;
+    }
+
     // ==================== FANCY BUTTON NUMBER REPLACEMENT ====================
     // Store the current button selector globally so we can access it on insert
     let currentFancyButtonSelector = null;
@@ -4356,7 +4413,8 @@
 
         // "Copy selector" button: Fancy Button Builder style boxes and every
         // widget-skin Advanced / Miscellaneous Styles box.
-        const showCopySelector = showMakePortable || taId.indexOf('MiscellaneousStyles') >= 0;
+        const showCopySelector = showMakePortable || taId.indexOf('MiscellaneousStyles') >= 0 ||
+            isGenericSelectorContext(textarea);
         const copySelectorMarkup = showCopySelector
             ? `
             <button class="css-copy-selector" title="Copy selector for a new rule at this level" aria-label="Copy selector" type="button">
@@ -4470,10 +4528,15 @@
                 const helpers = window.CPToolkit || {};
                 const sources = [helpers.graphicLinkHelper, helpers.widgetSkinHelper];
                 let snippet = null;
-                for (let i = 0; i < sources.length && !snippet; i++) {
-                    const source = sources[i];
-                    if (source && typeof source.getSelectorCopySnippetForTextarea === 'function') {
-                        snippet = source.getSelectorCopySnippetForTextarea(textarea);
+                if (isGenericSelectorContext(textarea)) {
+                    // Containers, menus and site-wide styles: the CMS label is the selector.
+                    snippet = getGenericSelectorCopySnippet(textarea);
+                } else {
+                    for (let i = 0; i < sources.length && !snippet; i++) {
+                        const source = sources[i];
+                        if (source && typeof source.getSelectorCopySnippetForTextarea === 'function') {
+                            snippet = source.getSelectorCopySnippetForTextarea(textarea);
+                        }
                     }
                 }
                 if (!snippet) {

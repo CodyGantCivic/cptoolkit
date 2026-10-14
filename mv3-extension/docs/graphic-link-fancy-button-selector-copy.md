@@ -99,6 +99,11 @@ maintaining the extension, not end-user help text (that lives in
      one and never crosses another textarea, then prefixes `.widget.skinN`.
      `.widget` itself becomes `.widget.skinN`; anything else becomes a
      descendant. State (`:hover`, `:active`) comes from the label text.
+   - Containers (`.containerStyle`), navigation menus (`.menu`) and site-wide
+     styles (`#MiscStyles`, `.sitestyleupdate`) use a generic path inside
+     `mini-ide.js` (`getGenericSelectorCopySnippet`): the CMS label above the
+     box is already the selector, so the snippet is `}` plus that label,
+     with no skin or button ID added.
 4. **Update selectors button** (`.cpFancyButtonConvertBtn`) — beside the ID
    badge. Green outline when every rule has both `.fancyButton1` and the real
    ID, red when a rule is missing one half, neutral when it cannot check
