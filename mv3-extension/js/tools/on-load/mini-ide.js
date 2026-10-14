@@ -4589,14 +4589,15 @@
             };
 
             // A media query wraps the same selector. The snippet closes the
-            // selector itself ("  }"), and the CMS's own closing "}" after the
-            // box closes the @media block, so the pasted text is already balanced.
+            // selector itself, and the CMS's own closing "}" after the box
+            // closes the @media block, so the pasted text is already balanced.
+            // Deliberately no indentation: the box is a plain text editor, so
+            // the text stays flush left with a truly empty line to type on.
             const MEDIA_WIDTHS = ['40em', '63em', '2200px'];
             const toMediaSnippet = function(baseSnippet, width) {
                 const match = /^\}\n\n([\s\S]*) \{$/.exec(baseSnippet);
                 if (!match) return null;
-                const selector = match[1].split('\n').map(function(line) { return '  ' + line; }).join('\n');
-                return '}\n\n@media (min-width: ' + width + ') {\n' + selector + ' {\n    \n  }';
+                return '}\n\n@media (min-width: ' + width + ') {\n' + match[1] + ' {\n\n}';
             };
 
             let menuEl = null;

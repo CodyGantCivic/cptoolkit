@@ -107,12 +107,13 @@ maintaining the extension, not end-user help text (that lives in
    - The button opens a small menu (appended to `<body>`, so no editor clips
      it): "Copy selector" plus `@media (min-width: 40em | 63em | 2200px)`
      variants. A media variant is the same selector wrapped in the query,
-     e.g. `}` / `@media (min-width: 40em) {` / `  #footerTS {` / `    ` /
-     `  }`. The snippet closes the selector itself, and the CMS adds one
+     e.g. `}` / `@media (min-width: 40em) {` / `#footerTS {` / (empty line) /
+     `}`, with no indentation and no trailing spaces because the box is a plain
+     text editor. The snippet closes the selector itself, and the CMS adds one
      closing `}` after the box, which closes the media block, so the pasted
-     text is balanced and the user types their styles on the blank line.
-     After pasting, the caret is at the end of the snippet, so press Up then
-     End to reach the blank line.
+     text is balanced and the user types their styles on the empty line.
+     After pasting, the caret is at the end of the snippet, so press Up once
+     to reach the empty line.
 4. **Update selectors button** (`.cpFancyButtonConvertBtn`) — beside the ID
    badge. Green outline when every rule has both `.fancyButton1` and the real
    ID, red when a rule is missing one half, neutral when it cannot check
