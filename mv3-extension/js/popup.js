@@ -115,8 +115,13 @@ async function detectCurrentTabWithDomDetector(tabId) {
         return { detected: false, lanes: [] };
       }
 
+      // On admin / Design Center URLs wait for the Admin lane, not just the
+      // first lane found: Live Edit markers can appear before Admin evidence
+      // and would leave the approved site with only the Live Edit tool set.
+      const location = (CPToolkitDomDetector.evaluatePage().location) || {};
+      const expectsAdmin = !!(location.isAdminPath || location.isDesignCenterPath);
       const result = await CPToolkitDomDetector.waitForDetection({
-        targetLanes: ['admin', 'live-edit', 'identity'],
+        targetLanes: expectsAdmin ? ['admin', 'identity'] : ['admin', 'live-edit', 'identity'],
         timeoutMs: 1500
       });
 
