@@ -378,6 +378,54 @@
                 border-color: #af282f !important;
                 background: #fdf4f4 !important;
             }
+            /* Copy selector menu (appended to <body> so no editor clips it) */
+            .cp-copy-selector-menu {
+                position: fixed;
+                z-index: 2147483000;
+                min-width: 260px;
+                padding: 4px;
+                background: #fff;
+                border: 1px solid #cfd6df;
+                border-radius: 6px;
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+                font-family: Arial, Helvetica, sans-serif;
+            }
+            .cp-copy-selector-menu button {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: none !important;
+                height: auto !important;
+                min-height: 0 !important;
+                max-height: none !important;
+                margin: 0 !important;
+                padding: 7px 10px !important;
+                background: transparent !important;
+                border: none !important;
+                border-radius: 4px !important;
+                box-shadow: none !important;
+                color: #1f2937 !important;
+                font-size: 13px !important;
+                font-weight: 600 !important;
+                line-height: 1.25 !important;
+                letter-spacing: normal !important;
+                text-align: left !important;
+                text-transform: none !important;
+                cursor: pointer !important;
+            }
+            .cp-copy-selector-menu button:hover,
+            .cp-copy-selector-menu button:focus {
+                background: #eef3fa !important;
+                outline: none !important;
+            }
+            .cp-copy-selector-menu .cp-menu-hint {
+                margin-top: 2px;
+                font-size: 11px;
+                font-weight: 400;
+                color: #6b7280;
+            }
             .css-validation-indicator .css-pseudo-toggle .pseudo-label {
                 display: inline-block;
                 font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
@@ -4417,7 +4465,7 @@
             isGenericSelectorContext(textarea);
         const copySelectorMarkup = showCopySelector
             ? `
-            <button class="css-copy-selector" title="Copy selector for a new rule at this level" aria-label="Copy selector" type="button">
+            <button class="css-copy-selector" title="Copy a selector or media query for a new rule at this level" aria-label="Copy selector or media query" aria-haspopup="menu" type="button">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
@@ -4522,9 +4570,7 @@
                     copied ? resolve() : reject(new Error('copy failed'));
                 });
             };
-            const handleCopySelector = function(e) {
-                e.preventDefault();
-                e.stopPropagation();
+            const getBaseSnippet = function() {
                 const helpers = window.CPToolkit || {};
                 const sources = [helpers.graphicLinkHelper, helpers.widgetSkinHelper];
                 let snippet = null;
@@ -4539,19 +4585,123 @@
                         }
                     }
                 }
-                if (!snippet) {
+                return snippet;
+            };
+
+            // A media query wraps the same selector. The CMS closes the box with
+            // one "}", which here closes the @media block, so the user only types
+            // one "}" of their own to close the selector.
+            const MEDIA_WIDTHS = ['40em', '63em', '2200px'];
+            const toMediaSnippet = function(baseSnippet, width) {
+                const match = /^\}\n\n([\s\S]*) \{$/.exec(baseSnippet);
+                if (!match) return null;
+                const selector = match[1].split('\n').map(function(line) { return '  ' + line; }).join('\n');
+                return '}\n\n@media (min-width: ' + width + ') {\n' + selector + ' {\n    ';
+            };
+
+            let menuEl = null;
+            const closeMenu = function(restoreFocus) {
+                if (!menuEl) return;
+                menuEl.remove();
+                menuEl = null;
+                document.removeEventListener('mousedown', onOutsideMouseDown, true);
+                document.removeEventListener('keydown', onMenuKeyDown, true);
+                if (restoreFocus) copySelectorBtn.focus();
+            };
+            const onOutsideMouseDown = function(e) {
+                if (!menuEl) return;
+                if (menuEl.contains(e.target) || copySelectorBtn.contains(e.target)) return;
+                closeMenu(false);
+            };
+            const onMenuKeyDown = function(e) {
+                if (!menuEl) return;
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeMenu(true);
+                    return;
+                }
+                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const items = Array.prototype.slice.call(menuEl.querySelectorAll('button'));
+                    const index = items.indexOf(document.activeElement);
+                    const next = e.key === 'ArrowDown'
+                        ? items[(index + 1) % items.length]
+                        : items[(index - 1 + items.length) % items.length];
+                    if (next) next.focus();
+                }
+            };
+
+            const openMenu = function() {
+                closeMenu(false);
+                const base = getBaseSnippet();
+                if (!base) {
                     flash(false, 'Could not work out the selector for this box');
                     return;
                 }
-                copyText(snippet).then(
-                    function() { flash(true, 'Copied!'); },
-                    function() { flash(false, 'Could not copy to the clipboard'); }
-                );
+
+                menuEl = document.createElement('div');
+                menuEl.className = 'cp-copy-selector-menu';
+                menuEl.setAttribute('role', 'menu');
+
+                const addItem = function(label, hint, text) {
+                    const item = document.createElement('button');
+                    item.type = 'button';
+                    item.setAttribute('role', 'menuitem');
+                    const labelEl = document.createElement('span');
+                    labelEl.textContent = label;
+                    const hintEl = document.createElement('span');
+                    hintEl.className = 'cp-menu-hint';
+                    hintEl.textContent = hint;
+                    item.appendChild(labelEl);
+                    item.appendChild(hintEl);
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        closeMenu(true);
+                        copyText(text).then(
+                            function() { flash(true, 'Copied!'); },
+                            function() { flash(false, 'Could not copy to the clipboard'); }
+                        );
+                    });
+                    menuEl.appendChild(item);
+                };
+
+                addItem('Copy selector', 'Closes this rule and starts a new one', base);
+                MEDIA_WIDTHS.forEach(function(width) {
+                    const text = toMediaSnippet(base, width);
+                    if (text) addItem('@media (min-width: ' + width + ')', 'Type one } after your styles to close the selector', text);
+                });
+
+                document.body.appendChild(menuEl);
+
+                // Above the button, or below it if there is no room.
+                const buttonRect = copySelectorBtn.getBoundingClientRect();
+                const menuRect = menuEl.getBoundingClientRect();
+                let top = buttonRect.top - menuRect.height - 6;
+                if (top < 8) top = buttonRect.bottom + 6;
+                const left = Math.min(buttonRect.left, window.innerWidth - menuRect.width - 8);
+                menuEl.style.top = Math.max(8, top) + 'px';
+                menuEl.style.left = Math.max(8, left) + 'px';
+
+                document.addEventListener('mousedown', onOutsideMouseDown, true);
+                document.addEventListener('keydown', onMenuKeyDown, true);
+                const first = menuEl.querySelector('button');
+                if (first) first.focus();
             };
+
+            const handleCopySelector = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (menuEl) {
+                    closeMenu(false);
+                } else {
+                    openMenu();
+                }
+            };
+            // A button turns Enter and Space into a click on its own, so a
+            // separate keydown handler would open and immediately close the menu.
             copySelectorBtn.addEventListener('click', handleCopySelector);
-            copySelectorBtn.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' || e.key === ' ') handleCopySelector(e);
-            });
         }
 
         // Initialize CSS Snippets (handled by css-snippets.js)

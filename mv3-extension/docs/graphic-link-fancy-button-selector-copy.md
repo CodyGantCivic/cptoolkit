@@ -104,6 +104,13 @@ maintaining the extension, not end-user help text (that lives in
      `mini-ide.js` (`getGenericSelectorCopySnippet`): the CMS label above the
      box is already the selector, so the snippet is `}` plus that label,
      with no skin or button ID added.
+   - The button opens a small menu (appended to `<body>`, so no editor clips
+     it): "Copy selector" plus `@media (min-width: 40em | 63em | 2200px)`
+     variants. A media variant is the same selector wrapped in the query and
+     left open inside the selector, e.g. `}` / `@media (min-width: 40em) {` /
+     `  #footerTS {` / `    `. The CMS adds one closing `}` after the box,
+     which closes the media block, so the user types exactly one `}` of their
+     own to close the selector.
 4. **Update selectors button** (`.cpFancyButtonConvertBtn`) — beside the ID
    badge. Green outline when every rule has both `.fancyButton1` and the real
    ID, red when a rule is missing one half, neutral when it cannot check
