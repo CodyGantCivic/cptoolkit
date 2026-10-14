@@ -476,6 +476,21 @@
       }
     }
 
+    // Snippet for the Mini IDE toolbar's copy-selector button. Reuses the base
+    // and hover state already baked into the per-panel copy icon that sits
+    // beside this textarea's header, so both buttons always agree.
+    function getSelectorCopySnippetForTextarea(textarea) {
+      const box = textarea && textarea.closest('.cpExpandCollapseBox');
+      const parent = box && box.parentElement;
+      const wrapper = parent && parent.querySelector('.cpSelectorCopyBtn');
+      if (!wrapper) return null;
+      return buildSelectorCopySnippet(
+        getFancyButtonId(),
+        wrapper.dataset.cpBase || '',
+        wrapper.dataset.cpHover === 'true'
+      );
+    }
+
     function handleSelectorCopyHover(e) {
       const wrapper = e.target.closest('.cpSelectorCopyBtn');
       if (!wrapper) return;
@@ -1089,6 +1104,7 @@ startObserving();
       processTextareas: processTextareas,
       injectFancyButtonIdBadge: injectFancyButtonIdBadge,
       injectSelectorCopyButtons: injectSelectorCopyButtons,
+      getSelectorCopySnippetForTextarea: getSelectorCopySnippetForTextarea,
       runAutoEstablishRealId: runAutoEstablishRealId
     };
     

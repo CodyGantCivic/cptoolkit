@@ -302,8 +302,8 @@
             /* ==================== PHASE 3: THEME / PSEUDO / SNIPPET TOGGLES ==================== */
             .css-validation-indicator .css-theme-toggle,
             .css-validation-indicator .css-code-toggle,
-            .css-validation-indicator .css-pseudo-toggle,
-            .css-validation-indicator .css-make-portable {
+            .css-validation-indicator .css-make-portable,
+            .css-validation-indicator .css-copy-selector {
                 flex: 0 0 auto;
                 margin-left: 8px;
                 /* Override CivicPlus admin button styles */
@@ -335,22 +335,23 @@
             }
             .css-validation-indicator .css-theme-toggle:hover,
             .css-validation-indicator .css-code-toggle:hover,
-            .css-validation-indicator .css-pseudo-toggle:hover,
-            .css-validation-indicator .css-make-portable:hover {
+            .css-validation-indicator .css-make-portable:hover,
+            .css-validation-indicator .css-copy-selector:hover {
                 background: rgba(0, 0, 0, 0.05) !important;
                 border-color: #999 !important;
                 opacity: 1 !important; /* Prevent .button hover opacity changes */
             }
             .css-validation-indicator .css-theme-toggle:focus,
             .css-validation-indicator .css-code-toggle:focus,
-            .css-validation-indicator .css-pseudo-toggle:focus,
-            .css-validation-indicator .css-make-portable:focus {
+            .css-validation-indicator .css-make-portable:focus,
+            .css-validation-indicator .css-copy-selector:focus {
                 outline: 2px solid #0078d4 !important;
                 outline-offset: 2px !important;
             }
             .css-validation-indicator .css-theme-toggle svg,
             .css-validation-indicator .css-code-toggle svg,
-            .css-validation-indicator .css-make-portable svg {
+            .css-validation-indicator .css-make-portable svg,
+            .css-validation-indicator .css-copy-selector svg {
                 width: 13px !important; /* Slightly smaller for compact layout */
                 height: 13px !important;
                 min-width: 13px !important;
@@ -365,6 +366,17 @@
             }
             .css-validation-indicator .css-make-portable svg {
                 stroke: #af282f !important; /* CivicPlus red — signals export / outbound action */
+            }
+            .css-validation-indicator .css-copy-selector svg {
+                stroke: #0b5b8a !important; /* Blue — copies to the clipboard */
+            }
+            .css-validation-indicator .css-copy-selector.cp-copy-ok {
+                border-color: #2e9e55 !important;
+                background: #f3fbf5 !important;
+            }
+            .css-validation-indicator .css-copy-selector.cp-copy-fail {
+                border-color: #af282f !important;
+                background: #fdf4f4 !important;
             }
             .css-validation-indicator .css-pseudo-toggle .pseudo-label {
                 display: inline-block;
@@ -4342,6 +4354,20 @@
             `
             : '';
 
+        // "Copy selector" button: Fancy Button Builder style boxes and every
+        // widget-skin Advanced / Miscellaneous Styles box.
+        const showCopySelector = showMakePortable || taId.indexOf('MiscellaneousStyles') >= 0;
+        const copySelectorMarkup = showCopySelector
+            ? `
+            <button class="css-copy-selector" title="Copy selector for a new rule at this level" aria-label="Copy selector" type="button">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+            </button>
+            `
+            : '';
+
         // Build validation indicator with theme toggle INSIDE (no selector hint)
         validationIndicator.innerHTML = `
             <div class="css-validation-status">
@@ -4363,6 +4389,7 @@
                 </svg>
             </button>
             ${makePortableMarkup}
+            ${copySelectorMarkup}
             <div class="css-snippet-wrapper" style="position: relative;">
                 <button class="css-code-toggle" title="CSS Snippets" aria-label="CSS Snippets" type="button">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -4403,6 +4430,64 @@
                     e.stopPropagation();
                     showMakePortableModal(textarea);
                 }
+            });
+        }
+
+        // Wire up the "Copy selector" button if present. The snippet comes from
+        // whichever helper owns this textarea: the Fancy Button Builder helper
+        // or the widget-skin helper.
+        const copySelectorBtn = validationIndicator.querySelector('.css-copy-selector');
+        if (copySelectorBtn) {
+            const defaultTitle = copySelectorBtn.getAttribute('title');
+            const flash = function(ok, message) {
+                copySelectorBtn.classList.remove('cp-copy-ok', 'cp-copy-fail');
+                copySelectorBtn.classList.add(ok ? 'cp-copy-ok' : 'cp-copy-fail');
+                copySelectorBtn.setAttribute('title', message);
+                setTimeout(function() {
+                    copySelectorBtn.classList.remove('cp-copy-ok', 'cp-copy-fail');
+                    copySelectorBtn.setAttribute('title', defaultTitle);
+                }, 1400);
+            };
+            const copyText = function(text) {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    return navigator.clipboard.writeText(text);
+                }
+                return new Promise(function(resolve, reject) {
+                    const scratch = document.createElement('textarea');
+                    scratch.value = text;
+                    scratch.style.cssText = 'position:fixed;opacity:0;';
+                    document.body.appendChild(scratch);
+                    scratch.select();
+                    let copied = false;
+                    try { copied = document.execCommand('copy'); } catch (err) { /* no-op */ }
+                    document.body.removeChild(scratch);
+                    copied ? resolve() : reject(new Error('copy failed'));
+                });
+            };
+            const handleCopySelector = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const helpers = window.CPToolkit || {};
+                const sources = [helpers.graphicLinkHelper, helpers.widgetSkinHelper];
+                let snippet = null;
+                for (let i = 0; i < sources.length && !snippet; i++) {
+                    const source = sources[i];
+                    if (source && typeof source.getSelectorCopySnippetForTextarea === 'function') {
+                        snippet = source.getSelectorCopySnippetForTextarea(textarea);
+                    }
+                }
+                if (!snippet) {
+                    flash(false, 'Could not work out the selector for this box');
+                    return;
+                }
+                copyText(snippet).then(
+                    function() { flash(true, 'Copied!'); },
+                    function() { flash(false, 'Could not copy to the clipboard'); }
+                );
+            };
+            copySelectorBtn.addEventListener('click', handleCopySelector);
+            copySelectorBtn.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') handleCopySelector(e);
             });
         }
 

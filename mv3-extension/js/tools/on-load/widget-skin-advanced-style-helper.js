@@ -206,12 +206,59 @@
       startObserving();
     }
 
+    // ----------------- copy selector snippet -----------------
+    // Each Advanced / Miscellaneous Styles box is labelled by the CMS with the
+    // selector it sits inside (e.g. ".widgetItem {") in text just above the
+    // box. The snippet prefixes that label with .widget.skinN so a new rule
+    // can be started at the cursor: "}" closes the box's own rule, then the
+    // full selector opens a new one. Any state in the label (:hover, :active)
+    // is carried through as-is.
+    function findSelectorLabel(textarea) {
+      const clean = (text) => String(text || '').replace(/\s+/g, ' ').trim();
+      const isOpener = (text) => text.length > 1 && text.length <= 200 &&
+        text.charAt(text.length - 1) === '{' && text.indexOf('{') === text.length - 1;
+
+      let node = textarea.closest('.css-editor-wrapper') || textarea;
+      for (let depth = 0; depth < 4 && node && node !== document.body; depth++) {
+        let sibling = node.previousSibling;
+        for (let seen = 0; sibling && seen < 6; seen++, sibling = sibling.previousSibling) {
+          const text = clean(sibling.textContent);
+          if (isOpener(text)) return text.slice(0, -1).trim();
+        }
+        node = node.parentElement;
+      }
+      return null;
+    }
+
+    function buildSkinSelector(labelSelector, skinId) {
+      const prefix = '.widget.skin' + skinId;
+      return labelSelector.split(',').map((part) => {
+        const selector = part.trim();
+        if (!selector) return '';
+        // ".widget", ".widget:hover", ".widget .x" become ".widget.skinN..."
+        // ".widgetItem" is a different class, so it becomes a descendant.
+        const match = /^\.widget(?![\w-])(.*)$/.exec(selector);
+        if (match) return prefix + match[1].replace(/\.skin\d+/g, '');
+        return prefix + ' ' + selector.replace(/^\.skin\d+\s*/, '');
+      }).filter(Boolean).join(',\n');
+    }
+
+    function getSelectorCopySnippetForTextarea(textarea) {
+      const skinId = getSkinId();
+      if (!textarea || !skinId || skinId === '-1') return null;
+      const label = findSelectorLabel(textarea);
+      if (!label) return null;
+      const selector = buildSkinSelector(label, skinId);
+      return selector ? '}\n\n' + selector + ' {' : null;
+    }
+
     // ----------------- expose API -----------------
     window.CPToolkit = window.CPToolkit || {};
     window.CPToolkit.widgetSkinHelper = {
       getSkinId: getSkinId,
       replaceSkinNumbers: replaceSkinNumbers,
       processTextareas: processTextareas,
+      getSelectorCopySnippetForTextarea: getSelectorCopySnippetForTextarea,
       debugInfo: function() {
         return {
           skinId: getSkinId(),
