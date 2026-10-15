@@ -114,6 +114,17 @@ maintaining the extension, not end-user help text (that lives in
      text is balanced and the user types their styles on the empty line.
      After pasting, the caret is at the end of the snippet, so press Up once
      to reach the empty line.
+   - A Prefix row (chips) at the top of the menu puts a parent selector in
+     front of every selector line of whatever is copied, plain or inside a
+     media query, e.g. `.row.outer:not(.wide) #footerTS`. Built-in:
+     `.row.outer.wide`, `.row.outer:not(.wide)`; users can add up to 8 of their
+     own (single selector, validated with `querySelector`; no commas or
+     braces) and remove them with the x. The chosen prefix is remembered in
+     `chrome.storage.local` (`cp-toolkit-selected-selector-prefix`, custom
+     list in `cp-toolkit-custom-selector-prefixes`) and falls back to None if
+     it is removed. The prefix is applied as a descendant (a space), so it is
+     wrong for a box that is itself the `.row.outer` element. A "Result:" line
+     shows the first resulting selector.
    - Users can add their own media queries from the menu ("+ Add media query",
      max 8) and remove them with the x on each row. They are stored as a list
      of condition strings in `chrome.storage.local` under
