@@ -382,8 +382,8 @@
             .cp-copy-selector-menu {
                 position: fixed;
                 z-index: 2147483000;
-                min-width: 260px;
-                padding: 4px;
+                min-width: 280px;
+                padding: 6px;
                 background: #fff;
                 border: 1px solid #cfd6df;
                 border-radius: 6px;
@@ -424,6 +424,84 @@
                 margin-top: 2px;
                 font-size: 11px;
                 font-weight: 400;
+                color: #6b7280;
+            }
+            .cp-copy-selector-menu .cp-menu-list {
+                max-height: min(60vh, 360px);
+                overflow-y: auto;
+            }
+            .cp-copy-selector-menu .cp-menu-row {
+                display: flex;
+                align-items: stretch;
+                gap: 2px;
+            }
+            .cp-copy-selector-menu .cp-menu-row .cp-menu-item {
+                flex: 1 1 auto !important;
+                width: auto !important;
+            }
+            .cp-copy-selector-menu .cp-menu-del {
+                flex: 0 0 30px !important;
+                width: 30px !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding: 0 !important;
+                font-size: 18px !important;
+                font-weight: 400 !important;
+                color: #6b7280 !important;
+            }
+            .cp-copy-selector-menu .cp-menu-del:hover,
+            .cp-copy-selector-menu .cp-menu-del:focus {
+                background: #fdf4f4 !important;
+                color: #af282f !important;
+            }
+            .cp-copy-selector-menu .cp-menu-footer {
+                margin-top: 4px;
+                padding: 6px 4px 2px;
+                border-top: 1px solid #e5e7eb;
+            }
+            .cp-copy-selector-menu .cp-menu-add {
+                flex-direction: row !important;
+                color: #0b5b8a !important;
+            }
+            .cp-copy-selector-menu .cp-menu-form-row {
+                display: flex;
+                gap: 6px;
+            }
+            .cp-copy-selector-menu .cp-menu-form input {
+                flex: 1 1 auto !important;
+                width: auto !important;
+                min-width: 0 !important;
+                height: 30px !important;
+                margin: 0 !important;
+                padding: 0 8px !important;
+                box-sizing: border-box !important;
+                border: 1px solid #b8c5d8 !important;
+                border-radius: 4px !important;
+                background: #fff !important;
+                color: #1f2937 !important;
+                font-size: 13px !important;
+            }
+            .cp-copy-selector-menu .cp-menu-confirm {
+                flex: 0 0 auto !important;
+                width: auto !important;
+                padding: 0 14px !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                background: #af282f !important;
+                color: #fff !important;
+            }
+            .cp-copy-selector-menu .cp-menu-confirm:hover,
+            .cp-copy-selector-menu .cp-menu-confirm:focus {
+                background: #8c2026 !important;
+            }
+            .cp-copy-selector-menu .cp-menu-error,
+            .cp-copy-selector-menu .cp-menu-note {
+                margin-top: 5px;
+                font-size: 11px;
+                line-height: 1.3;
+                color: #af282f;
+            }
+            .cp-copy-selector-menu .cp-menu-note {
                 color: #6b7280;
             }
             .css-validation-indicator .css-pseudo-toggle .pseudo-label {
@@ -4593,18 +4671,72 @@
             // closes the @media block, so the pasted text is already balanced.
             // Deliberately no indentation: the box is a plain text editor, so
             // the text stays flush left with a truly empty line to type on.
-            const MEDIA_WIDTHS = ['40em', '63em', '2200px'];
-            const toMediaSnippet = function(baseSnippet, width) {
+            const DEFAULT_MEDIA_CONDITIONS = ['(min-width: 40em)', '(min-width: 63em)', '(min-width: 2200px)'];
+            const CUSTOM_MEDIA_KEY = 'cp-toolkit-custom-media-queries';
+            const MAX_CUSTOM_MEDIA = 8;
+
+            const toMediaSnippet = function(baseSnippet, condition) {
                 const match = /^\}\n\n([\s\S]*) \{$/.exec(baseSnippet);
                 if (!match) return null;
-                return '}\n\n@media (min-width: ' + width + ') {\n' + match[1] + ' {\n\n}';
+                return '}\n\n@media ' + condition + ' {\n' + match[1] + ' {\n\n}';
+            };
+
+            // Turn what the user typed into a media condition, or null if it
+            // isn't a valid one. "50em" becomes "(min-width: 50em)"; a full
+            // condition such as "(max-width: 30em)" is used as written.
+            const normalizeMediaCondition = function(input) {
+                let value = String(input || '').replace(/\s+/g, ' ').trim()
+                    .replace(/^@media\s+/i, '').replace(/\s*\{$/, '');
+                if (!value || value.length > 80 || /[{};<>]/.test(value)) return null;
+                if (/^\d+(\.\d+)?(em|rem|px)$/i.test(value)) {
+                    value = '(min-width: ' + value.toLowerCase() + ')';
+                } else if (/^[a-z-]+\s*:/i.test(value)) {
+                    value = '(' + value + ')';
+                }
+                // The browser reports "not all" for a query it cannot parse.
+                if (typeof window.matchMedia !== 'function' || window.matchMedia(value).media === 'not all') return null;
+                return value;
+            };
+
+            const loadCustomMedia = function() {
+                return new Promise(function(resolve) {
+                    try {
+                        if (!chrome.runtime || !chrome.runtime.id) { resolve([]); return; }
+                        chrome.storage.local.get(CUSTOM_MEDIA_KEY, function(settings) {
+                            if (chrome.runtime.lastError) { resolve([]); return; }
+                            const list = settings && settings[CUSTOM_MEDIA_KEY];
+                            resolve(Array.isArray(list)
+                                ? list.filter(function(item) { return typeof item === 'string' && item; })
+                                : []);
+                        });
+                    } catch (err) {
+                        resolve([]);
+                    }
+                });
+            };
+
+            const saveCustomMedia = function(list) {
+                return new Promise(function(resolve) {
+                    try {
+                        if (!chrome.runtime || !chrome.runtime.id) { resolve(false); return; }
+                        chrome.storage.local.set({ [CUSTOM_MEDIA_KEY]: list }, function() {
+                            resolve(!chrome.runtime.lastError);
+                        });
+                    } catch (err) {
+                        resolve(false);
+                    }
+                });
             };
 
             let menuEl = null;
+            let menuBase = null;
+            let addFormOpen = false;
+
             const closeMenu = function(restoreFocus) {
                 if (!menuEl) return;
                 menuEl.remove();
                 menuEl = null;
+                addFormOpen = false;
                 document.removeEventListener('mousedown', onOutsideMouseDown, true);
                 document.removeEventListener('keydown', onMenuKeyDown, true);
                 if (restoreFocus) copySelectorBtn.focus();
@@ -4619,10 +4751,16 @@
                 if (e.key === 'Escape') {
                     e.preventDefault();
                     e.stopPropagation();
-                    closeMenu(true);
+                    // First Escape backs out of the add form, the next closes the menu.
+                    if (addFormOpen) {
+                        addFormOpen = false;
+                        refreshMenu();
+                    } else {
+                        closeMenu(true);
+                    }
                     return;
                 }
-                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && e.target.tagName !== 'INPUT') {
                     e.preventDefault();
                     const items = Array.prototype.slice.call(menuEl.querySelectorAll('button'));
                     const index = items.indexOf(document.activeElement);
@@ -4633,21 +4771,130 @@
                 }
             };
 
-            const openMenu = function() {
-                closeMenu(false);
-                const base = getBaseSnippet();
-                if (!base) {
-                    flash(false, 'Could not work out the selector for this box');
-                    return;
+            const positionMenu = function() {
+                // Above the button, or below it if there is no room.
+                const buttonRect = copySelectorBtn.getBoundingClientRect();
+                const menuRect = menuEl.getBoundingClientRect();
+                let top = buttonRect.top - menuRect.height - 6;
+                if (top < 8) top = buttonRect.bottom + 6;
+                const left = Math.min(buttonRect.left, window.innerWidth - menuRect.width - 8);
+                menuEl.style.top = Math.max(8, top) + 'px';
+                menuEl.style.left = Math.max(8, left) + 'px';
+            };
+
+            const copyChoice = function(text) {
+                closeMenu(true);
+                copyText(text).then(
+                    function() { flash(true, 'Copied!'); },
+                    function() { flash(false, 'Could not copy to the clipboard'); }
+                );
+            };
+
+            const buildAddFooter = function(customList) {
+                const footer = document.createElement('div');
+                footer.className = 'cp-menu-footer';
+
+                if (customList.length >= MAX_CUSTOM_MEDIA) {
+                    const full = document.createElement('div');
+                    full.className = 'cp-menu-note';
+                    full.textContent = 'Limit of ' + MAX_CUSTOM_MEDIA + ' of your own reached. Remove one to add another.';
+                    footer.appendChild(full);
+                    return footer;
                 }
 
-                menuEl = document.createElement('div');
-                menuEl.className = 'cp-copy-selector-menu';
-                menuEl.setAttribute('role', 'menu');
+                if (!addFormOpen) {
+                    const addButton = document.createElement('button');
+                    addButton.type = 'button';
+                    addButton.className = 'cp-menu-add';
+                    addButton.textContent = '+ Add media query';
+                    addButton.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        addFormOpen = true;
+                        refreshMenu();
+                    });
+                    footer.appendChild(addButton);
+                    return footer;
+                }
 
-                const addItem = function(label, hint, text) {
+                const form = document.createElement('div');
+                form.className = 'cp-menu-form';
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = 'e.g. 50em or (max-width: 30em)';
+                input.setAttribute('aria-label', 'New media query');
+                input.maxLength = 80;
+                const confirm = document.createElement('button');
+                confirm.type = 'button';
+                confirm.className = 'cp-menu-confirm';
+                confirm.textContent = 'Add';
+                const error = document.createElement('div');
+                error.className = 'cp-menu-error';
+
+                const submit = function() {
+                    const condition = normalizeMediaCondition(input.value);
+                    if (!condition) {
+                        error.textContent = 'Enter a width like 50em, or a full condition like (max-width: 30em).';
+                        return;
+                    }
+                    const taken = DEFAULT_MEDIA_CONDITIONS.concat(customList).some(function(existing) {
+                        return existing.toLowerCase() === condition.toLowerCase();
+                    });
+                    if (taken) {
+                        error.textContent = 'That media query is already in the list.';
+                        return;
+                    }
+                    saveCustomMedia(customList.concat(condition)).then(function(saved) {
+                        if (!saved) {
+                            error.textContent = 'Could not save. Reload the page and try again.';
+                            return;
+                        }
+                        addFormOpen = false;
+                        refreshMenu();
+                    });
+                };
+
+                confirm.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    submit();
+                });
+                input.addEventListener('keydown', function(e) {
+                    // Keep typing away from the page's own keyboard shortcuts.
+                    e.stopPropagation();
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        submit();
+                    }
+                });
+                input.addEventListener('keyup', function(e) { e.stopPropagation(); });
+                input.addEventListener('keypress', function(e) { e.stopPropagation(); });
+
+                const row = document.createElement('div');
+                row.className = 'cp-menu-form-row';
+                row.appendChild(input);
+                row.appendChild(confirm);
+                form.appendChild(row);
+                form.appendChild(error);
+                footer.appendChild(form);
+                setTimeout(function() { input.focus(); }, 0);
+                return footer;
+            };
+
+            const renderMenu = function(customList) {
+                if (!menuEl) return;
+                menuEl.textContent = '';
+
+                const list = document.createElement('div');
+                list.className = 'cp-menu-list';
+
+                const addRow = function(label, hint, text, onDelete) {
+                    const row = document.createElement('div');
+                    row.className = 'cp-menu-row';
+
                     const item = document.createElement('button');
                     item.type = 'button';
+                    item.className = 'cp-menu-item';
                     item.setAttribute('role', 'menuitem');
                     const labelEl = document.createElement('span');
                     labelEl.textContent = label;
@@ -4659,36 +4906,69 @@
                     item.addEventListener('click', function(e) {
                         e.preventDefault();
                         e.stopPropagation();
-                        closeMenu(true);
-                        copyText(text).then(
-                            function() { flash(true, 'Copied!'); },
-                            function() { flash(false, 'Could not copy to the clipboard'); }
-                        );
+                        copyChoice(text);
                     });
-                    menuEl.appendChild(item);
+                    row.appendChild(item);
+
+                    if (onDelete) {
+                        const del = document.createElement('button');
+                        del.type = 'button';
+                        del.className = 'cp-menu-del';
+                        del.title = 'Remove this media query';
+                        del.setAttribute('aria-label', 'Remove ' + label);
+                        del.textContent = '×';
+                        del.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onDelete();
+                        });
+                        row.appendChild(del);
+                    }
+                    list.appendChild(row);
                 };
 
-                addItem('Copy selector', 'Closes this rule and starts a new one', base);
-                MEDIA_WIDTHS.forEach(function(width) {
-                    const text = toMediaSnippet(base, width);
-                    if (text) addItem('@media (min-width: ' + width + ')', 'Already closed; type your styles on the blank line', text);
+                addRow('Copy selector', 'Closes this rule and starts a new one', menuBase);
+                DEFAULT_MEDIA_CONDITIONS.forEach(function(condition) {
+                    addRow('@media ' + condition, 'Closed and ready for your styles', toMediaSnippet(menuBase, condition));
+                });
+                customList.forEach(function(condition) {
+                    addRow('@media ' + condition, 'Your media query', toMediaSnippet(menuBase, condition), function() {
+                        saveCustomMedia(customList.filter(function(item) { return item !== condition; })).then(refreshMenu);
+                    });
                 });
 
-                document.body.appendChild(menuEl);
+                menuEl.appendChild(list);
+                menuEl.appendChild(buildAddFooter(customList));
+                positionMenu();
+            };
 
-                // Above the button, or below it if there is no room.
-                const buttonRect = copySelectorBtn.getBoundingClientRect();
-                const menuRect = menuEl.getBoundingClientRect();
-                let top = buttonRect.top - menuRect.height - 6;
-                if (top < 8) top = buttonRect.bottom + 6;
-                const left = Math.min(buttonRect.left, window.innerWidth - menuRect.width - 8);
-                menuEl.style.top = Math.max(8, top) + 'px';
-                menuEl.style.left = Math.max(8, left) + 'px';
+            const refreshMenu = function() {
+                if (!menuEl) return;
+                loadCustomMedia().then(renderMenu);
+            };
+
+            const openMenu = function() {
+                closeMenu(false);
+                const base = getBaseSnippet();
+                if (!base) {
+                    flash(false, 'Could not work out the selector for this box');
+                    return;
+                }
+
+                menuBase = base;
+                menuEl = document.createElement('div');
+                menuEl.className = 'cp-copy-selector-menu';
+                menuEl.setAttribute('role', 'menu');
+                document.body.appendChild(menuEl);
 
                 document.addEventListener('mousedown', onOutsideMouseDown, true);
                 document.addEventListener('keydown', onMenuKeyDown, true);
-                const first = menuEl.querySelector('button');
-                if (first) first.focus();
+
+                loadCustomMedia().then(function(customList) {
+                    renderMenu(customList);
+                    const first = menuEl && menuEl.querySelector('.cp-menu-item');
+                    if (first) first.focus();
+                });
             };
 
             const handleCopySelector = function(e) {
@@ -4699,8 +4979,7 @@
                 } else {
                     openMenu();
                 }
-            };
-            // A button turns Enter and Space into a click on its own, so a
+            };            // A button turns Enter and Space into a click on its own, so a
             // separate keydown handler would open and immediately close the menu.
             copySelectorBtn.addEventListener('click', handleCopySelector);
         }

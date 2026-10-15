@@ -114,6 +114,16 @@ maintaining the extension, not end-user help text (that lives in
      text is balanced and the user types their styles on the empty line.
      After pasting, the caret is at the end of the snippet, so press Up once
      to reach the empty line.
+   - Users can add their own media queries from the menu ("+ Add media query",
+     max 8) and remove them with the x on each row. They are stored as a list
+     of condition strings in `chrome.storage.local` under
+     `cp-toolkit-custom-media-queries`. Input is cleaned by
+     `normalizeMediaCondition` in `mini-ide.js` (`50em` becomes
+     `(min-width: 50em)`; a leading `@media` and trailing `{` are dropped;
+     `{ } ; < >` are rejected) and then must parse as a real media query
+     (`matchMedia(...).media !== "not all"`). The three built-in widths are
+     fixed and cannot be removed. Entries are only ever placed on the
+     clipboard, never written into the page as markup.
 4. **Update selectors button** (`.cpFancyButtonConvertBtn`) — beside the ID
    badge. Green outline when every rule has both `.fancyButton1` and the real
    ID, red when a rule is missing one half, neutral when it cannot check
