@@ -382,7 +382,11 @@
             .cp-copy-selector-menu {
                 position: fixed;
                 z-index: 2147483000;
-                min-width: 280px;
+                width: 320px;
+                max-width: calc(100vw - 16px);
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
                 padding: 6px;
                 background: #fff;
                 border: 1px solid #cfd6df;
@@ -427,7 +431,8 @@
                 color: #6b7280;
             }
             .cp-copy-selector-menu .cp-menu-list {
-                max-height: min(60vh, 360px);
+                flex: 1 1 auto;
+                min-height: 0;
                 overflow-y: auto;
             }
             .cp-copy-selector-menu .cp-menu-row {
@@ -569,13 +574,43 @@
                 color: #af282f !important;
             }
             .cp-copy-selector-menu .cp-menu-preview {
-                margin-top: 8px;
+                margin-top: 6px;
                 overflow: hidden;
                 font-family: Consolas, Monaco, 'Courier New', monospace;
                 font-size: 11px;
                 color: #374151;
                 text-overflow: ellipsis;
                 white-space: nowrap;
+            }
+            .cp-copy-selector-menu .cp-menu-prefix,
+            .cp-copy-selector-menu .cp-menu-footer {
+                flex: 0 0 auto;
+            }
+            .cp-copy-selector-menu .cp-menu-group {
+                display: grid;
+                grid-template-columns: 82px minmax(0, 1fr);
+                align-items: center;
+                gap: 4px 6px;
+                margin-bottom: 6px;
+            }
+            .cp-copy-selector-menu .cp-menu-group .cp-menu-heading {
+                margin: 0;
+            }
+            .cp-copy-selector-menu .cp-menu-group .cp-menu-form,
+            .cp-copy-selector-menu .cp-menu-group .cp-menu-note {
+                grid-column: 1 / -1;
+            }
+            .cp-copy-selector-menu .cp-menu-chip {
+                max-width: 150px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .cp-copy-selector-menu .cp-menu-item {
+                flex-direction: row !important;
+                align-items: center !important;
+                padding: 5px 10px !important;
+                font-weight: 500 !important;
             }
             .css-validation-indicator .css-pseudo-toggle .pseudo-label {
                 display: inline-block;
@@ -4756,6 +4791,15 @@
             const SELECTED_PREFIX_KEY = 'cp-toolkit-selected-selector-prefix';
             const MAX_CUSTOM_PREFIXES = 8;
 
+            // Widgets sit inside an outer row (the prefix above) and each widget
+            // has a row of its own inside it, so a skin box can also put that
+            // inner row right after ".widget.skinN":
+            // ".row.outer:not(.wide) .widget.skin12 .row.wide .widgetItem".
+            // Only meaningful for widget skin boxes.
+            const DEFAULT_INNER_ROWS = ['.row.wide', '.row:not(.wide)'];
+            const SELECTED_INNER_ROW_KEY = 'cp-toolkit-selected-inner-row';
+            const SKIN_SELECTOR_START = /^(\.widget\.skin\d+\S*)([\s\S]*)$/;
+
             // The base snippet is "}\n\n<selectors, one per line> {". Put the
             // prefix in front of every selector line.
             const applyPrefix = function(baseSnippet, prefix) {
@@ -4764,6 +4808,19 @@
                 if (!match) return baseSnippet;
                 const selectors = match[1].split(',\n').map(function(selector) {
                     return prefix + ' ' + selector;
+                }).join(',\n');
+                return '}\n\n' + selectors + ' {';
+            };
+
+            // Put the widget's inner row after ".widget.skinN" on every selector
+            // line that starts with it; other lines are left alone.
+            const applyInnerRow = function(baseSnippet, innerRow) {
+                if (!innerRow) return baseSnippet;
+                const match = /^\}\n\n([\s\S]*) \{$/.exec(baseSnippet);
+                if (!match) return baseSnippet;
+                const selectors = match[1].split(',\n').map(function(selector) {
+                    const parts = SKIN_SELECTOR_START.exec(selector);
+                    return parts ? parts[1] + ' ' + innerRow + parts[2] : selector;
                 }).join(',\n');
                 return '}\n\n' + selectors + ' {';
             };
@@ -4844,17 +4901,19 @@
             };
 
             const loadMenuState = function() {
-                return readStored([CUSTOM_MEDIA_KEY, CUSTOM_PREFIX_KEY, SELECTED_PREFIX_KEY]).then(function(settings) {
+                return readStored([CUSTOM_MEDIA_KEY, CUSTOM_PREFIX_KEY, SELECTED_PREFIX_KEY, SELECTED_INNER_ROW_KEY]).then(function(settings) {
                     const customPrefixes = cleanList(settings[CUSTOM_PREFIX_KEY]);
                     let selectedPrefix = typeof settings[SELECTED_PREFIX_KEY] === 'string' ? settings[SELECTED_PREFIX_KEY] : '';
                     // A prefix that was removed can no longer be the chosen one.
                     if (selectedPrefix && DEFAULT_PREFIXES.concat(customPrefixes).indexOf(selectedPrefix) === -1) {
                         selectedPrefix = '';
                     }
+                    const storedInner = settings[SELECTED_INNER_ROW_KEY];
                     return {
                         customMedia: cleanList(settings[CUSTOM_MEDIA_KEY]),
                         customPrefixes: customPrefixes,
-                        selectedPrefix: selectedPrefix
+                        selectedPrefix: selectedPrefix,
+                        selectedInnerRow: DEFAULT_INNER_ROWS.indexOf(storedInner) !== -1 ? storedInner : ''
                     };
                 });
             };
@@ -4905,15 +4964,33 @@
                 }
             };
 
+            // Keep the menu fully on screen on small laptops: above the button if
+            // it fits, else below, else shrink it to the larger side and let the
+            // media query list scroll.
             const positionMenu = function() {
-                // Above the button, or below it if there is no room.
+                const margin = 8;
+                const gap = 6;
                 const buttonRect = copySelectorBtn.getBoundingClientRect();
+                menuEl.style.maxHeight = (window.innerHeight - margin * 2) + 'px';
                 const menuRect = menuEl.getBoundingClientRect();
-                let top = buttonRect.top - menuRect.height - 6;
-                if (top < 8) top = buttonRect.bottom + 6;
-                const left = Math.min(buttonRect.left, window.innerWidth - menuRect.width - 8);
-                menuEl.style.top = Math.max(8, top) + 'px';
-                menuEl.style.left = Math.max(8, left) + 'px';
+                const roomAbove = buttonRect.top - margin - gap;
+                const roomBelow = window.innerHeight - buttonRect.bottom - margin - gap;
+
+                let top;
+                if (menuRect.height <= roomAbove) {
+                    top = buttonRect.top - menuRect.height - gap;
+                } else if (menuRect.height <= roomBelow) {
+                    top = buttonRect.bottom + gap;
+                } else if (roomAbove >= roomBelow) {
+                    menuEl.style.maxHeight = Math.max(160, roomAbove) + 'px';
+                    top = margin;
+                } else {
+                    menuEl.style.maxHeight = Math.max(160, roomBelow) + 'px';
+                    top = buttonRect.bottom + gap;
+                }
+                const left = Math.min(buttonRect.left, window.innerWidth - menuRect.width - margin);
+                menuEl.style.top = Math.max(margin, top) + 'px';
+                menuEl.style.left = Math.max(margin, left) + 'px';
             };
 
             const copyChoice = function(text) {
@@ -4981,60 +5058,90 @@
                 return form;
             };
 
-            // Chips for choosing the prefix, with the resulting selector below.
-            const buildPrefixSection = function(state, effectiveBase) {
-                const section = document.createElement('div');
-                section.className = 'cp-menu-prefix';
+            // One labelled row of choice chips. Each option is
+            // { label, value, title, onDelete }; the chosen one is highlighted.
+            const buildChipGroup = function(headingText, options, selectedValue, onSelect) {
+                const group = document.createElement('div');
+                group.className = 'cp-menu-group';
 
                 const heading = document.createElement('div');
                 heading.className = 'cp-menu-heading';
-                heading.textContent = 'Prefix';
-                section.appendChild(heading);
+                heading.textContent = headingText;
+                group.appendChild(heading);
 
                 const chips = document.createElement('div');
                 chips.className = 'cp-menu-chips';
 
-                const addChip = function(label, value, onDelete) {
+                options.forEach(function(option) {
+                    const selected = selectedValue === option.value;
                     const wrap = document.createElement('span');
                     wrap.className = 'cp-menu-chip-wrap';
+
                     const chip = document.createElement('button');
                     chip.type = 'button';
-                    chip.className = 'cp-menu-chip' + (state.selectedPrefix === value ? ' cp-selected' : '');
+                    chip.className = 'cp-menu-chip' + (selected ? ' cp-selected' : '');
                     chip.setAttribute('role', 'menuitemradio');
-                    chip.setAttribute('aria-checked', state.selectedPrefix === value ? 'true' : 'false');
-                    chip.textContent = label;
+                    chip.setAttribute('aria-checked', selected ? 'true' : 'false');
+                    chip.textContent = option.label;
+                    chip.title = option.title || option.value || 'No ' + headingText.toLowerCase();
                     chip.addEventListener('click', function(e) {
                         e.preventDefault();
                         e.stopPropagation();
-                        writeStored({ [SELECTED_PREFIX_KEY]: value }).then(refreshMenu);
+                        onSelect(option.value);
                     });
                     wrap.appendChild(chip);
-                    if (onDelete) {
+
+                    if (option.onDelete) {
                         const del = document.createElement('button');
                         del.type = 'button';
                         del.className = 'cp-menu-chip-del';
                         del.title = 'Remove this prefix';
-                        del.setAttribute('aria-label', 'Remove prefix ' + label);
+                        del.setAttribute('aria-label', 'Remove prefix ' + option.label);
                         del.textContent = '×';
                         del.addEventListener('click', function(e) {
                             e.preventDefault();
                             e.stopPropagation();
-                            onDelete();
+                            option.onDelete();
                         });
                         wrap.appendChild(del);
                     }
                     chips.appendChild(wrap);
-                };
+                });
 
-                addChip('None', '');
-                DEFAULT_PREFIXES.forEach(function(prefix) { addChip(prefix, prefix); });
+                group.appendChild(chips);
+                return { group: group, chips: chips };
+            };
+
+            const chipLabelFor = function(selector) {
+                return selector.indexOf(':not(') !== -1 ? 'not wide' : 'wide';
+            };
+
+            // Outer prefix (in front of everything) and, for widget skin boxes,
+            // the widget's own row, plus the resulting selector.
+            const buildPrefixSection = function(state, effectiveBase, showInnerRow) {
+                const section = document.createElement('div');
+                section.className = 'cp-menu-prefix';
+
+                const outerOptions = [{ label: 'None', value: '' }];
+                DEFAULT_PREFIXES.forEach(function(prefix) {
+                    outerOptions.push({ label: chipLabelFor(prefix), value: prefix, title: prefix });
+                });
                 state.customPrefixes.forEach(function(prefix) {
-                    addChip(prefix, prefix, function() {
-                        const update = { [CUSTOM_PREFIX_KEY]: state.customPrefixes.filter(function(item) { return item !== prefix; }) };
-                        // Removing the chosen prefix falls back to None.
-                        if (state.selectedPrefix === prefix) update[SELECTED_PREFIX_KEY] = '';
-                        writeStored(update).then(refreshMenu);
+                    outerOptions.push({
+                        label: prefix,
+                        value: prefix,
+                        title: prefix,
+                        onDelete: function() {
+                            const update = { [CUSTOM_PREFIX_KEY]: state.customPrefixes.filter(function(item) { return item !== prefix; }) };
+                            // Removing the chosen prefix falls back to None.
+                            if (state.selectedPrefix === prefix) update[SELECTED_PREFIX_KEY] = '';
+                            writeStored(update).then(refreshMenu);
+                        }
                     });
+                });
+
+                const outer = buildChipGroup('Outer prefix', outerOptions, state.selectedPrefix, function(value) {
+                    writeStored({ [SELECTED_PREFIX_KEY]: value }).then(refreshMenu);
                 });
 
                 if (state.customPrefixes.length < MAX_CUSTOM_PREFIXES && !prefixFormOpen) {
@@ -5050,12 +5157,11 @@
                         addFormOpen = false;
                         refreshMenu();
                     });
-                    chips.appendChild(plus);
+                    outer.chips.appendChild(plus);
                 }
-                section.appendChild(chips);
 
                 if (prefixFormOpen) {
-                    section.appendChild(buildAddForm({
+                    outer.group.appendChild(buildAddForm({
                         placeholder: 'e.g. .row.outer.wide',
                         label: 'New selector prefix',
                         validate: function(text) {
@@ -5081,18 +5187,29 @@
                     const note = document.createElement('div');
                     note.className = 'cp-menu-note';
                     note.textContent = 'Limit of ' + MAX_CUSTOM_PREFIXES + ' of your own reached. Remove one to add another.';
-                    section.appendChild(note);
+                    outer.group.appendChild(note);
+                }
+                section.appendChild(outer.group);
+
+                if (showInnerRow) {
+                    const innerOptions = [{ label: 'None', value: '' }];
+                    DEFAULT_INNER_ROWS.forEach(function(row) {
+                        innerOptions.push({ label: chipLabelFor(row), value: row, title: row });
+                    });
+                    const inner = buildChipGroup('Widget row', innerOptions, state.selectedInnerRow, function(value) {
+                        writeStored({ [SELECTED_INNER_ROW_KEY]: value }).then(refreshMenu);
+                    });
+                    section.appendChild(inner.group);
                 }
 
                 const preview = document.createElement('div');
                 preview.className = 'cp-menu-preview';
                 const previewText = previewSelector(effectiveBase);
-                preview.textContent = 'Result: ' + previewText;
+                preview.textContent = previewText;
                 preview.title = previewText;
                 section.appendChild(preview);
                 return section;
             };
-
             const buildAddMediaFooter = function(state) {
                 const footer = document.createElement('div');
                 footer.className = 'cp-menu-footer';
@@ -5148,9 +5265,15 @@
                 if (!menuEl) return;
                 menuEl.textContent = '';
 
-                // Everything copied from here on carries the chosen prefix.
-                const effectiveBase = applyPrefix(menuBase, state.selectedPrefix);
-                menuEl.appendChild(buildPrefixSection(state, effectiveBase));
+                // Everything copied from here on carries the chosen rows: the
+                // widget's inner row goes after .widget.skinN first, then the
+                // outer prefix goes in front of the whole selector.
+                const showInnerRow = /(^|\n)\.widget\.skin\d+/.test(menuBase);
+                const effectiveBase = applyPrefix(
+                    showInnerRow ? applyInnerRow(menuBase, state.selectedInnerRow) : menuBase,
+                    state.selectedPrefix
+                );
+                menuEl.appendChild(buildPrefixSection(state, effectiveBase, showInnerRow));
 
                 const list = document.createElement('div');
                 list.className = 'cp-menu-list';
@@ -5163,13 +5286,8 @@
                     item.type = 'button';
                     item.className = 'cp-menu-item';
                     item.setAttribute('role', 'menuitem');
-                    const labelEl = document.createElement('span');
-                    labelEl.textContent = label;
-                    const hintEl = document.createElement('span');
-                    hintEl.className = 'cp-menu-hint';
-                    hintEl.textContent = hint;
-                    item.appendChild(labelEl);
-                    item.appendChild(hintEl);
+                    item.textContent = label;
+                    item.title = hint;
                     item.addEventListener('click', function(e) {
                         e.preventDefault();
                         e.stopPropagation();
@@ -5210,7 +5328,6 @@
                 menuEl.appendChild(buildAddMediaFooter(state));
                 positionMenu();
             };
-
             const refreshMenu = function() {
                 if (!menuEl) return;
                 loadMenuState().then(renderMenu);

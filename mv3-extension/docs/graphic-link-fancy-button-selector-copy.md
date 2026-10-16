@@ -114,6 +114,15 @@ maintaining the extension, not end-user help text (that lives in
      text is balanced and the user types their styles on the empty line.
      After pasting, the caret is at the end of the snippet, so press Up once
      to reach the empty line.
+   - Widget skin boxes also get a "Widget row" choice (`.row.wide` or
+     `.row:not(.wide)`), inserted right after `.widget.skinN` (and any state
+     attached to it) on every selector line that starts with it, before the
+     outer prefix is applied, e.g.
+     `.row.outer:not(.wide) .widget.skin12 .row.wide .widgetItem`. It is hidden
+     on non-skin boxes and ignored there. The menu is a fixed 320px wide,
+     lays out as a flex column and re-measures on every render: it opens above
+     the button if it fits, else below, else shrinks to the larger side and
+     only the media query list scrolls (`positionMenu` in `mini-ide.js`).
    - A Prefix row (chips) at the top of the menu puts a parent selector in
      front of every selector line of whatever is copied, plain or inside a
      media query, e.g. `.row.outer:not(.wide) #footerTS`. Built-in:
