@@ -1281,7 +1281,7 @@
             "Unit": 0,
             "Value": null
           },
-          "MiscellaneousStyles": "}\n\n.widget.skin126 .widgetTitle::after {\ncontent: \"\";\ndisplay: block;\nwidth: 72px;\nheight: 2px;\nborder-radius: 4px;\nmargin: .25rem 0 0;\nbackground: #000000;",
+          "MiscellaneousStyles": "}\n\n.widget.skin126 .widgetTitle::after {\ncontent: \"\";\ndisplay: block;\nwidth: 72px;\nheight: 2px;\nborder-radius: 4px;\nmargin: .25rem 0 0;\nbackground: #CC0020;",
           "PaddingBottom": {
             "Unit": 0,
             "Value": null
@@ -2069,14 +2069,14 @@
           "HoverShadowSpreadRadius4": 0,
           "HoverShadowSpreadRadius5": 0,
           "HoverTextAlignment": 0,
-          "LinkHoverColor": "rgb(0, 0, 0)",
+          "LinkHoverColor": "rgb(34, 34, 34)",
           "LinkHoverMiscellaneousStyles": "",
           "LinkHoverUnderlined": true,
-          "LinkNormalColor": "rgb(0, 0, 0)",
+          "LinkNormalColor": "rgb(34, 34, 34)",
           "LinkNormalMiscellaneousStyles": "}\n\n.widgetCalendar.skin126 strong a {\ndisplay: block;\nfont-size: 1.25em;\nmargin-top: .5rem;\nline-height: 1.3;\n",
           "LinkNormalUnderlined": false,
           "LinkSelectedUnderlined": false,
-          "LinkVisitedColor": "rgb(0, 0, 0)",
+          "LinkVisitedColor": "rgb(34, 34, 34)",
           "LinkVisitedMiscellaneousStyles": "",
           "MarginBottom": {
             "Unit": 0,
@@ -2480,7 +2480,7 @@
         "data": {
           "AnimationClass": null,
           "AnimationId": "00000000-0000-0000-0000-000000000000",
-          "BackgroundColor": "rgb(204, 0, 32)",
+          "BackgroundColor": "rgb(117, 117, 117)",
           "BackgroundGradientDegrees": 0,
           "BackgroundGradientDirection": 0,
           "BackgroundGradientEndingColor": "",
@@ -2499,7 +2499,7 @@
           "BackgroundImagePositionYKeyword": 0,
           "BackgroundImagePositionYUseKeyword": true,
           "BackgroundImageRepeat": 0,
-          "BorderColor": "",
+          "BorderColor": "rgb(117, 117, 117)",
           "BorderRadiusBottomLeft": {
             "Unit": 1,
             "Value": null
@@ -2517,8 +2517,8 @@
             "Value": null
           },
           "BorderSides": 15,
-          "BorderStyle": 0,
-          "BorderWidth": 0,
+          "BorderStyle": 1,
+          "BorderWidth": 2,
           "BulletColor": "",
           "BulletStyle": 0,
           "BulletWidth": 2,
@@ -2528,7 +2528,7 @@
           "DisplayColumnSeparator": false,
           "FontColor": "",
           "FontFamily": "Open Sans",
-          "FontSize": 1.25,
+          "FontSize": 1.27,
           "FontStyle": 0,
           "FontVariant": "700",
           "ForceReadOnLinkToNewLine": false,
@@ -2554,7 +2554,7 @@
           "HoverBackgroundImagePositionYKeyword": 0,
           "HoverBackgroundImagePositionYUseKeyword": true,
           "HoverBackgroundImageRepeat": 0,
-          "HoverBorderColor": "",
+          "HoverBorderColor": "rgb(255, 255, 255)",
           "HoverBorderRadiusBottomLeft": {
             "Unit": 1,
             "Value": null
@@ -2572,8 +2572,8 @@
             "Value": null
           },
           "HoverBorderSides": 15,
-          "HoverBorderStyle": 0,
-          "HoverBorderWidth": 0,
+          "HoverBorderStyle": 1,
+          "HoverBorderWidth": 2,
           "HoverCapitalization": 0,
           "HoverFontColor": "",
           "HoverFontFamily": "",
@@ -2612,14 +2612,14 @@
           "HoverShadowSpreadRadius5": 0,
           "HoverTextAlignment": 0,
           "LinkHoverColor": "rgb(0, 0, 0)",
-          "LinkHoverMiscellaneousStyles": "",
+          "LinkHoverMiscellaneousStyles": "border-radius: 12px;",
           "LinkHoverUnderlined": true,
           "LinkNormalColor": "rgb(255, 255, 255)",
           "LinkNormalMiscellaneousStyles": "border-radius: 12px;\ntransition: all .3s ease-in-out;\ndisplay: table;\nmargin: 1.25em auto;",
           "LinkNormalUnderlined": false,
           "LinkSelectedUnderlined": false,
           "LinkVisitedColor": "rgb(255, 255, 255)",
-          "LinkVisitedMiscellaneousStyles": "background-color: #CC0020;",
+          "LinkVisitedMiscellaneousStyles": "background-color: #CC0020;\nborder: 2px solid #757575;\nborder-radius: 12px;",
           "MarginBottom": {
             "Unit": 0,
             "Value": null
@@ -2639,19 +2639,19 @@
           "MiscellaneousStyles": "",
           "PaddingBottom": {
             "Unit": 0,
-            "Value": 0.75
+            "Value": 0.625
           },
           "PaddingLeft": {
             "Unit": 0,
-            "Value": 2.4
+            "Value": 1.875
           },
           "PaddingRight": {
             "Unit": 0,
-            "Value": 2.4
+            "Value": 1.875
           },
           "PaddingTop": {
             "Unit": 0,
-            "Value": 0.75
+            "Value": 0.625
           },
           "ParentComponentWithTrigger": null,
           "RecordStatus": 0,
@@ -7825,7 +7825,7 @@
             "Unit": 0,
             "Value": null
           },
-          "MiscellaneousStyles": "}\n\n.widget.skin149 .widgetTitle::after {\ncontent: \"\";\ndisplay: block;\nwidth: 72px;\nheight: 2px;\nborder-radius: 4px;\nmargin: .25rem 0 0;\nbackground: #000000;",
+          "MiscellaneousStyles": "}\n\n.widget.skin149 .widgetTitle::after {\ncontent: \"\";\ndisplay: block;\nwidth: 72px;\nheight: 2px;\nborder-radius: 4px;\nmargin: .25rem 0 0;\nbackground: #CC0020;",
           "PaddingBottom": {
             "Unit": 0,
             "Value": null
@@ -8613,14 +8613,14 @@
           "HoverShadowSpreadRadius4": 0,
           "HoverShadowSpreadRadius5": 0,
           "HoverTextAlignment": 0,
-          "LinkHoverColor": "rgb(0, 0, 0)",
+          "LinkHoverColor": "rgb(34, 34, 34)",
           "LinkHoverMiscellaneousStyles": "",
           "LinkHoverUnderlined": true,
-          "LinkNormalColor": "rgb(0, 0, 0)",
+          "LinkNormalColor": "rgb(34, 34, 34)",
           "LinkNormalMiscellaneousStyles": "}\n\n.widgetCalendar.skin149 strong a {\ndisplay: block;\nfont-size: 1.25em;\nmargin-top: .5rem;\nline-height: 1.3;\n",
           "LinkNormalUnderlined": false,
           "LinkSelectedUnderlined": false,
-          "LinkVisitedColor": "rgb(0, 0, 0)",
+          "LinkVisitedColor": "rgb(34, 34, 34)",
           "LinkVisitedMiscellaneousStyles": "",
           "MarginBottom": {
             "Unit": 0,
@@ -9024,7 +9024,7 @@
         "data": {
           "AnimationClass": null,
           "AnimationId": "00000000-0000-0000-0000-000000000000",
-          "BackgroundColor": "rgb(204, 0, 32)",
+          "BackgroundColor": "rgb(117, 117, 117)",
           "BackgroundGradientDegrees": 0,
           "BackgroundGradientDirection": 0,
           "BackgroundGradientEndingColor": "",
@@ -9043,7 +9043,7 @@
           "BackgroundImagePositionYKeyword": 0,
           "BackgroundImagePositionYUseKeyword": true,
           "BackgroundImageRepeat": 0,
-          "BorderColor": "",
+          "BorderColor": "rgb(117, 117, 117)",
           "BorderRadiusBottomLeft": {
             "Unit": 1,
             "Value": null
@@ -9061,8 +9061,8 @@
             "Value": null
           },
           "BorderSides": 15,
-          "BorderStyle": 0,
-          "BorderWidth": 0,
+          "BorderStyle": 1,
+          "BorderWidth": 2,
           "BulletColor": "",
           "BulletStyle": 0,
           "BulletWidth": 2,
@@ -9072,7 +9072,7 @@
           "DisplayColumnSeparator": false,
           "FontColor": "",
           "FontFamily": "Open Sans",
-          "FontSize": 1.25,
+          "FontSize": 1.27,
           "FontStyle": 0,
           "FontVariant": "700",
           "ForceReadOnLinkToNewLine": false,
@@ -9098,7 +9098,7 @@
           "HoverBackgroundImagePositionYKeyword": 0,
           "HoverBackgroundImagePositionYUseKeyword": true,
           "HoverBackgroundImageRepeat": 0,
-          "HoverBorderColor": "",
+          "HoverBorderColor": "rgb(255, 255, 255)",
           "HoverBorderRadiusBottomLeft": {
             "Unit": 1,
             "Value": null
@@ -9116,8 +9116,8 @@
             "Value": null
           },
           "HoverBorderSides": 15,
-          "HoverBorderStyle": 0,
-          "HoverBorderWidth": 0,
+          "HoverBorderStyle": 1,
+          "HoverBorderWidth": 2,
           "HoverCapitalization": 0,
           "HoverFontColor": "",
           "HoverFontFamily": "",
@@ -9156,14 +9156,14 @@
           "HoverShadowSpreadRadius5": 0,
           "HoverTextAlignment": 0,
           "LinkHoverColor": "rgb(0, 0, 0)",
-          "LinkHoverMiscellaneousStyles": "",
+          "LinkHoverMiscellaneousStyles": "border-radius: 12px;",
           "LinkHoverUnderlined": true,
           "LinkNormalColor": "rgb(255, 255, 255)",
           "LinkNormalMiscellaneousStyles": "border-radius: 12px;\ntransition: all .3s ease-in-out;\ndisplay: table;\nmargin: 1.25em auto;",
           "LinkNormalUnderlined": false,
           "LinkSelectedUnderlined": false,
           "LinkVisitedColor": "rgb(255, 255, 255)",
-          "LinkVisitedMiscellaneousStyles": "background-color: #CC0020;",
+          "LinkVisitedMiscellaneousStyles": "background-color: #CC0020;\nborder: 2px solid #757575;\nborder-radius: 12px;",
           "MarginBottom": {
             "Unit": 0,
             "Value": null
@@ -9183,19 +9183,19 @@
           "MiscellaneousStyles": "",
           "PaddingBottom": {
             "Unit": 0,
-            "Value": 0.75
+            "Value": 0.625
           },
           "PaddingLeft": {
             "Unit": 0,
-            "Value": 2.4
+            "Value": 1.875
           },
           "PaddingRight": {
             "Unit": 0,
-            "Value": 2.4
+            "Value": 1.875
           },
           "PaddingTop": {
             "Unit": 0,
-            "Value": 0.75
+            "Value": 0.625
           },
           "ParentComponentWithTrigger": null,
           "RecordStatus": 0,
@@ -14369,7 +14369,7 @@
             "Unit": 0,
             "Value": null
           },
-          "MiscellaneousStyles": "}\n\n.widget.skin128 .widgetTitle::after {\ncontent: \"\";\ndisplay: block;\nwidth: 72px;\nheight: 2px;\nborder-radius: 4px;\nmargin: .25rem 0 0;\nbackground: #000000;",
+          "MiscellaneousStyles": "}\n\n.widget.skin128 .widgetTitle::after {\ncontent: \"\";\ndisplay: block;\nwidth: 72px;\nheight: 2px;\nborder-radius: 4px;\nmargin: .25rem 0 0;\nbackground: #CC0020;",
           "PaddingBottom": {
             "Unit": 0,
             "Value": null
@@ -15157,14 +15157,14 @@
           "HoverShadowSpreadRadius4": 0,
           "HoverShadowSpreadRadius5": 0,
           "HoverTextAlignment": 0,
-          "LinkHoverColor": "rgb(0, 0, 0)",
+          "LinkHoverColor": "rgb(34, 34, 34)",
           "LinkHoverMiscellaneousStyles": "",
           "LinkHoverUnderlined": true,
-          "LinkNormalColor": "rgb(0, 0, 0)",
+          "LinkNormalColor": "rgb(34, 34, 34)",
           "LinkNormalMiscellaneousStyles": "} \n\n.widgetCalendar.skin128 strong a {\ndisplay: block;\nfont-size: 1.25em;\nmargin-top: .5rem;\nline-height: 1.3;\n",
           "LinkNormalUnderlined": false,
           "LinkSelectedUnderlined": false,
-          "LinkVisitedColor": "rgb(0, 0, 0)",
+          "LinkVisitedColor": "rgb(34, 34, 34)",
           "LinkVisitedMiscellaneousStyles": "",
           "MarginBottom": {
             "Unit": 0,
@@ -15568,7 +15568,7 @@
         "data": {
           "AnimationClass": null,
           "AnimationId": "00000000-0000-0000-0000-000000000000",
-          "BackgroundColor": "rgb(204, 0, 32)",
+          "BackgroundColor": "rgb(117, 117, 117)",
           "BackgroundGradientDegrees": 0,
           "BackgroundGradientDirection": 0,
           "BackgroundGradientEndingColor": "",
@@ -15587,7 +15587,7 @@
           "BackgroundImagePositionYKeyword": 0,
           "BackgroundImagePositionYUseKeyword": true,
           "BackgroundImageRepeat": 0,
-          "BorderColor": "",
+          "BorderColor": "rgb(117, 117, 117)",
           "BorderRadiusBottomLeft": {
             "Unit": 1,
             "Value": null
@@ -15605,8 +15605,8 @@
             "Value": null
           },
           "BorderSides": 15,
-          "BorderStyle": 0,
-          "BorderWidth": 0,
+          "BorderStyle": 1,
+          "BorderWidth": 2,
           "BulletColor": "",
           "BulletStyle": 0,
           "BulletWidth": 2,
@@ -15616,7 +15616,7 @@
           "DisplayColumnSeparator": false,
           "FontColor": "",
           "FontFamily": "Open Sans",
-          "FontSize": 1.25,
+          "FontSize": 1.27,
           "FontStyle": 0,
           "FontVariant": "700",
           "ForceReadOnLinkToNewLine": false,
@@ -15642,7 +15642,7 @@
           "HoverBackgroundImagePositionYKeyword": 0,
           "HoverBackgroundImagePositionYUseKeyword": true,
           "HoverBackgroundImageRepeat": 0,
-          "HoverBorderColor": "",
+          "HoverBorderColor": "rgb(255, 255, 255)",
           "HoverBorderRadiusBottomLeft": {
             "Unit": 1,
             "Value": null
@@ -15660,8 +15660,8 @@
             "Value": null
           },
           "HoverBorderSides": 15,
-          "HoverBorderStyle": 0,
-          "HoverBorderWidth": 0,
+          "HoverBorderStyle": 1,
+          "HoverBorderWidth": 2,
           "HoverCapitalization": 0,
           "HoverFontColor": "",
           "HoverFontFamily": "",
@@ -15700,14 +15700,14 @@
           "HoverShadowSpreadRadius5": 0,
           "HoverTextAlignment": 0,
           "LinkHoverColor": "rgb(0, 0, 0)",
-          "LinkHoverMiscellaneousStyles": "",
+          "LinkHoverMiscellaneousStyles": "border-radius: 12px;",
           "LinkHoverUnderlined": true,
           "LinkNormalColor": "rgb(255, 255, 255)",
           "LinkNormalMiscellaneousStyles": "border-radius: 12px;\ntransition: all .3s ease-in-out;\ndisplay: table;\nmargin: 1.25em auto;",
           "LinkNormalUnderlined": false,
           "LinkSelectedUnderlined": false,
           "LinkVisitedColor": "rgb(255, 255, 255)",
-          "LinkVisitedMiscellaneousStyles": "background-color: #CC0020;",
+          "LinkVisitedMiscellaneousStyles": "background-color: #CC0020;\nborder: 2px solid #757575;\nborder-radius: 12px;",
           "MarginBottom": {
             "Unit": 0,
             "Value": null
@@ -15727,19 +15727,19 @@
           "MiscellaneousStyles": "",
           "PaddingBottom": {
             "Unit": 0,
-            "Value": 0.75
+            "Value": 0.625
           },
           "PaddingLeft": {
             "Unit": 0,
-            "Value": 2.4
+            "Value": 1.875
           },
           "PaddingRight": {
             "Unit": 0,
-            "Value": 2.4
+            "Value": 1.875
           },
           "PaddingTop": {
             "Unit": 0,
-            "Value": 0.75
+            "Value": 0.625
           },
           "ParentComponentWithTrigger": null,
           "RecordStatus": 0,
@@ -20913,7 +20913,7 @@
             "Unit": 0,
             "Value": null
           },
-          "MiscellaneousStyles": "}\n\n.widget.skin150 .widgetTitle::after {\ncontent: \"\";\ndisplay: block;\nwidth: 72px;\nheight: 2px;\nborder-radius: 4px;\nmargin: .25rem 0 0;\nbackground: #000000;",
+          "MiscellaneousStyles": "}\n\n.widget.skin150 .widgetTitle::after {\ncontent: \"\";\ndisplay: block;\nwidth: 72px;\nheight: 2px;\nborder-radius: 4px;\nmargin: .25rem 0 0;\nbackground: #CC0020;",
           "PaddingBottom": {
             "Unit": 0,
             "Value": null
@@ -21701,14 +21701,14 @@
           "HoverShadowSpreadRadius4": 0,
           "HoverShadowSpreadRadius5": 0,
           "HoverTextAlignment": 0,
-          "LinkHoverColor": "rgb(0, 0, 0)",
+          "LinkHoverColor": "rgb(34, 34, 34)",
           "LinkHoverMiscellaneousStyles": "",
           "LinkHoverUnderlined": true,
-          "LinkNormalColor": "rgb(0, 0, 0)",
+          "LinkNormalColor": "rgb(34, 34, 34)",
           "LinkNormalMiscellaneousStyles": "} \n\n.widgetCalendar.skin150 strong a {\ndisplay: block;\nfont-size: 1.25em;\nmargin-top: .5rem;\nline-height: 1.3;\n",
           "LinkNormalUnderlined": false,
           "LinkSelectedUnderlined": false,
-          "LinkVisitedColor": "rgb(0, 0, 0)",
+          "LinkVisitedColor": "rgb(34, 34, 34)",
           "LinkVisitedMiscellaneousStyles": "",
           "MarginBottom": {
             "Unit": 0,
@@ -22112,7 +22112,7 @@
         "data": {
           "AnimationClass": null,
           "AnimationId": "00000000-0000-0000-0000-000000000000",
-          "BackgroundColor": "rgb(204, 0, 32)",
+          "BackgroundColor": "rgb(117, 117, 117)",
           "BackgroundGradientDegrees": 0,
           "BackgroundGradientDirection": 0,
           "BackgroundGradientEndingColor": "",
@@ -22131,7 +22131,7 @@
           "BackgroundImagePositionYKeyword": 0,
           "BackgroundImagePositionYUseKeyword": true,
           "BackgroundImageRepeat": 0,
-          "BorderColor": "",
+          "BorderColor": "rgb(117, 117, 117)",
           "BorderRadiusBottomLeft": {
             "Unit": 1,
             "Value": null
@@ -22149,8 +22149,8 @@
             "Value": null
           },
           "BorderSides": 15,
-          "BorderStyle": 0,
-          "BorderWidth": 0,
+          "BorderStyle": 1,
+          "BorderWidth": 2,
           "BulletColor": "",
           "BulletStyle": 0,
           "BulletWidth": 2,
@@ -22160,7 +22160,7 @@
           "DisplayColumnSeparator": false,
           "FontColor": "",
           "FontFamily": "Open Sans",
-          "FontSize": 1.25,
+          "FontSize": 1.27,
           "FontStyle": 0,
           "FontVariant": "700",
           "ForceReadOnLinkToNewLine": false,
@@ -22186,7 +22186,7 @@
           "HoverBackgroundImagePositionYKeyword": 0,
           "HoverBackgroundImagePositionYUseKeyword": true,
           "HoverBackgroundImageRepeat": 0,
-          "HoverBorderColor": "",
+          "HoverBorderColor": "rgb(255, 255, 255)",
           "HoverBorderRadiusBottomLeft": {
             "Unit": 1,
             "Value": null
@@ -22204,8 +22204,8 @@
             "Value": null
           },
           "HoverBorderSides": 15,
-          "HoverBorderStyle": 0,
-          "HoverBorderWidth": 0,
+          "HoverBorderStyle": 1,
+          "HoverBorderWidth": 2,
           "HoverCapitalization": 0,
           "HoverFontColor": "",
           "HoverFontFamily": "",
@@ -22244,14 +22244,14 @@
           "HoverShadowSpreadRadius5": 0,
           "HoverTextAlignment": 0,
           "LinkHoverColor": "rgb(0, 0, 0)",
-          "LinkHoverMiscellaneousStyles": "",
+          "LinkHoverMiscellaneousStyles": "border-radius: 12px;",
           "LinkHoverUnderlined": true,
           "LinkNormalColor": "rgb(255, 255, 255)",
           "LinkNormalMiscellaneousStyles": "border-radius: 12px;\ntransition: all .3s ease-in-out;\ndisplay: table;\nmargin: 1.25em auto;",
           "LinkNormalUnderlined": false,
           "LinkSelectedUnderlined": false,
           "LinkVisitedColor": "rgb(255, 255, 255)",
-          "LinkVisitedMiscellaneousStyles": "background-color: #CC0020;",
+          "LinkVisitedMiscellaneousStyles": "background-color: #CC0020;\nborder: 2px solid #757575;\nborder-radius: 12px;",
           "MarginBottom": {
             "Unit": 0,
             "Value": null
@@ -22271,19 +22271,19 @@
           "MiscellaneousStyles": "",
           "PaddingBottom": {
             "Unit": 0,
-            "Value": 0.75
+            "Value": 0.625
           },
           "PaddingLeft": {
             "Unit": 0,
-            "Value": 2.4
+            "Value": 1.875
           },
           "PaddingRight": {
             "Unit": 0,
-            "Value": 2.4
+            "Value": 1.875
           },
           "PaddingTop": {
             "Unit": 0,
-            "Value": 0.75
+            "Value": 0.625
           },
           "ParentComponentWithTrigger": null,
           "RecordStatus": 0,
@@ -28656,7 +28656,7 @@
         "data": {
           "AnimationClass": null,
           "AnimationId": "00000000-0000-0000-0000-000000000000",
-          "BackgroundColor": "rgb(204, 0, 32)",
+          "BackgroundColor": "rgb(117, 117, 117)",
           "BackgroundGradientDegrees": 0,
           "BackgroundGradientDirection": 0,
           "BackgroundGradientEndingColor": "",
@@ -28675,7 +28675,7 @@
           "BackgroundImagePositionYKeyword": 0,
           "BackgroundImagePositionYUseKeyword": true,
           "BackgroundImageRepeat": 0,
-          "BorderColor": "",
+          "BorderColor": "rgb(117, 117, 117)",
           "BorderRadiusBottomLeft": {
             "Unit": 1,
             "Value": null
@@ -28693,8 +28693,8 @@
             "Value": null
           },
           "BorderSides": 15,
-          "BorderStyle": 0,
-          "BorderWidth": 0,
+          "BorderStyle": 1,
+          "BorderWidth": 2,
           "BulletColor": "",
           "BulletStyle": 0,
           "BulletWidth": 2,
@@ -28704,7 +28704,7 @@
           "DisplayColumnSeparator": false,
           "FontColor": "",
           "FontFamily": "Open Sans",
-          "FontSize": 1.25,
+          "FontSize": 1.27,
           "FontStyle": 0,
           "FontVariant": "700",
           "ForceReadOnLinkToNewLine": false,
@@ -28730,7 +28730,7 @@
           "HoverBackgroundImagePositionYKeyword": 0,
           "HoverBackgroundImagePositionYUseKeyword": true,
           "HoverBackgroundImageRepeat": 0,
-          "HoverBorderColor": "",
+          "HoverBorderColor": "rgb(255, 255, 255)",
           "HoverBorderRadiusBottomLeft": {
             "Unit": 1,
             "Value": null
@@ -28748,8 +28748,8 @@
             "Value": null
           },
           "HoverBorderSides": 15,
-          "HoverBorderStyle": 0,
-          "HoverBorderWidth": 0,
+          "HoverBorderStyle": 1,
+          "HoverBorderWidth": 2,
           "HoverCapitalization": 0,
           "HoverFontColor": "",
           "HoverFontFamily": "",
@@ -28788,14 +28788,14 @@
           "HoverShadowSpreadRadius5": 0,
           "HoverTextAlignment": 0,
           "LinkHoverColor": "rgb(0, 0, 0)",
-          "LinkHoverMiscellaneousStyles": "",
+          "LinkHoverMiscellaneousStyles": "border-radius: 12px;",
           "LinkHoverUnderlined": true,
           "LinkNormalColor": "rgb(255, 255, 255)",
           "LinkNormalMiscellaneousStyles": "border-radius: 12px;\ntransition: all .3s ease-in-out;\ndisplay: table;\nmargin: 1.25em auto;",
           "LinkNormalUnderlined": false,
           "LinkSelectedUnderlined": false,
           "LinkVisitedColor": "rgb(255, 255, 255)",
-          "LinkVisitedMiscellaneousStyles": "background-color: #CC0020;",
+          "LinkVisitedMiscellaneousStyles": "background-color: #CC0020;\nborder: 2px solid #757575;\nborder-radius: 12px;",
           "MarginBottom": {
             "Unit": 0,
             "Value": null
@@ -28815,19 +28815,19 @@
           "MiscellaneousStyles": " ",
           "PaddingBottom": {
             "Unit": 0,
-            "Value": 0.75
+            "Value": 0.625
           },
           "PaddingLeft": {
             "Unit": 0,
-            "Value": 2.4
+            "Value": 1.875
           },
           "PaddingRight": {
             "Unit": 0,
-            "Value": 2.4
+            "Value": 1.875
           },
           "PaddingTop": {
             "Unit": 0,
-            "Value": 0.75
+            "Value": 0.625
           },
           "ParentComponentWithTrigger": null,
           "RecordStatus": 0,
@@ -35200,7 +35200,7 @@
         "data": {
           "AnimationClass": null,
           "AnimationId": "00000000-0000-0000-0000-000000000000",
-          "BackgroundColor": "rgb(204, 0, 32)",
+          "BackgroundColor": "rgb(117, 117, 117)",
           "BackgroundGradientDegrees": 0,
           "BackgroundGradientDirection": 0,
           "BackgroundGradientEndingColor": "",
@@ -35219,7 +35219,7 @@
           "BackgroundImagePositionYKeyword": 0,
           "BackgroundImagePositionYUseKeyword": true,
           "BackgroundImageRepeat": 0,
-          "BorderColor": "",
+          "BorderColor": "rgb(117, 117, 117)",
           "BorderRadiusBottomLeft": {
             "Unit": 1,
             "Value": null
@@ -35237,8 +35237,8 @@
             "Value": null
           },
           "BorderSides": 15,
-          "BorderStyle": 0,
-          "BorderWidth": 0,
+          "BorderStyle": 1,
+          "BorderWidth": 2,
           "BulletColor": "",
           "BulletStyle": 0,
           "BulletWidth": 2,
@@ -35248,7 +35248,7 @@
           "DisplayColumnSeparator": false,
           "FontColor": "",
           "FontFamily": "Open Sans",
-          "FontSize": 1.25,
+          "FontSize": 1.27,
           "FontStyle": 0,
           "FontVariant": "700",
           "ForceReadOnLinkToNewLine": false,
@@ -35274,7 +35274,7 @@
           "HoverBackgroundImagePositionYKeyword": 0,
           "HoverBackgroundImagePositionYUseKeyword": true,
           "HoverBackgroundImageRepeat": 0,
-          "HoverBorderColor": "",
+          "HoverBorderColor": "rgb(255, 255, 255)",
           "HoverBorderRadiusBottomLeft": {
             "Unit": 1,
             "Value": null
@@ -35292,8 +35292,8 @@
             "Value": null
           },
           "HoverBorderSides": 15,
-          "HoverBorderStyle": 0,
-          "HoverBorderWidth": 0,
+          "HoverBorderStyle": 1,
+          "HoverBorderWidth": 2,
           "HoverCapitalization": 0,
           "HoverFontColor": "",
           "HoverFontFamily": "",
@@ -35332,14 +35332,14 @@
           "HoverShadowSpreadRadius5": 0,
           "HoverTextAlignment": 0,
           "LinkHoverColor": "rgb(0, 0, 0)",
-          "LinkHoverMiscellaneousStyles": "",
+          "LinkHoverMiscellaneousStyles": "border-radius: 12px;",
           "LinkHoverUnderlined": true,
           "LinkNormalColor": "rgb(255, 255, 255)",
           "LinkNormalMiscellaneousStyles": "border-radius: 12px;\ntransition: all .3s ease-in-out;\ndisplay: table;\nmargin: 1.25em auto;",
           "LinkNormalUnderlined": false,
           "LinkSelectedUnderlined": false,
           "LinkVisitedColor": "rgb(255, 255, 255)",
-          "LinkVisitedMiscellaneousStyles": "background-color: #CC0020;",
+          "LinkVisitedMiscellaneousStyles": "background-color: #CC0020;\nborder: 2px solid #757575;\nborder-radius: 12px;",
           "MarginBottom": {
             "Unit": 0,
             "Value": null
@@ -35359,19 +35359,19 @@
           "MiscellaneousStyles": "   ",
           "PaddingBottom": {
             "Unit": 0,
-            "Value": 0.75
+            "Value": 0.625
           },
           "PaddingLeft": {
             "Unit": 0,
-            "Value": 2.4
+            "Value": 1.875
           },
           "PaddingRight": {
             "Unit": 0,
-            "Value": 2.4
+            "Value": 1.875
           },
           "PaddingTop": {
             "Unit": 0,
-            "Value": 0.75
+            "Value": 0.625
           },
           "ParentComponentWithTrigger": null,
           "RecordStatus": 0,
@@ -41744,7 +41744,7 @@
         "data": {
           "AnimationClass": null,
           "AnimationId": "00000000-0000-0000-0000-000000000000",
-          "BackgroundColor": "rgb(204, 0, 32)",
+          "BackgroundColor": "rgb(117, 117, 117)",
           "BackgroundGradientDegrees": 0,
           "BackgroundGradientDirection": 0,
           "BackgroundGradientEndingColor": "",
@@ -41763,7 +41763,7 @@
           "BackgroundImagePositionYKeyword": 0,
           "BackgroundImagePositionYUseKeyword": true,
           "BackgroundImageRepeat": 0,
-          "BorderColor": "",
+          "BorderColor": "rgb(117, 117, 117)",
           "BorderRadiusBottomLeft": {
             "Unit": 1,
             "Value": null
@@ -41781,8 +41781,8 @@
             "Value": null
           },
           "BorderSides": 15,
-          "BorderStyle": 0,
-          "BorderWidth": 0,
+          "BorderStyle": 1,
+          "BorderWidth": 2,
           "BulletColor": "",
           "BulletStyle": 0,
           "BulletWidth": 2,
@@ -41792,7 +41792,7 @@
           "DisplayColumnSeparator": false,
           "FontColor": "",
           "FontFamily": "Open Sans",
-          "FontSize": 1.25,
+          "FontSize": 1.27,
           "FontStyle": 0,
           "FontVariant": "700",
           "ForceReadOnLinkToNewLine": false,
@@ -41818,7 +41818,7 @@
           "HoverBackgroundImagePositionYKeyword": 0,
           "HoverBackgroundImagePositionYUseKeyword": true,
           "HoverBackgroundImageRepeat": 0,
-          "HoverBorderColor": "",
+          "HoverBorderColor": "rgb(255, 255, 255)",
           "HoverBorderRadiusBottomLeft": {
             "Unit": 1,
             "Value": null
@@ -41836,8 +41836,8 @@
             "Value": null
           },
           "HoverBorderSides": 15,
-          "HoverBorderStyle": 0,
-          "HoverBorderWidth": 0,
+          "HoverBorderStyle": 1,
+          "HoverBorderWidth": 2,
           "HoverCapitalization": 0,
           "HoverFontColor": "",
           "HoverFontFamily": "",
@@ -41876,14 +41876,14 @@
           "HoverShadowSpreadRadius5": 0,
           "HoverTextAlignment": 0,
           "LinkHoverColor": "rgb(0, 0, 0)",
-          "LinkHoverMiscellaneousStyles": "",
+          "LinkHoverMiscellaneousStyles": "border-radius: 12px;",
           "LinkHoverUnderlined": true,
           "LinkNormalColor": "rgb(255, 255, 255)",
           "LinkNormalMiscellaneousStyles": "border-radius: 12px;\ntransition: all .3s ease-in-out;\ndisplay: table;\nmargin: 1.25em auto;",
           "LinkNormalUnderlined": false,
           "LinkSelectedUnderlined": false,
           "LinkVisitedColor": "rgb(255, 255, 255)",
-          "LinkVisitedMiscellaneousStyles": "background-color: #CC0020;",
+          "LinkVisitedMiscellaneousStyles": "background-color: #CC0020;\nborder: 2px solid #757575;\nborder-radius: 12px;",
           "MarginBottom": {
             "Unit": 0,
             "Value": null
@@ -41903,19 +41903,19 @@
           "MiscellaneousStyles": "  ",
           "PaddingBottom": {
             "Unit": 0,
-            "Value": 0.75
+            "Value": 0.625
           },
           "PaddingLeft": {
             "Unit": 0,
-            "Value": 2.4
+            "Value": 1.875
           },
           "PaddingRight": {
             "Unit": 0,
-            "Value": 2.4
+            "Value": 1.875
           },
           "PaddingTop": {
             "Unit": 0,
-            "Value": 0.75
+            "Value": 0.625
           },
           "ParentComponentWithTrigger": null,
           "RecordStatus": 0,
