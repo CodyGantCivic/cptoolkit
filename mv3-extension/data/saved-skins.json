@@ -53572,7 +53572,7 @@
           "HoverBorderStyle": 0,
           "HoverBorderWidth": 0,
           "HoverCapitalization": -1,
-          "HoverFontColor": "",
+          "HoverFontColor": "rgb(255, 255, 255)",
           "HoverFontFamily": "",
           "HoverFontSize": 0,
           "HoverFontStyle": 0,
