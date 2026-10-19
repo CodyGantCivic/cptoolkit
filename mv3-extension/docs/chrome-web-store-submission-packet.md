@@ -1,22 +1,22 @@
 # Chrome Web Store Submission Packet
 
-Last updated: 2026-07-27
+Last updated: 2026-10-18
 
 Purpose: keep the upload/review notes for the MV3 Web Store readiness submission in the repo.
 
 ## Package
 
 - Extension name: `CivicPlus Internal Toolkit`
-- Submission version: `1.1.6`
+- Submission version: `1.2.0` (previous version: `1.1.71`)
 - Source folder: `mv3-extension`
 - Local unpacked test folder: the same `mv3-extension` source folder
 - Production build folder: none; the Store package is assembled directly from the tested source tree
-- Upload artifact: `mv3-extension/dist/civicplus-internal-toolkit-1.1.6.zip`
-- Verified size: 2,122,318 bytes
-- Verified runtime file count: 184
-- SHA-256: `FA952EA39B2E941CDA542ED681D47FAF0C7E1C70D534D936A56B08AC61158F7E`
+- Upload artifact: `mv3-extension/dist/civicplus-internal-toolkit-1.2.0.zip`
+- Verified size: 2,240,451 bytes
+- Verified runtime file count: 191
+- SHA-256: `AB101DA3D279FB6E0DA79782FDFE15D51E8F5044BAE92A1F25FACD548A75C0BA`
 - Privacy policy URL: `https://cp-vlasak.github.io/cptoolkit/privacy.html`
-- Submission type: existing Chrome Web Store item update if the old listing can be recovered; otherwise new item submission using the same package.
+- Submission type: update to the existing Chrome Web Store item. This update adds one new permission, `declarativeContent` (green toolbar dot on CivicPlus-looking pages); its justification is in the permissions section below.
 
 ## Single Purpose
 
@@ -66,15 +66,15 @@ If the dashboard asks for data categories, review carefully with the final priva
 
 1. Confirm local QA by loading the source-of-truth `mv3-extension` folder unpacked.
 2. Run release checks and guardrails.
-3. Create `mv3-extension/dist/civicplus-internal-toolkit-1.1.6.zip` directly from the tested source tree, including only `manifest.json`, `css/`, `data/`, `html/`, `images/`, `js/`, and `socials/`.
-4. Verify `manifest.json` is at the ZIP root, the packaged version is `1.1.6`, and every packaged file matches the source tree.
+3. Create `mv3-extension/dist/civicplus-internal-toolkit-1.2.0.zip` directly from the tested source tree, including only `manifest.json`, `css/`, `data/`, `html/`, `images/`, `js/`, and `socials/`.
+4. Verify `manifest.json` is at the ZIP root, the packaged version is `1.2.0`, and every packaged file matches the source tree.
 5. Upload the ZIP in Chrome Developer Dashboard.
 6. Review Package, Store Listing, Privacy Practices, and Distribution tabs.
 7. Submit for review.
 
-The artifact above was assembled and byte-compared against the source tree on 2026-07-26. If any runtime source file changes during acceptance testing, rebuild the ZIP and replace the size, file count, and SHA-256 recorded here.
+The artifact above was assembled and byte-compared against the source tree on 2026-10-18. If any runtime source file changes during acceptance testing, rebuild the ZIP and replace the size, file count, and SHA-256 recorded here.
 
-Release owner reported local unpacked acceptance testing passed on 2026-07-27 and approved the candidate for merge and upload. Rollback checkpoint `pre-v1.1.6-2026-07-27` preserves the exact pre-merge v1.1.5 `main` state.
+Version 1.2.0 builds on the shipped `1.1.71`. Local unpacked acceptance testing for 1.2.0 is pending with the release owner; do not upload until it passes. Rollback checkpoint for the 1.1.6 release: `pre-v1.1.6-2026-07-27`.
 
 ## Manual QA Still Worth Doing Before Clicking Submit
 
@@ -85,3 +85,4 @@ Release owner reported local unpacked acceptance testing passed on 2026-07-27 an
 - Theme Manager, Widget Manager, Graphic Links, snippet library, and Fancy Button library load without console regressions.
 - Context-menu on-demand tools still appear and run on matching pages.
 - Prevent-timeout has no extension errors after a two-minute alarm cycle with several CP tabs open.
+- New in 1.2.0: the green dot appears on CivicPlus-looking pages; the Copy selector menu (media queries, row prefixes) works; the Skin Manager lists the new News Flash, Footer and Utilities defaults first; the Rectangular arrow snippet shows in the flyout for a news skin's Footer.

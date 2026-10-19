@@ -34,6 +34,38 @@
     <hr>
     <div id="message"></div>
     <div id="version-list">
+      <div class="version v1.2.0">
+        <h4>Version 1.2.0</h4>
+        <h5>New Default Skins &amp; Copy Selector Tools</h5>
+
+        <div class="tool-category">New Features</div>
+        <ul class="tool-list">
+          <li><strong>10 New Default Skins:</strong> The Skin Manager now ships with ready-made News Flash skins (News Carousel, News Carousel + Background, News List, News List + Background), Footer skins (Horizontal, Vertical, Social Icons), and Utilities skins (Tabs, Tabs + Background, Tabs Left + Panel).</li>
+          <li><strong>Defaults Listed First:</strong> In the Skin Manager, built-in defaults now list ahead of your own saved skins in every category, and the Default/Skin labels have room next to each name.</li>
+          <li><strong>Rectangular Arrows Snippet:</strong> Rectangular arrow variant for News Flash carousels.</li>
+          <li><strong>Update Selectors Button:</strong> The Fancy Button Builder shows whether a button's selectors are up to date (green) or still in the old format (red). One click adds the missing selector to every style box. Nothing saves until you save the button.</li>
+          <li><strong>Copy Selector in the Editor:</strong> A new toolbar button in the CSS editor opens a small menu. Choose "Copy selector", or a ready-made <code>@media (min-width: ...)</code> block for 40em, 63em or 2200px that already wraps the same selector and is closed, ready for your styles. You can also add your own media queries (for example <code>50em</code> or <code>(max-width: 30em)</code>) with "+ Add media query" and remove them with the &times; next to each one. An "Outer prefix" row at the top of the menu (None, wide, not wide, or your own) puts the outer row (<code>.row.outer.wide</code> or <code>.row.outer:not(.wide)</code>) in front of whatever you copy, and on widget skin boxes a "Widget row" choice adds the widget's own row (<code>.row.wide</code> or <code>.row:not(.wide)</code>) after <code>.widget.skinN</code>. Both also apply to the media queries, and the menu stays a fixed size and scrolls on small screens. It copies a ready-to-paste selector for the box you are in, for Fancy Button styles, widget skin Advanced Styles (for example <code>.widget.skin12 a:hover</code>), content and structural containers, navigation menus such as flyouts and the left-nav accordion, and the site-wide default styles such as headlines.</li>
+          <li><strong>CSS Snippets Toggle:</strong> CSS Snippets now has its own on/off switch and sidebar button in the toolbar popup, separate from Mini IDE.</li>
+          <li><strong>Vanity Domain Approval:</strong> On a site the toolkit has not been approved for, the toolbar icon gets a green dot on CivicPlus pages, and the toolbar popup opens by itself on admin addresses so you can choose to trust the site. If you switch away, it comes back when you return.</li>
+          <li><strong>Copy Several Skins at Once:</strong> Copying a widget skin no longer saves the page each time. Copy as many as you need, then save once; the toolkit fixes all of the copies together, shows a progress screen, and ends with one summary. The new skin preview now stays in the main content container only.</li>
+        </ul>
+
+        <div class="tool-category">Improvements</div>
+        <ul class="tool-list">
+          <li><strong>Mega Menu Defaults:</strong> The four default Mega Menu skins now match the latest design changes: white hover text and links, a hover underline on the default, and softer borders on the rounded skins.</li>
+          <li><strong>Calendar Defaults:</strong> The Calendar Grid and Calendar Strip defaults have the new View All look (colors, padding, border), the Grid skins have a red title underline and darker link text, and the Colored and Rounded Weekdays day circles are red with a gray hover.</li>
+        </ul>
+
+        <div class="tool-category">Bug Fixes</div>
+        <ul class="tool-list">
+          <li><strong>Toolkit Loading on Refresh:</strong> Fixed a random case where refreshing a Design Center page loaded only some of the toolkit's tools. Admin pages now wait to be recognized as admin pages.</li>
+          <li><strong>Font Filter After Reopening:</strong> The Manage Fonts filter box no longer disappears after you close and reopen the window.</li>
+          <li><strong>Insert Powered By:</strong> The tool no longer adds its own style block; the byline icon is styled by the Powered By skin instead.</li>
+          <li><strong>Updated Icons:</strong> Refreshed the black LinkedIn and Mastodon social icons used by the button import defaults.</li>
+          <li><strong>Pseudo Override Button Removed:</strong> The small <code>::0</code> button in the CSS editor toolbar was removed.</li>
+        </ul>
+      </div>
+
       <div class="version v1.1.71">
         <h4>Version 1.1.71</h4>
         <h5>Saved Skins, Fancy Button Reliability &amp; Bug Fixes</h5>
@@ -48,11 +80,6 @@
           <li><strong>"Powered By" Skin:</strong> A new skin for the "Government Websites by CivicPlus" byline, so its colors can be set through Theme Manager.</li>
           <li><strong>Fancy Button ID Badge:</strong> The Fancy Button Builder's title now shows which numbered button you're editing.</li>
           <li><strong>Fancy Button Selector Copy:</strong> One click copies the exact CSS selector for any Advanced Styles panel.</li>
-          <li><strong>Update Selectors Button:</strong> The Fancy Button Builder shows whether a button's selectors are up to date (green) or still in the old format (red). One click adds the missing selector to every style box. Nothing saves until you save the button.</li>
-          <li><strong>Copy Selector in the Editor:</strong> A new toolbar button in the CSS editor opens a small menu. Choose "Copy selector", or a ready-made <code>@media (min-width: ...)</code> block for 40em, 63em or 2200px that already wraps the same selector and is closed, ready for your styles. You can also add your own media queries (for example <code>50em</code> or <code>(max-width: 30em)</code>) with "+ Add media query" and remove them with the &times; next to each one. An "Outer prefix" row at the top of the menu (None, wide, not wide, or your own) puts the outer row (<code>.row.outer.wide</code> or <code>.row.outer:not(.wide)</code>) in front of whatever you copy, and on widget skin boxes a "Widget row" choice adds the widget's own row (<code>.row.wide</code> or <code>.row:not(.wide)</code>) after <code>.widget.skinN</code>. Both also apply to the media queries, and the menu stays a fixed size and scrolls on small screens. It copies a ready-to-paste selector for the box you are in, for Fancy Button styles, widget skin Advanced Styles (for example <code>.widget.skin12 a:hover</code>), content and structural containers, navigation menus such as flyouts and the left-nav accordion, and the site-wide default styles such as headlines.</li>
-          <li><strong>CSS Snippets Toggle:</strong> CSS Snippets now has its own on/off switch and sidebar button in the toolbar popup, separate from Mini IDE.</li>
-          <li><strong>Vanity Domain Approval:</strong> On a site the toolkit has not been approved for, the toolbar icon gets a green dot on CivicPlus pages, and the toolbar popup opens by itself on admin addresses so you can choose to trust the site. If you switch away, it comes back when you return.</li>
-          <li><strong>Copy Several Skins at Once:</strong> Copying a widget skin no longer saves the page each time. Copy as many as you need, then save once; the toolkit fixes all of the copies together, shows a progress screen, and ends with one summary. The new skin preview now stays in the main content container only.</li>
         </ul>
 
         <div class="tool-category">Bug Fixes</div>
@@ -64,11 +91,6 @@
           <li><strong>Fancy Button Selector Persistence:</strong> Reopening a button's style editor no longer erases its real ID and replaces it with a placeholder.</li>
           <li><strong>Fancy Button Import:</strong> Importing a button from the Template Library now reliably learns its real, CMS-assigned ID.</li>
           <li><strong>Snippet Library Button:</strong> Fixed the Snippet Library button next to the in-page CSS editor sometimes doing nothing when clicked.</li>
-          <li><strong>Toolkit Loading on Refresh:</strong> Fixed a random case where refreshing a Design Center page loaded only some of the toolkit's tools. Admin pages now wait to be recognized as admin pages.</li>
-          <li><strong>Font Filter After Reopening:</strong> The Manage Fonts filter box no longer disappears after you close and reopen the window.</li>
-          <li><strong>Insert Powered By:</strong> The tool no longer adds its own style block; the byline icon is styled by the Powered By skin instead.</li>
-          <li><strong>Updated Icons:</strong> Refreshed the black LinkedIn and Mastodon social icons used by the button import defaults.</li>
-          <li><strong>Pseudo Override Button Removed:</strong> The small <code>::0</code> button in the CSS editor toolbar was removed.</li>
           <li><strong>"Powered By" Skin Setup:</strong> Fixed a stray extra closing bracket in the skin's generated Wrapper styles from the base-skin setup tool.</li>
         </ul>
       </div>
