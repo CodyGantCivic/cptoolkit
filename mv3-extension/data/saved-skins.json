@@ -18684,11 +18684,11 @@
           "LinkHoverMiscellaneousStyles": "",
           "LinkHoverUnderlined": true,
           "LinkNormalColor": "",
-          "LinkNormalMiscellaneousStyles": "background-size: contain;\nposition: relative; \nz-index: 0;\n}\n\n.widget.skin128 .miniCalendar td > a::after {\ncontent: \"\";\nposition: absolute;\nleft: 50%;\ntop: 50%;\ntransform: translate(-50%, -50%);\nwidth: 2.25em;\nheight: 2.25em;\nborder-radius: 50%;\nz-index: -1;\nbackground-color: #000;\nborder: 2px solid #FFF;\ntransition: all .3s ease;",
+          "LinkNormalMiscellaneousStyles": "background-size: contain;\nposition: relative; \nz-index: 0;\n}\n\n.widget.skin128 .miniCalendar td > a::after {\ncontent: \"\";\nposition: absolute;\nleft: 50%;\ntop: 50%;\ntransform: translate(-50%, -50%);\nwidth: 2.25em;\nheight: 2.25em;\nborder-radius: 50%;\nz-index: -1;\nbackground-color: #CC0020;\nborder: 2px solid #FFF;\ntransition: all .3s ease;",
           "LinkNormalUnderlined": false,
           "LinkSelectedUnderlined": false,
           "LinkVisitedColor": "",
-          "LinkVisitedMiscellaneousStyles": "}\n\n.widget.skin128 .miniCalendar td > a:is(:hover, :focus, :active)::after {\nbackground-color: #CC0020;\n",
+          "LinkVisitedMiscellaneousStyles": "}\n\n.widget.skin128 .miniCalendar td > a:is(:hover, :focus, :active)::after {\nbackground-color: #383838;\n",
           "MarginBottom": {
             "Unit": 0,
             "Value": null
@@ -25232,7 +25232,7 @@
           "LinkNormalUnderlined": false,
           "LinkSelectedUnderlined": false,
           "LinkVisitedColor": "",
-          "LinkVisitedMiscellaneousStyles": "}\n\n.widget.skin150 .miniCalendar td > a:is(:hover, :focus, :active)::after {\nbackground-color: #CC0020;\n",
+          "LinkVisitedMiscellaneousStyles": "}\n\n.widget.skin150 .miniCalendar td > a:is(:hover, :focus, :active)::after {\nbackground-color: #383838;\n",
           "MarginBottom": {
             "Unit": 0,
             "Value": null
