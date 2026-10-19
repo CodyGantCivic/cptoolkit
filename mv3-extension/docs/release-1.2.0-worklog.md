@@ -1,6 +1,6 @@
 # CP Toolkit — Next Release Worklog
 
-Status: in progress. Release owner is still fixing things before this goes out; version number not yet assigned (current shipped `manifest.json` version is `1.1.6`). Rename this file to `docs/release-X.X.X-worklog.md` once a version is picked, matching the convention in `docs/release-1.1.6-worklog.md`.
+Status: version `1.2.0` prepared for Chrome Web Store submission on 2026-10-18 (previous shipped version: `1.1.71`). Upload package: `mv3-extension/dist/civicplus-internal-toolkit-1.2.0.zip`. Pending: release-owner acceptance testing and Store submission.
 
 This is the running rundown of everything on `pr/widget-skin-custom-css-indicator` that hasn't shipped yet (i.e. everything ahead of `main`). Append new dated entries below as more work lands — do not rewrite prior entries.
 
@@ -53,3 +53,12 @@ This is the running rundown of everything on `pr/widget-skin-custom-css-indicato
 - **Small fixes:** Manage Fonts filter re-adds itself after the modal is reopened (the modal element is reused with rebuilt contents); Insert Powered By no longer adds a `<style>` block (the Powered By skin carries those rules); black LinkedIn and Mastodon social icons replaced.
 - **Skin copy rework — flagged, may need to be reverted after rollout.** It changes when copies are saved and cannot be tested against every widget type or amount of advanced-style CSS. Copy Skin no longer saves per copy; each copy is remembered with the unsaved skin it created; the next Save assigns real IDs and `fix-copied-skin-references-helper.js` repairs every copy in one pass, with one summary. New-skin previews are dismissed only in `data-cprole="contentContainer"` (the main container is left alone), Manage Widget Skins is reopened, and a shared overlay (`skin-operation-overlay-helper.js`, Dismiss button plus failsafe timer) covers the CMS re-render. Open: after a copy the main container's preview was still seen disappearing; the toolkit never clicks it, so a console warning now records when it vanishes, to find out what removes it. To revert, drop the commits touching `widget-skin-default-override-helper.js`, `fix-copied-skin-references-helper.js`, `skin-operation-overlay-helper.js` and their two loaders.
 - Not run: `node tests/*.test.js` (no Node on the authoring machine). Everything above was reviewed by reading and live-checked by the owner, not machine-tested.
+
+### 2026-10-18 — Default skins, snippet default, skin defaults polish, 1.2.0 packaging
+
+- **New default skins (10):** News Flash (News Carousel, News Carousel + Background, News List, News List + Background), Footer (Horizontal, Vertical, Social Icons), Utilities (Tabs, Tabs + Background, Tabs Left + Panel) added to `data/saved-skins.json`; source site/URL metadata removed.
+- **Skin Manager:** built-in defaults list ahead of user skins in each category; the Default/Skin chip has spacing before the skin name.
+- **Updated defaults:** the four Mega Menu defaults match the adjusted "-2" clones; Calendar Grid defaults take the new View All, title underline and link colors; Calendar Strip defaults take the new View All and #222 link colors; Colored and Rounded Weekdays day circles use #CC0020 with a #383838 hover; View All margin uses rem.
+- **First bundled snippet default:** `rectangular-buttons` (News, Footer component 11), registered under the `news` flyout context in `KEY_TO_CONTEXT_MAP`.
+- **Release prep:** version bumped to `1.2.0`; 1.1.71 changelog entry restored to its released contents and this batch moved into a new 1.2.0 entry; submission packet updated for the 1.2.0 package.
+- **Manifest change for review:** adds the `declarativeContent` permission (green toolbar dot) and the skin overlay helper to the reviewed vanity-domain web-accessible list.
