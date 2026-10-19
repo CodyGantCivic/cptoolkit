@@ -561,6 +561,7 @@
             'mega-menu-border': ['megaMenu'],
             'carousel-basics': ['news'],
             'carousel-height-matched': ['news'],
+            'rectangular-buttons': ['news'],
             'slideshow-basics': ['slideshow'],
             'footer-lines': ['footer'],
             'popular-links': ['links'],
