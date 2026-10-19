@@ -12,9 +12,9 @@ Purpose: keep the upload/review notes for the MV3 Web Store readiness submission
 - Local unpacked test folder: the same `mv3-extension` source folder
 - Production build folder: none; the Store package is assembled directly from the tested source tree
 - Upload artifact: `mv3-extension/dist/civicplus-internal-toolkit-1.2.1.zip`
-- Verified size: 2,240,469 bytes
+- Verified size: 2,240,894 bytes
 - Verified runtime file count: 191
-- SHA-256: `67D0E2C556161199430FC9175BE549B1CC8276852104348E35195A1447CD8956`
+- SHA-256: `AEC7DF5A485609B30C5D40E2DDC100B92D129A78B57BEB5A5759EA41886C6687`
 - Privacy policy URL: `https://cp-vlasak.github.io/cptoolkit/privacy.html`
 - Submission type: update to the existing Chrome Web Store item. If the 1.2.0 submission is still pending review, cancel it in the dashboard and upload this 1.2.1 package in its place (the version must be higher than 1.2.0); if 1.2.0 has already published, submit 1.2.1 as a normal update. This update adds one new permission, `declarativeContent` (green toolbar dot on CivicPlus-looking pages); its justification is in the permissions section below.
 
@@ -74,7 +74,7 @@ If the dashboard asks for data categories, review carefully with the final priva
 
 The artifact above was assembled and byte-compared against the source tree on 2026-10-19. If any runtime source file changes during acceptance testing, rebuild the ZIP and replace the size, file count, and SHA-256 recorded here.
 
-Version 1.2.1 is a one-fix patch on top of 1.2.0: the View All visited-state background on the Calendar and News Flash skin defaults was red and is now gray (`#757575`). The 1.2.0 package that was submitted first had SHA-256 `AB101DA3D279FB6E0DA79782FDFE15D51E8F5044BAE92A1F25FACD548A75C0BA`. Local unpacked acceptance testing for 1.2.1 is pending with the release owner; do not upload until it passes. Rollback checkpoint for the 1.1.6 release: `pre-v1.1.6-2026-07-27`.
+Version 1.2.1 is a bugfix patch on top of 1.2.0: (1) the View All visited-state background on the Calendar and News Flash skin defaults was red and is now gray (`#757575`); (2) Multiple Category Upload no longer lets Submit be clicked twice while categories are saving. The 1.2.0 package that was submitted first had SHA-256 `AB101DA3D279FB6E0DA79782FDFE15D51E8F5044BAE92A1F25FACD548A75C0BA`. Local unpacked acceptance testing for 1.2.1 is pending with the release owner; do not upload until it passes. Rollback checkpoint for the 1.1.6 release: `pre-v1.1.6-2026-07-27`.
 
 ## Manual QA Still Worth Doing Before Clicking Submit
 
