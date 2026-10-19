@@ -68,6 +68,11 @@
       return;
     }
 
+    // Initialize once per page. A second run would add a second trigger button and
+    // a second modal with its own Submit handler.
+    if (window.__cpMultipleCategoryUploadInit) return;
+    window.__cpMultipleCategoryUploadInit = true;
+
     // console.log(TOOLKIT_NAME + ' Initializing...');
 
     // Inject styles
@@ -214,9 +219,18 @@
     });
 
     // Submit button - posts each category
+    let submitting = false;
     modal
       .querySelector("#cp-mcu-submit")
       .addEventListener("click", function () {
+        // The page only reloads after every save finishes, so a second click while
+        // saving would create every category a second time. Ignore repeat clicks.
+        if (submitting) return;
+        submitting = true;
+        const submitButton = modal.querySelector("#cp-mcu-submit");
+        submitButton.disabled = true;
+        submitButton.textContent = "Submitting...";
+        const seenNames = new Set();
         const nameInputs = Array.from(modal.querySelectorAll(".cp-mcu-name"));
         const statusSelects = Array.from(
           modal.querySelectorAll(".cp-mcu-status"),
@@ -238,6 +252,11 @@
         nameInputs.forEach(function (input, idx) {
           const name = input.value.trim();
           if (!name) return;
+
+          // Skip a name that is repeated within this batch.
+          const nameKey = name.toLowerCase();
+          if (seenNames.has(nameKey)) return;
+          seenNames.add(nameKey);
 
           const status = statusSelects[idx]
             ? statusSelects[idx].value
@@ -280,6 +299,10 @@
             window.location.reload();
           });
         } else {
+          // Nothing to submit: unlock the button and close.
+          submitting = false;
+          submitButton.disabled = false;
+          submitButton.textContent = "Submit";
           closeModal();
         }
       });
