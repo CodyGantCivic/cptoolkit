@@ -12,9 +12,9 @@ Purpose: keep the upload/review notes for the MV3 Web Store readiness submission
 - Local unpacked test folder: the same `mv3-extension` source folder
 - Production build folder: none; the Store package is assembled directly from the tested source tree
 - Upload artifact: `mv3-extension/dist/civicplus-internal-toolkit-1.2.0.zip`
-- Verified size: 2,240,451 bytes
+- Verified size: 2,240,377 bytes
 - Verified runtime file count: 191
-- SHA-256: `AB101DA3D279FB6E0DA79782FDFE15D51E8F5044BAE92A1F25FACD548A75C0BA`
+- SHA-256: `F272A889AA61E86EE77C47ABE4A14BE100A38D49FA0487C6D2494F74FF8B92D6`
 - Privacy policy URL: `https://cp-vlasak.github.io/cptoolkit/privacy.html`
 - Submission type: update to the existing Chrome Web Store item. This update adds one new permission, `declarativeContent` (green toolbar dot on CivicPlus-looking pages); its justification is in the permissions section below.
 
