@@ -1675,6 +1675,7 @@
                     color: #1565c0;
                     background: rgba(25, 118, 210, 0.12);
                     flex-shrink: 0;
+                    margin-right: 8px;
                 }
                 .copied-skins-section {
                     border-bottom: 2px solid #1976d2;
