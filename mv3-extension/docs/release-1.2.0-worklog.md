@@ -1,6 +1,6 @@
 # CP Toolkit — Next Release Worklog
 
-Status: version `1.2.0` prepared for Chrome Web Store submission on 2026-10-18 (previous shipped version: `1.1.71`). Upload package: `mv3-extension/dist/civicplus-internal-toolkit-1.2.0.zip`. Pending: release-owner acceptance testing and Store submission.
+Status: `1.2.0` was submitted to the Chrome Web Store on 2026-10-18; `1.2.1` (a late one-fix patch, 2026-10-19) replaces it. Upload package for 1.2.1: `mv3-extension/dist/civicplus-internal-toolkit-1.2.1.zip`. Previous shipped version: `1.1.71`. Pending: release-owner acceptance testing and Store submission of 1.2.1.
 
 This is the running rundown of everything on `pr/widget-skin-custom-css-indicator` that hasn't shipped yet (i.e. everything ahead of `main`). Append new dated entries below as more work lands — do not rewrite prior entries.
 
@@ -62,3 +62,9 @@ This is the running rundown of everything on `pr/widget-skin-custom-css-indicato
 - **First bundled snippet default:** `rectangular-buttons` (News, Footer component 11), registered under the `news` flyout context in `KEY_TO_CONTEXT_MAP`.
 - **Release prep:** version bumped to `1.2.0`; 1.1.71 changelog entry restored to its released contents and this batch moved into a new 1.2.0 entry; submission packet updated for the 1.2.0 package.
 - **Manifest change for review:** adds the `declarativeContent` permission (green toolbar dot) and the skin overlay helper to the reviewed vanity-domain web-accessible list.
+
+### 2026-10-19 — 1.2.1 late patch
+
+- **Fix:** the View All visited-state custom styles on the 11 gray View All skin defaults (7 Calendar, 4 News Flash) set `background-color: #CC0020` while the normal state is `#757575`, so a visited View All button turned red. Visited background is now `#757575`. This was found after the 1.2.0 submission, hence the patch.
+- **Release prep:** version `1.2.1` in `manifest.json` and `js/background/service-worker.js`; new 1.2.1 entry in `html/changelog.html` (the extension opens the changelog on update and highlights entries newer than the user's previous version, so the entry's `v1.2.1` class matters); submission packet updated; package rebuilt.
+- **Audit:** every skin default was scanned for visited/normal background mismatches. The only other hit (Calendar Grid Boxes day link) is a hover rule stored in the visited field, which is intended.

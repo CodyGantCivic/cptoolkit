@@ -1,22 +1,22 @@
 # Chrome Web Store Submission Packet
 
-Last updated: 2026-10-18
+Last updated: 2026-10-19
 
 Purpose: keep the upload/review notes for the MV3 Web Store readiness submission in the repo.
 
 ## Package
 
 - Extension name: `CivicPlus Internal Toolkit`
-- Submission version: `1.2.0` (previous version: `1.1.71`)
+- Submission version: `1.2.1` (late patch; `1.2.0` was submitted first on 2026-10-18 and this replaces it; last shipped version before that: `1.1.71`)
 - Source folder: `mv3-extension`
 - Local unpacked test folder: the same `mv3-extension` source folder
 - Production build folder: none; the Store package is assembled directly from the tested source tree
-- Upload artifact: `mv3-extension/dist/civicplus-internal-toolkit-1.2.0.zip`
-- Verified size: 2,240,377 bytes
+- Upload artifact: `mv3-extension/dist/civicplus-internal-toolkit-1.2.1.zip`
+- Verified size: 2,240,469 bytes
 - Verified runtime file count: 191
-- SHA-256: `F272A889AA61E86EE77C47ABE4A14BE100A38D49FA0487C6D2494F74FF8B92D6`
+- SHA-256: `67D0E2C556161199430FC9175BE549B1CC8276852104348E35195A1447CD8956`
 - Privacy policy URL: `https://cp-vlasak.github.io/cptoolkit/privacy.html`
-- Submission type: update to the existing Chrome Web Store item. This update adds one new permission, `declarativeContent` (green toolbar dot on CivicPlus-looking pages); its justification is in the permissions section below.
+- Submission type: update to the existing Chrome Web Store item. If the 1.2.0 submission is still pending review, cancel it in the dashboard and upload this 1.2.1 package in its place (the version must be higher than 1.2.0); if 1.2.0 has already published, submit 1.2.1 as a normal update. This update adds one new permission, `declarativeContent` (green toolbar dot on CivicPlus-looking pages); its justification is in the permissions section below.
 
 ## Single Purpose
 
@@ -66,15 +66,15 @@ If the dashboard asks for data categories, review carefully with the final priva
 
 1. Confirm local QA by loading the source-of-truth `mv3-extension` folder unpacked.
 2. Run release checks and guardrails.
-3. Create `mv3-extension/dist/civicplus-internal-toolkit-1.2.0.zip` directly from the tested source tree, including only `manifest.json`, `css/`, `data/`, `html/`, `images/`, `js/`, and `socials/`.
-4. Verify `manifest.json` is at the ZIP root, the packaged version is `1.2.0`, and every packaged file matches the source tree.
+3. Create `mv3-extension/dist/civicplus-internal-toolkit-1.2.1.zip` directly from the tested source tree, including only `manifest.json`, `css/`, `data/`, `html/`, `images/`, `js/`, and `socials/`.
+4. Verify `manifest.json` is at the ZIP root, the packaged version is `1.2.1`, and every packaged file matches the source tree.
 5. Upload the ZIP in Chrome Developer Dashboard.
 6. Review Package, Store Listing, Privacy Practices, and Distribution tabs.
 7. Submit for review.
 
-The artifact above was assembled and byte-compared against the source tree on 2026-10-18. If any runtime source file changes during acceptance testing, rebuild the ZIP and replace the size, file count, and SHA-256 recorded here.
+The artifact above was assembled and byte-compared against the source tree on 2026-10-19. If any runtime source file changes during acceptance testing, rebuild the ZIP and replace the size, file count, and SHA-256 recorded here.
 
-Version 1.2.0 builds on the shipped `1.1.71`. Local unpacked acceptance testing for 1.2.0 is pending with the release owner; do not upload until it passes. Rollback checkpoint for the 1.1.6 release: `pre-v1.1.6-2026-07-27`.
+Version 1.2.1 is a one-fix patch on top of 1.2.0: the View All visited-state background on the Calendar and News Flash skin defaults was red and is now gray (`#757575`). The 1.2.0 package that was submitted first had SHA-256 `AB101DA3D279FB6E0DA79782FDFE15D51E8F5044BAE92A1F25FACD548A75C0BA`. Local unpacked acceptance testing for 1.2.1 is pending with the release owner; do not upload until it passes. Rollback checkpoint for the 1.1.6 release: `pre-v1.1.6-2026-07-27`.
 
 ## Manual QA Still Worth Doing Before Clicking Submit
 
@@ -85,4 +85,4 @@ Version 1.2.0 builds on the shipped `1.1.71`. Local unpacked acceptance testing 
 - Theme Manager, Widget Manager, Graphic Links, snippet library, and Fancy Button library load without console regressions.
 - Context-menu on-demand tools still appear and run on matching pages.
 - Prevent-timeout has no extension errors after a two-minute alarm cycle with several CP tabs open.
-- New in 1.2.0: the green dot appears on CivicPlus-looking pages; the Copy selector menu (media queries, row prefixes) works; the Skin Manager lists the new News Flash, Footer and Utilities defaults first; the Rectangular arrow snippet shows in the flyout for a news skin's Footer.
+- New in 1.2.0: the green dot appears on CivicPlus-looking pages; the Copy selector menu (media queries, row prefixes) works; the Skin Manager lists the new News Flash, Footer and Utilities defaults first; a View All button on a Calendar or News Flash default skin stays gray after it has been visited (1.2.1); the Rectangular arrow snippet shows in the flyout for a news skin's Footer.
