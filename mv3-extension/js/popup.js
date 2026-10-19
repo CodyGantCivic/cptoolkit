@@ -20,6 +20,7 @@ const KNOWN_PLATFORM_HOSTS = [
 const categories = {
   "CSS & Design Tools": [
     "mini-ide",
+    "css-snippets",
     "custom-css-deployer",
     "option-set-importer",
     "widget-skin-advanced-style-helper",
@@ -55,6 +56,10 @@ const categories = {
   "Session & Status": ["prevent-timeout"],
   "Other Tools": ["remember-image-picker-state", "show-changelog"],
 };
+
+const VANITY_DISMISSED_KEY = 'cp-toolkit-vanity-dismissed-hosts';
+const VANITY_POPUP_CONTEXT_KEY = 'cp-toolkit-vanity-popup-context';
+const VANITY_ADMIN_PATH = /^\/(?:admin|designcenter)(?:\/|$)/i;
 
 function normalizeHostname(hostname) {
   return String(hostname || '').toLowerCase().replace(/\.$/, '');
@@ -110,8 +115,13 @@ async function detectCurrentTabWithDomDetector(tabId) {
         return { detected: false, lanes: [] };
       }
 
+      // On admin / Design Center URLs wait for the Admin lane, not just the
+      // first lane found: Live Edit markers can appear before Admin evidence
+      // and would leave the approved site with only the Live Edit tool set.
+      const location = (CPToolkitDomDetector.evaluatePage().location) || {};
+      const expectsAdmin = !!(location.isAdminPath || location.isDesignCenterPath);
       const result = await CPToolkitDomDetector.waitForDetection({
-        targetLanes: ['admin', 'live-edit', 'identity'],
+        targetLanes: expectsAdmin ? ['admin', 'identity'] : ['admin', 'live-edit', 'identity'],
         timeoutMs: 1500
       });
 
@@ -249,13 +259,91 @@ async function renderVanityTrustPrompt(statusDiv, tab, detection, originPattern)
   });
 
   statusDiv.appendChild(button);
+
+  const host = normalizeHostname(new URL(tab.url).hostname);
+  // Closing the popup is "not now": the automatic popup only opens once per
+  // browser session for each site. Clicking the toolbar icon on the site
+  // always shows this prompt again.
+  const neverButton = document.createElement('button');
+  neverButton.type = 'button';
+  neverButton.textContent = "Don't ask again for this site";
+  neverButton.style.cssText = [
+    'display:block', 'width:auto', 'height:auto', 'margin:8px auto 0', 'padding:0',
+    'background:none!important', 'border:none!important', 'box-shadow:none!important',
+    'color:#5f6b7a!important', 'font-size:11px', 'font-weight:normal',
+    'text-decoration:underline', 'cursor:pointer'
+  ].join(';');
+  neverButton.addEventListener('click', async () => {
+    await addHostToList(chrome.storage.local, VANITY_DISMISSED_KEY, host);
+    window.close();
+  });
+
+  statusDiv.appendChild(neverButton);
+}
+
+async function getAutoOpenedTabUrl(tabId) {
+  try {
+    const storage = chrome.storage.session || chrome.storage.local;
+    // One entry per tab, kept for as long as the tab is open, so waiting a
+    // while before clicking Trust doesn't lose the URL.
+    const settings = await storage.get(VANITY_POPUP_CONTEXT_KEY);
+    const map = settings[VANITY_POPUP_CONTEXT_KEY] || {};
+    const context = map[String(tabId)];
+    if (context && typeof context.url === 'string') {
+      return context.url;
+    }
+  } catch (error) {
+    // Fall through to the normal "No active tab" state.
+  }
+  return '';
+}
+
+async function addHostToList(storage, key, host) {
+  try {
+    const settings = await storage.get(key);
+    const list = Array.isArray(settings[key]) ? settings[key] : [];
+    if (!list.includes(host)) list.push(host);
+    await storage.set({ [key]: list });
+  } catch (error) {
+    // Dismissal is a convenience; the popup still closes if storage fails.
+  }
+}
+
+async function isHostInList(storage, key, host) {
+  try {
+    const settings = await storage.get(key);
+    return Array.isArray(settings[key]) && settings[key].includes(host);
+  } catch (error) {
+    return false;
+  }
+}
+
+// An automatically opened popup has no page access, so detection can't run.
+// For an unapproved site the URL is the only signal: show the approval prompt
+// for CivicPlus admin / Design Center paths unless the user said no already.
+async function renderUrlBasedTrustPrompt(statusDiv, tab, originPattern) {
+  const url = new URL(tab.url);
+  const host = normalizeHostname(url.hostname);
+  if (!VANITY_ADMIN_PATH.test(url.pathname)) return false;
+  if (await isHostInList(chrome.storage.local, VANITY_DISMISSED_KEY, host)) return false;
+
+  await renderVanityTrustPrompt(statusDiv, tab, { lanes: ['admin'] }, originPattern);
+  return true;
 }
 
 // Check if current tab is a CivicPlus site
 async function checkCivicPlusSite() {
   const statusDiv = document.getElementById('site-status');
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  
+  let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+  // A popup opened automatically (not by a click) has no activeTab grant, so
+  // Chrome hides the tab's URL. The service worker saw the navigation and left
+  // the URL for us.
+  if (tab && !tab.url) {
+    const knownUrl = await getAutoOpenedTabUrl(tab.id);
+    if (knownUrl) tab = Object.assign({}, tab, { url: knownUrl });
+  }
+
   if (!tab || !tab.url) {
     statusDiv.textContent = 'No active tab';
     statusDiv.className = 'status inactive';
@@ -301,7 +389,7 @@ async function checkCivicPlusSite() {
       } catch (scriptError) {
         if (hasTrustedOriginPermission) {
           setTrustedInactiveStatus(statusDiv, tab);
-        } else {
+        } else if (!(await renderUrlBasedTrustPrompt(statusDiv, tab, originPattern))) {
           setSiteStatus(statusDiv, 'inactive', 'fas fa-times-circle', 'Not a CivicPlus site');
         }
       }
@@ -381,7 +469,15 @@ async function toggleTool(toolId) {
   // Update UI
   const toolDiv = document.getElementById('tool-' + toolId);
   const statusSpan = toolDiv.querySelector('.tool-status');
-  
+
+  if (toolId === 'css-snippets') {
+    const sidebarBtn = toolDiv.querySelector('.tool-snippets-btn');
+    if (sidebarBtn) {
+      sidebarBtn.disabled = !newState;
+      sidebarBtn.title = newState ? 'Open CSS Snippets Sidebar' : 'Enable CSS Snippets first';
+    }
+  }
+
   if (newState) {
     toolDiv.classList.add('enabled');
     statusSpan.className = 'tool-status on';
@@ -455,11 +551,12 @@ function generateToolsUI(settings, activeTab) {
       
       toolDiv.appendChild(nameSpan);
 
-      // Add CSS Snippets icon button next to Mini IDE
-      if (toolId === 'mini-ide') {
+      // Add the Snippets sidebar icon button next to its own CSS Snippets toggle
+      if (toolId === 'css-snippets') {
         const snippetsBtn = document.createElement('button');
         snippetsBtn.className = 'tool-snippets-btn';
-        snippetsBtn.title = 'Open CSS Snippets Sidebar';
+        snippetsBtn.disabled = !isEnabled;
+        snippetsBtn.title = isEnabled ? 'Open CSS Snippets Sidebar' : 'Enable CSS Snippets first';
         snippetsBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>';
         snippetsBtn.addEventListener('click', async (e) => {
           e.stopPropagation();

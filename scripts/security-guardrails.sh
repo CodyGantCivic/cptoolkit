@@ -148,6 +148,7 @@ const expectedDynamicVanityResources = [
   'js/tools/on-load/helpers/fix-copied-skin-references-helper.js',
   'js/tools/on-load/helpers/widget-skin-change-handler.js',
   'js/tools/on-load/helpers/widget-skin-default-override-helper.js',
+  'js/tools/on-load/helpers/skin-operation-overlay-helper.js',
   'js/tools/on-load/helpers/widget-skin-custom-css-reader.js'
 ];
 

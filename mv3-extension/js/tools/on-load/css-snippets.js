@@ -561,6 +561,7 @@
             'mega-menu-border': ['megaMenu'],
             'carousel-basics': ['news'],
             'carousel-height-matched': ['news'],
+            'rectangular-buttons': ['news'],
             'slideshow-basics': ['slideshow'],
             'footer-lines': ['footer'],
             'popular-links': ['links'],
@@ -1674,6 +1675,7 @@
                     color: #1565c0;
                     background: rgba(25, 118, 210, 0.12);
                     flex-shrink: 0;
+                    margin-right: 8px;
                 }
                 .copied-skins-section {
                     border-bottom: 2px solid #1976d2;

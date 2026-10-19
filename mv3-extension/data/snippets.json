@@ -1,3 +1,15 @@
 {
-  
+  "rectangular-buttons": {
+    "type": "snippet",
+    "name": "Rectangular Buttons",
+    "category": "News",
+    "tags": [],
+    "description": "Rectangular arrow variant for News Flash carousels.",
+    "dynamicSelector": false,
+    "alwaysInQuickList": false,
+    "code": "",
+    "components": {
+      "11": "}\n\n.js .widget.skin182 .cpCarousel .arrow {\n    opacity: 1;\n}\n\n.js .widget.skin182 .cpCarousel .arrow::before {\n    background: #222222;\n    border-radius: 10px;\n    height: 64px;\n    width: 32px;\n    margin-top: -31px;\n    opacity: 1;\n}\n\n.js .widget.skin182 .cpCarousel .arrow:is(:hover, :focus, :active)::before {\n    background: #FFFFFF;\n}\n\n.js .widget.skin182 .cpCarousel .arrow.prev::after {\nmargin-left: -12px;\n}\n\n.js .widget.skin182 .cpCarousel .arrow.next::after {\nmargin-right: -12px;\n}\n\n.js .widget.skin182 .cpCarousel .arrow.prev:is(:hover, :focus, :active)::after {\n    border-right-color: #222222;\n}\n\n.js .widget.skin182 .cpCarousel .arrow.next:is(:hover, :focus, :active)::after {\n    border-left-color: #222222;"
+    }
+  }
 }

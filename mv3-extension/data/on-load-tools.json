@@ -6,6 +6,13 @@
     "version-introduced": "1.14.0",
     "help-text": "Adds a VS Code-like editing experience to CSS textareas in Theme Manager, Widget Manager, and Fancy Button Builder. Features include syntax highlighting with light/dark themes, CSS validation with error detection, line numbers, character counting, and a CSS snippets library. Disable this if you prefer the plain textarea. Note: Core CSS functionality (.skinN replacement, text limits) is handled by the separate 'Widget Skin Advanced Style Helper' and 'Graphic Link Advanced Style Helper' tools."
   },
+  "css-snippets": {
+    "name": "CSS Snippets",
+    "description": "Adds the CSS snippets library: the Snippets sidebar and the snippets dropdown inside the Mini IDE editor.",
+    "enabled-by-default": true,
+    "version-introduced": "1.14.0",
+    "help-text": "Adds the CSS snippets library to Theme Manager, Widget Manager, and Fancy Button Builder: a Snippets sidebar (open it from the popup button beside this tool) and the snippets dropdown in the Mini IDE editor toolbar. Turning this off hides both; Mini IDE keeps working without snippets."
+  },
   "custom-css-deployer": {
     "name": "Custom CSS Deployer",
     "description": "Deploy your own CSS overrides to selected CMS pages using rule-based matching.",

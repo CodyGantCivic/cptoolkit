@@ -206,12 +206,74 @@
       startObserving();
     }
 
+    // ----------------- copy selector snippet -----------------
+    // Each Advanced / Miscellaneous Styles box is labelled by the CMS with the
+    // selector it sits inside (e.g. ".widgetItem {") in text just above the
+    // box. The snippet prefixes that label with .widget.skinN so a new rule
+    // can be started at the cursor: "}" closes the box's own rule, then the
+    // full selector opens a new one. Any state in the label (:hover, :active)
+    // is carried through as-is.
+    // The label comes in two shapes: one node reading ".widgetItem {", or the
+    // selector in one node (".widget a:link") with a lone "{" node after it.
+    // The nearest label wins, and the search never crosses into another
+    // textarea's area, so a box can't pick up a neighbouring box's selector.
+    function findSelectorLabel(textarea) {
+      const clean = (text) => String(text || '').replace(/\s+/g, ' ').trim();
+      const looksLikeSelector = (text) => text.length > 0 && text.length <= 200 &&
+        text.indexOf('{') === -1 && text.indexOf('}') === -1 && /[.#:\[]/.test(text);
+      const isOpener = (text) => text.length > 1 && text.charAt(text.length - 1) === '{' &&
+        text.indexOf('{') === text.length - 1 && looksLikeSelector(text.slice(0, -1));
+
+      const ownArea = textarea.closest('.css-editor-wrapper') || textarea;
+      let sawLoneBrace = false;
+      let node = ownArea;
+      for (let depth = 0; depth < 4 && node && node !== document.body; depth++) {
+        let sibling = node.previousSibling;
+        for (let seen = 0; sibling && seen < 8; seen++, sibling = sibling.previousSibling) {
+          if (sibling.nodeType === 1 && sibling.querySelector && sibling.querySelector('textarea')) {
+            return null; // reached another box
+          }
+          const text = clean(sibling.textContent);
+          if (!text) continue;
+          if (text === '{') { sawLoneBrace = true; continue; }
+          if (isOpener(text)) return text.slice(0, -1).trim();
+          if (sawLoneBrace && looksLikeSelector(text)) return text;
+          if (sawLoneBrace) return null; // text before "{" isn't a selector
+        }
+        node = node.parentElement;
+      }
+      return null;
+    }
+
+    function buildSkinSelector(labelSelector, skinId) {
+      const prefix = '.widget.skin' + skinId;
+      return labelSelector.split(',').map((part) => {
+        const selector = part.trim();
+        if (!selector) return '';
+        // ".widget", ".widget:hover", ".widget .x" become ".widget.skinN..."
+        // ".widgetItem" is a different class, so it becomes a descendant.
+        const match = /^\.widget(?![\w-])(.*)$/.exec(selector);
+        if (match) return prefix + match[1].replace(/\.skin\d+/g, '');
+        return prefix + ' ' + selector.replace(/^\.skin\d+\s*/, '');
+      }).filter(Boolean).join(',\n');
+    }
+
+    function getSelectorCopySnippetForTextarea(textarea) {
+      const skinId = getSkinId();
+      if (!textarea || !skinId || skinId === '-1') return null;
+      const label = findSelectorLabel(textarea);
+      if (!label) return null;
+      const selector = buildSkinSelector(label, skinId);
+      return selector ? '}\n\n' + selector + ' {' : null;
+    }
+
     // ----------------- expose API -----------------
     window.CPToolkit = window.CPToolkit || {};
     window.CPToolkit.widgetSkinHelper = {
       getSkinId: getSkinId,
       replaceSkinNumbers: replaceSkinNumbers,
       processTextareas: processTextareas,
+      getSelectorCopySnippetForTextarea: getSelectorCopySnippetForTextarea,
       debugInfo: function() {
         return {
           skinId: getSkinId(),

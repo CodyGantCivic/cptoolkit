@@ -136,6 +136,7 @@
       status: state.status,
       attempt: state.attempt,
       reason: state.reason || '',
+      lanes: state.payload && state.payload.lanes ? state.payload.lanes.slice() : [],
       activationId: documentActivationId
     };
   }
@@ -259,8 +260,21 @@
   updateActivationResult(immediateResult);
   sendLaneActivations(immediateResult, 'initial');
 
+  // On admin and Design Center URLs, wait for the Admin lane specifically.
+  // A single Live Edit marker (e.g. the "Live Edit is Off" nav item) is enough
+  // to detect Live Edit as soon as the top of the page parses, which can
+  // happen before the Admin evidence does. Resolving on that alone loads only
+  // the Live Edit tool set and never reconsiders, so Admin-only tools go
+  // missing on some refreshes. If Admin never shows up, the detector's
+  // deadline still returns whatever lanes are present.
+  var pageLocation = (immediateResult && immediateResult.location) || {};
+  var expectsAdminLane = !!(pageLocation.isAdminPath || pageLocation.isDesignCenterPath);
+  var waitTargetLanes = expectsAdminLane
+    ? [LANES.ADMIN, LANES.IDENTITY]
+    : [LANES.ADMIN, LANES.LIVE_EDIT, LANES.IDENTITY];
+
   detector.waitForDetection({
-    targetLanes: [LANES.ADMIN, LANES.LIVE_EDIT, LANES.IDENTITY],
+    targetLanes: waitTargetLanes,
     timeoutMs: detector.defaultTimeoutMs
   }).then(function(result) {
     updateActivationResult(result);

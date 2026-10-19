@@ -214,9 +214,13 @@
   }
 
   function enhanceModal(modal) {
-    if (modal.hasAttribute(ENHANCED_ATTR)) return;
+    // The Manage Fonts modal element can be reused while its contents are
+    // rebuilt on reopen, which drops our controls but leaves the attribute
+    // behind. Trust the controls themselves, not the attribute alone.
+    if (modal.hasAttribute(ENHANCED_ATTR) && modal.querySelector("#" + CONTROL_ID)) return;
     modal.setAttribute(ENHANCED_ATTR, "true");
     filterText = "";
+    ensureStyles();
     ensureControls(modal);
     applyFilter(modal);
   }

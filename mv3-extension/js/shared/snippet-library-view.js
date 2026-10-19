@@ -180,7 +180,11 @@
       .filter(function(key) { return skinMatches(key, source[key], viewState); })
       .map(function(key) { return [key, source[key]]; });
 
-    return sortEntries(entries, viewState.sortBy === "manual" ? "newest" : viewState.sortBy);
+    var sorted = sortEntries(entries, viewState.sortBy === "manual" ? "newest" : viewState.sortBy);
+    var isDefault = function(entry) { return entry[1] && entry[1].isUserSkin === false; };
+
+    // Keep bundled defaults together ahead of user skins, preserving sort order within each group.
+    return sorted.filter(isDefault).concat(sorted.filter(function(entry) { return !isDefault(entry); }));
   }
 
   function getCategoryLabel(value) {

@@ -18,21 +18,6 @@
     const THEMES = ['light', 'dark', 'no-styles'];
     const THEME_STORAGE_KEY = 'css-editor-theme';
     const DEFAULT_THEME = 'light';
-    const PSEUDO_MODE_STORAGE_KEY = 'theme-manager-enhancer-pseudo-mode';
-    const PSEUDO_MODE_DEFAULT = 'legacy-fix';
-    const PSEUDO_MODES = ['legacy-fix', 'cms-default', 'off'];
-    const PSEUDO_MODE_LABELS = {
-        'legacy-fix': 'Safe layout bounds',
-        'cms-default': 'CMS default bounds',
-        'off': 'Override off'
-    };
-    const PSEUDO_MODE_SHORT_LABELS = {
-        'legacy-fix': '::0',
-        'cms-default': '::-2',
-        'off': '::x'
-    };
-    let pseudoModeCache = null;
-    let pseudoModeStorageListenerBound = false;
 
     /**
      * Get saved theme from localStorage or return default
@@ -110,147 +95,6 @@
         const savedTheme = getSavedTheme();
         // console.log(TOOLKIT_NAME + ' Theme system initialized. Saved theme:', savedTheme); // Phase 3: Reduced logging
         // Note: Theme is now applied to each editor as it's created (see createCSSEditor)
-    }
-
-    function pageMatches(patterns) {
-        const url = window.location.href.toLowerCase();
-        const pathname = window.location.pathname.toLowerCase();
-        return patterns.some(pattern => {
-            const regex = new RegExp(pattern.replace(/\*/g, '.*'), 'i');
-            return regex.test(url) || regex.test(pathname);
-        });
-    }
-
-    function isThemeManagerPage() {
-        return pageMatches(['/designcenter/themes/']);
-    }
-
-    function sanitizePseudoMode(mode) {
-        return PSEUDO_MODES.includes(mode) ? mode : PSEUDO_MODE_DEFAULT;
-    }
-
-    function getNextPseudoMode(mode) {
-        const normalizedMode = sanitizePseudoMode(mode);
-        const currentIndex = PSEUDO_MODES.indexOf(normalizedMode);
-        const nextIndex = (currentIndex + 1) % PSEUDO_MODES.length;
-        return PSEUDO_MODES[nextIndex];
-    }
-
-    function applyPseudoModeToButton(button, mode) {
-        if (!button) return;
-
-        const normalizedMode = sanitizePseudoMode(mode);
-        const modeLabel = PSEUDO_MODE_LABELS[normalizedMode] || PSEUDO_MODE_LABELS[PSEUDO_MODE_DEFAULT];
-        const shortLabel = PSEUDO_MODE_SHORT_LABELS[normalizedMode] || PSEUDO_MODE_SHORT_LABELS[PSEUDO_MODE_DEFAULT];
-        const labelNode = button.querySelector('.pseudo-label');
-
-        button.setAttribute('data-mode', normalizedMode);
-        button.setAttribute('title', 'Pseudo override: ' + modeLabel + ' (click to cycle)');
-        button.setAttribute('aria-label', 'Pseudo override: ' + modeLabel + '. Click to cycle.');
-
-        if (labelNode) {
-            labelNode.textContent = shortLabel;
-        }
-    }
-
-    function updateAllPseudoModeButtons(mode) {
-        document.querySelectorAll('.css-pseudo-toggle').forEach((button) => {
-            applyPseudoModeToButton(button, mode);
-        });
-    }
-
-    function bindPseudoModeStorageListener() {
-        if (pseudoModeStorageListenerBound || !chrome.storage || !chrome.storage.onChanged) {
-            return;
-        }
-
-        chrome.storage.onChanged.addListener((changes, areaName) => {
-            if (areaName !== 'local' || !changes[PSEUDO_MODE_STORAGE_KEY]) {
-                return;
-            }
-
-            pseudoModeCache = sanitizePseudoMode(changes[PSEUDO_MODE_STORAGE_KEY].newValue);
-            updateAllPseudoModeButtons(pseudoModeCache);
-        });
-
-        pseudoModeStorageListenerBound = true;
-    }
-
-    function readPseudoModeFromStorage(callback) {
-        if (!chrome.storage || !chrome.storage.local || !chrome.runtime?.id) {
-            callback(PSEUDO_MODE_DEFAULT);
-            return;
-        }
-
-        try {
-            chrome.storage.local.get(PSEUDO_MODE_STORAGE_KEY, (settings) => {
-                if (chrome.runtime.lastError) {
-                    console.warn(TOOLKIT_NAME + ' Failed to read pseudo mode:', chrome.runtime.lastError);
-                    callback(PSEUDO_MODE_DEFAULT);
-                    return;
-                }
-
-                callback(sanitizePseudoMode(settings[PSEUDO_MODE_STORAGE_KEY]));
-            });
-        } catch (err) {
-            // Extension context invalidated (e.g. the extension was reloaded while
-            // this page's content script was still running) — fall back quietly.
-            console.warn(TOOLKIT_NAME + ' Extension context unavailable, using default pseudo mode:', err);
-            callback(PSEUDO_MODE_DEFAULT);
-        }
-    }
-
-    function initializePseudoToggle(button) {
-        if (!button || !isThemeManagerPage()) {
-            return;
-        }
-
-        bindPseudoModeStorageListener();
-
-        const applyMode = (mode) => {
-            pseudoModeCache = sanitizePseudoMode(mode);
-            updateAllPseudoModeButtons(pseudoModeCache);
-        };
-
-        if (pseudoModeCache) {
-            applyMode(pseudoModeCache);
-        } else {
-            readPseudoModeFromStorage(applyMode);
-        }
-
-        const cyclePseudoMode = (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-
-            const currentMode = sanitizePseudoMode(button.getAttribute('data-mode') || pseudoModeCache || PSEUDO_MODE_DEFAULT);
-            const nextMode = getNextPseudoMode(currentMode);
-            const settings = {};
-
-            pseudoModeCache = nextMode;
-            updateAllPseudoModeButtons(nextMode);
-            settings[PSEUDO_MODE_STORAGE_KEY] = nextMode;
-
-            if (!chrome.runtime?.id) {
-                return;
-            }
-
-            try {
-                chrome.storage.local.set(settings, () => {
-                    if (chrome.runtime.lastError) {
-                        console.warn(TOOLKIT_NAME + ' Failed to save pseudo mode:', chrome.runtime.lastError);
-                    }
-                });
-            } catch (err) {
-                console.warn(TOOLKIT_NAME + ' Extension context unavailable, could not save pseudo mode:', err);
-            }
-        };
-
-        button.addEventListener('click', cyclePseudoMode);
-        button.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-                cyclePseudoMode(event);
-            }
-        });
     }
 
     // ==================== CSS INJECTION ====================
@@ -458,8 +302,8 @@
             /* ==================== PHASE 3: THEME / PSEUDO / SNIPPET TOGGLES ==================== */
             .css-validation-indicator .css-theme-toggle,
             .css-validation-indicator .css-code-toggle,
-            .css-validation-indicator .css-pseudo-toggle,
-            .css-validation-indicator .css-make-portable {
+            .css-validation-indicator .css-make-portable,
+            .css-validation-indicator .css-copy-selector {
                 flex: 0 0 auto;
                 margin-left: 8px;
                 /* Override CivicPlus admin button styles */
@@ -491,22 +335,23 @@
             }
             .css-validation-indicator .css-theme-toggle:hover,
             .css-validation-indicator .css-code-toggle:hover,
-            .css-validation-indicator .css-pseudo-toggle:hover,
-            .css-validation-indicator .css-make-portable:hover {
+            .css-validation-indicator .css-make-portable:hover,
+            .css-validation-indicator .css-copy-selector:hover {
                 background: rgba(0, 0, 0, 0.05) !important;
                 border-color: #999 !important;
                 opacity: 1 !important; /* Prevent .button hover opacity changes */
             }
             .css-validation-indicator .css-theme-toggle:focus,
             .css-validation-indicator .css-code-toggle:focus,
-            .css-validation-indicator .css-pseudo-toggle:focus,
-            .css-validation-indicator .css-make-portable:focus {
+            .css-validation-indicator .css-make-portable:focus,
+            .css-validation-indicator .css-copy-selector:focus {
                 outline: 2px solid #0078d4 !important;
                 outline-offset: 2px !important;
             }
             .css-validation-indicator .css-theme-toggle svg,
             .css-validation-indicator .css-code-toggle svg,
-            .css-validation-indicator .css-make-portable svg {
+            .css-validation-indicator .css-make-portable svg,
+            .css-validation-indicator .css-copy-selector svg {
                 width: 13px !important; /* Slightly smaller for compact layout */
                 height: 13px !important;
                 min-width: 13px !important;
@@ -521,6 +366,251 @@
             }
             .css-validation-indicator .css-make-portable svg {
                 stroke: #af282f !important; /* CivicPlus red — signals export / outbound action */
+            }
+            .css-validation-indicator .css-copy-selector svg {
+                stroke: #0b5b8a !important; /* Blue — copies to the clipboard */
+            }
+            .css-validation-indicator .css-copy-selector.cp-copy-ok {
+                border-color: #2e9e55 !important;
+                background: #f3fbf5 !important;
+            }
+            .css-validation-indicator .css-copy-selector.cp-copy-fail {
+                border-color: #af282f !important;
+                background: #fdf4f4 !important;
+            }
+            /* Copy selector menu (appended to <body> so no editor clips it) */
+            .cp-copy-selector-menu {
+                position: fixed;
+                z-index: 2147483000;
+                width: 320px;
+                max-width: calc(100vw - 16px);
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                padding: 6px;
+                background: #fff;
+                border: 1px solid #cfd6df;
+                border-radius: 6px;
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+                font-family: Arial, Helvetica, sans-serif;
+            }
+            .cp-copy-selector-menu button {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: none !important;
+                height: auto !important;
+                min-height: 0 !important;
+                max-height: none !important;
+                margin: 0 !important;
+                padding: 7px 10px !important;
+                background: transparent !important;
+                border: none !important;
+                border-radius: 4px !important;
+                box-shadow: none !important;
+                color: #1f2937 !important;
+                font-size: 13px !important;
+                font-weight: 600 !important;
+                line-height: 1.25 !important;
+                letter-spacing: normal !important;
+                text-align: left !important;
+                text-transform: none !important;
+                cursor: pointer !important;
+            }
+            .cp-copy-selector-menu button:hover,
+            .cp-copy-selector-menu button:focus {
+                background: #eef3fa !important;
+                outline: none !important;
+            }
+            .cp-copy-selector-menu .cp-menu-hint {
+                margin-top: 2px;
+                font-size: 11px;
+                font-weight: 400;
+                color: #6b7280;
+            }
+            .cp-copy-selector-menu .cp-menu-list {
+                flex: 1 1 auto;
+                min-height: 0;
+                overflow-y: auto;
+            }
+            .cp-copy-selector-menu .cp-menu-row {
+                display: flex;
+                align-items: stretch;
+                gap: 2px;
+            }
+            .cp-copy-selector-menu .cp-menu-row .cp-menu-item {
+                flex: 1 1 auto !important;
+                width: auto !important;
+            }
+            .cp-copy-selector-menu .cp-menu-del {
+                flex: 0 0 30px !important;
+                width: 30px !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding: 0 !important;
+                font-size: 18px !important;
+                font-weight: 400 !important;
+                color: #6b7280 !important;
+            }
+            .cp-copy-selector-menu .cp-menu-del:hover,
+            .cp-copy-selector-menu .cp-menu-del:focus {
+                background: #fdf4f4 !important;
+                color: #af282f !important;
+            }
+            .cp-copy-selector-menu .cp-menu-footer {
+                margin-top: 4px;
+                padding: 6px 4px 2px;
+                border-top: 1px solid #e5e7eb;
+            }
+            .cp-copy-selector-menu .cp-menu-add {
+                flex-direction: row !important;
+                color: #0b5b8a !important;
+            }
+            .cp-copy-selector-menu .cp-menu-form-row {
+                display: flex;
+                gap: 6px;
+            }
+            .cp-copy-selector-menu .cp-menu-form input {
+                flex: 1 1 auto !important;
+                width: auto !important;
+                min-width: 0 !important;
+                height: 30px !important;
+                margin: 0 !important;
+                padding: 0 8px !important;
+                box-sizing: border-box !important;
+                border: 1px solid #b8c5d8 !important;
+                border-radius: 4px !important;
+                background: #fff !important;
+                color: #1f2937 !important;
+                font-size: 13px !important;
+            }
+            .cp-copy-selector-menu .cp-menu-confirm {
+                flex: 0 0 auto !important;
+                width: auto !important;
+                padding: 0 14px !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                background: #af282f !important;
+                color: #fff !important;
+            }
+            .cp-copy-selector-menu .cp-menu-confirm:hover,
+            .cp-copy-selector-menu .cp-menu-confirm:focus {
+                background: #8c2026 !important;
+            }
+            .cp-copy-selector-menu .cp-menu-error,
+            .cp-copy-selector-menu .cp-menu-note {
+                margin-top: 5px;
+                font-size: 11px;
+                line-height: 1.3;
+                color: #af282f;
+            }
+            .cp-copy-selector-menu .cp-menu-note {
+                color: #6b7280;
+            }
+            .cp-copy-selector-menu .cp-menu-prefix {
+                margin-bottom: 4px;
+                padding: 2px 4px 8px;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            .cp-copy-selector-menu .cp-menu-heading {
+                margin-bottom: 5px;
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                color: #6b7280;
+            }
+            .cp-copy-selector-menu .cp-menu-chips {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+            .cp-copy-selector-menu .cp-menu-chip-wrap {
+                display: inline-flex;
+                align-items: center;
+            }
+            .cp-copy-selector-menu .cp-menu-chip {
+                width: auto !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                padding: 3px 10px !important;
+                background: #f3f4f6 !important;
+                border: 1px solid #d1d5db !important;
+                border-radius: 999px !important;
+                color: #374151 !important;
+                font-size: 12px !important;
+                font-weight: 500 !important;
+            }
+            .cp-copy-selector-menu .cp-menu-chip:hover,
+            .cp-copy-selector-menu .cp-menu-chip:focus {
+                background: #e5e7eb !important;
+            }
+            .cp-copy-selector-menu .cp-menu-chip.cp-selected {
+                background: #0b5b8a !important;
+                border-color: #0b5b8a !important;
+                color: #fff !important;
+            }
+            .cp-copy-selector-menu .cp-menu-chip-add {
+                background: #fff !important;
+                border-style: dashed !important;
+                color: #0b5b8a !important;
+            }
+            .cp-copy-selector-menu .cp-menu-chip-del {
+                width: 20px !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: center !important;
+                margin-left: 2px !important;
+                padding: 0 !important;
+                font-size: 15px !important;
+                font-weight: 400 !important;
+                color: #6b7280 !important;
+            }
+            .cp-copy-selector-menu .cp-menu-chip-del:hover,
+            .cp-copy-selector-menu .cp-menu-chip-del:focus {
+                background: #fdf4f4 !important;
+                color: #af282f !important;
+            }
+            .cp-copy-selector-menu .cp-menu-preview {
+                margin-top: 6px;
+                overflow: hidden;
+                font-family: Consolas, Monaco, 'Courier New', monospace;
+                font-size: 11px;
+                color: #374151;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .cp-copy-selector-menu .cp-menu-prefix,
+            .cp-copy-selector-menu .cp-menu-footer {
+                flex: 0 0 auto;
+            }
+            .cp-copy-selector-menu .cp-menu-group {
+                display: grid;
+                grid-template-columns: 82px minmax(0, 1fr);
+                align-items: center;
+                gap: 4px 6px;
+                margin-bottom: 6px;
+            }
+            .cp-copy-selector-menu .cp-menu-group .cp-menu-heading {
+                margin: 0;
+            }
+            .cp-copy-selector-menu .cp-menu-group .cp-menu-form,
+            .cp-copy-selector-menu .cp-menu-group .cp-menu-note {
+                grid-column: 1 / -1;
+            }
+            .cp-copy-selector-menu .cp-menu-chip {
+                max-width: 150px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .cp-copy-selector-menu .cp-menu-item {
+                flex-direction: row !important;
+                align-items: center !important;
+                padding: 5px 10px !important;
+                font-weight: 500 !important;
             }
             .css-validation-indicator .css-pseudo-toggle .pseudo-label {
                 display: inline-block;
@@ -3940,8 +4030,53 @@
         return parts.join('');
     }
 
+    // A rule "needs conversion" only when one of its fancy-button selectors is
+    // missing its placeholder (.fancyButton1) or real-ID (.fancyButtonN) twin
+    // elsewhere in the same selector list. Rules that are already dual stay
+    // untouched, unlike makeSelectorListPortable, which would re-emit them in
+    // a different order.
+    function portableRuleNeedsConversion(prelude, numOnly) {
+        if (!numOnly || numOnly === '1') return false;
+        const selectors = splitSelectorList(prelude);
+        if (selectors.length === 0) return false;
+        for (const sel of selectors) {
+            if (selectorHasUnsafeFancyButton1(sel).unsafe) return false;
+        }
+        const key = function(s) { return String(s).replace(/\s+/g, ' ').trim(); };
+        const have = new Set(selectors.map(key));
+        for (const sel of selectors) {
+            if (topLevelFancyButtonNums(sel).length === 0) continue;
+            const placeholder = mapTopLevelFancyButtonTokens(sel, function() { return '1'; });
+            const real = mapTopLevelFancyButtonTokens(sel, function() { return numOnly; });
+            if (!have.has(key(placeholder)) || !have.has(key(real))) return true;
+        }
+        return false;
+    }
+
+    function makeSelectorListPortableIfMissing(prelude, uniqueId) {
+        const numOnly = String(uniqueId).replace(/^fancyButton/, '');
+        if (!portableRuleNeedsConversion(prelude, numOnly)) {
+            return { prelude, skipped: false, changed: false };
+        }
+        return makeSelectorListPortable(prelude, uniqueId);
+    }
+
+    // True when any rule in `css` is missing its .fancyButton1 or real-ID twin.
+    function cssNeedsPortableConversion(css, uniqueId) {
+        if (!css || !css.trim()) return false;
+        const numOnly = String(uniqueId).replace(/^fancyButton/, '');
+        let needed = false;
+        walkAndTransform(css, uniqueId, function(prelude) {
+            if (!needed && portableRuleNeedsConversion(prelude, numOnly)) needed = true;
+            return { prelude, skipped: false, changed: false };
+        }, []);
+        return needed;
+    }
+
     // Full "Make portable" transform — dual selectors + safety gates.
-    function transformCssPortable(css, uniqueId) {
+    // With onlyIfMissing, rules that already have both selectors are left
+    // verbatim and only rules missing a twin are converted.
+    function transformCssPortable(css, uniqueId, onlyIfMissing) {
         const before = css.length;
         const stats = { before, after: before, delta: 0 };
 
@@ -3962,7 +4097,12 @@
         }
 
         const skipped = [];
-        const output = walkAndTransform(css, uniqueId, makeSelectorListPortable, skipped);
+        const output = walkAndTransform(
+            css,
+            uniqueId,
+            onlyIfMissing ? makeSelectorListPortableIfMissing : makeSelectorListPortable,
+            skipped
+        );
 
         if (!isFragment) {
             const postflightError = portableNativeParse(output);
@@ -4282,6 +4422,7 @@
         splitSelectorList,
         makeSelectorListPortable,
         transformCssPortable,
+        cssNeedsPortableConversion,
         applyForSave,
         showMakePortableModal,
         // Diagnostic hook for ad-hoc console testing.
@@ -4289,6 +4430,63 @@
             return transformCssPortable(css, String(uniqueId || '1'));
         }
     };
+
+    // ==================== COPY SELECTOR FOR CONTAINERS, MENUS, SITE STYLES ====================
+    // Content/structural container boxes (.containerStyle), navigation menu
+    // boxes such as flyouts and the left-nav accordion (.menu), and the
+    // site-wide default boxes (#MiscStyles, .sitestyleupdate) have no skin or
+    // button ID to add. The CMS already prints the selector the box sits in
+    // just above it, so the snippet is that selector as-is.
+    function isGenericSelectorContext(textarea) {
+        if (!textarea) return false;
+        const classList = textarea.classList;
+        return !!(
+            textarea.id === 'MiscStyles' ||
+            (classList && (
+                classList.contains('containerStyle') ||
+                classList.contains('menu') ||
+                classList.contains('sitestyleupdate')
+            ))
+        );
+    }
+
+    // The label comes in two shapes: one node reading ".headline {", or the
+    // selector in one node with a lone "{" node after it. The nearest label
+    // wins, and the search never crosses into another textarea's area.
+    function findSelectorLabelText(textarea) {
+        const clean = (text) => String(text || '').replace(/\s+/g, ' ').trim();
+        const looksLikeSelector = (text) => text.length > 0 && text.length <= 200 &&
+            text.indexOf('{') === -1 && text.indexOf('}') === -1 && /[.#:\[]|^[a-z][a-z0-9]*(\s|$|,)/.test(text);
+        const isOpener = (text) => text.length > 1 && text.charAt(text.length - 1) === '{' &&
+            text.indexOf('{') === text.length - 1 && looksLikeSelector(text.slice(0, -1).trim());
+
+        let node = textarea.closest('.css-editor-wrapper') || textarea;
+        let sawLoneBrace = false;
+        for (let depth = 0; depth < 4 && node && node !== document.body; depth++) {
+            let sibling = node.previousSibling;
+            for (let seen = 0; sibling && seen < 8; seen++, sibling = sibling.previousSibling) {
+                if (sibling.nodeType === 1 && sibling.querySelector && sibling.querySelector('textarea')) {
+                    return null; // reached another box
+                }
+                const text = clean(sibling.textContent);
+                if (!text) continue;
+                if (text === '{') { sawLoneBrace = true; continue; }
+                if (isOpener(text)) return text.slice(0, -1).trim();
+                if (sawLoneBrace && looksLikeSelector(text)) return text;
+                if (sawLoneBrace) return null;
+            }
+            node = node.parentElement;
+        }
+        return null;
+    }
+
+    function getGenericSelectorCopySnippet(textarea) {
+        const label = findSelectorLabelText(textarea);
+        if (!label) return null;
+        const selector = label.split(',').map(function(part) { return part.trim(); })
+            .filter(Boolean).join(',\n');
+        return selector ? '}\n\n' + selector + ' {' : null;
+    }
 
     // ==================== FANCY BUTTON NUMBER REPLACEMENT ====================
     // Store the current button selector globally so we can access it on insert
@@ -4427,15 +4625,6 @@
         const validationIndicator = document.createElement('div');
         validationIndicator.className = 'css-validation-indicator valid';
 
-        const showPseudoToggle = isThemeManagerPage();
-        const pseudoToggleMarkup = showPseudoToggle
-            ? `
-            <button class="css-pseudo-toggle" title="Pseudo override" aria-label="Pseudo override" type="button" data-mode="legacy-fix">
-                <span class="pseudo-label">::0</span>
-            </button>
-            `
-            : '';
-
         // "Make portable" button is only relevant for fancy-button CSS
         // (graphic link advanced styles + the fancy button builder tabs).
         const taId = textarea && textarea.id ? textarea.id : '';
@@ -4451,6 +4640,21 @@
                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
                     <polyline points="15 3 21 3 21 9"/>
                     <line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+            </button>
+            `
+            : '';
+
+        // "Copy selector" button: Fancy Button Builder style boxes and every
+        // widget-skin Advanced / Miscellaneous Styles box.
+        const showCopySelector = showMakePortable || taId.indexOf('MiscellaneousStyles') >= 0 ||
+            isGenericSelectorContext(textarea);
+        const copySelectorMarkup = showCopySelector
+            ? `
+            <button class="css-copy-selector" title="Copy a selector or media query for a new rule at this level" aria-label="Copy selector or media query" aria-haspopup="menu" type="button">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                 </svg>
             </button>
             `
@@ -4477,7 +4681,7 @@
                 </svg>
             </button>
             ${makePortableMarkup}
-            ${pseudoToggleMarkup}
+            ${copySelectorMarkup}
             <div class="css-snippet-wrapper" style="position: relative;">
                 <button class="css-code-toggle" title="CSS Snippets" aria-label="CSS Snippets" type="button">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -4521,10 +4725,649 @@
             });
         }
 
-        // Initialize pseudo override toggle (Theme Manager only)
-        const pseudoToggle = validationIndicator.querySelector('.css-pseudo-toggle');
-        if (pseudoToggle) {
-            initializePseudoToggle(pseudoToggle);
+        // Wire up the "Copy selector" button if present. The snippet comes from
+        // whichever helper owns this textarea: the Fancy Button Builder helper
+        // or the widget-skin helper.
+        const copySelectorBtn = validationIndicator.querySelector('.css-copy-selector');
+        if (copySelectorBtn) {
+            const defaultTitle = copySelectorBtn.getAttribute('title');
+            const flash = function(ok, message) {
+                copySelectorBtn.classList.remove('cp-copy-ok', 'cp-copy-fail');
+                copySelectorBtn.classList.add(ok ? 'cp-copy-ok' : 'cp-copy-fail');
+                copySelectorBtn.setAttribute('title', message);
+                setTimeout(function() {
+                    copySelectorBtn.classList.remove('cp-copy-ok', 'cp-copy-fail');
+                    copySelectorBtn.setAttribute('title', defaultTitle);
+                }, 1400);
+            };
+            const copyText = function(text) {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    return navigator.clipboard.writeText(text);
+                }
+                return new Promise(function(resolve, reject) {
+                    const scratch = document.createElement('textarea');
+                    scratch.value = text;
+                    scratch.style.cssText = 'position:fixed;opacity:0;';
+                    document.body.appendChild(scratch);
+                    scratch.select();
+                    let copied = false;
+                    try { copied = document.execCommand('copy'); } catch (err) { /* no-op */ }
+                    document.body.removeChild(scratch);
+                    copied ? resolve() : reject(new Error('copy failed'));
+                });
+            };
+            const getBaseSnippet = function() {
+                const helpers = window.CPToolkit || {};
+                const sources = [helpers.graphicLinkHelper, helpers.widgetSkinHelper];
+                let snippet = null;
+                if (isGenericSelectorContext(textarea)) {
+                    // Containers, menus and site-wide styles: the CMS label is the selector.
+                    snippet = getGenericSelectorCopySnippet(textarea);
+                } else {
+                    for (let i = 0; i < sources.length && !snippet; i++) {
+                        const source = sources[i];
+                        if (source && typeof source.getSelectorCopySnippetForTextarea === 'function') {
+                            snippet = source.getSelectorCopySnippetForTextarea(textarea);
+                        }
+                    }
+                }
+                return snippet;
+            };
+
+            // A media query wraps the same selector. The snippet closes the
+            // selector itself, and the CMS's own closing "}" after the box
+            // closes the @media block, so the pasted text is already balanced.
+            // Deliberately no indentation: the box is a plain text editor, so
+            // the text stays flush left with a truly empty line to type on.
+            const DEFAULT_MEDIA_CONDITIONS = ['(min-width: 40em)', '(min-width: 63em)', '(min-width: 2200px)'];
+            const CUSTOM_MEDIA_KEY = 'cp-toolkit-custom-media-queries';
+            const MAX_CUSTOM_MEDIA = 8;
+
+            // A prefix goes in front of the box's own selector as a parent, so
+            // ".row.outer:not(.wide)" + "#footerTS" copies ".row.outer:not(.wide) #footerTS".
+            // The chosen prefix applies to the plain selector and every media query.
+            const DEFAULT_PREFIXES = ['.row.outer.wide', '.row.outer:not(.wide)'];
+            const CUSTOM_PREFIX_KEY = 'cp-toolkit-custom-selector-prefixes';
+            const SELECTED_PREFIX_KEY = 'cp-toolkit-selected-selector-prefix';
+            const MAX_CUSTOM_PREFIXES = 8;
+
+            // Widgets sit inside an outer row (the prefix above) and each widget
+            // has a row of its own inside it, so a skin box can also put that
+            // inner row right after ".widget.skinN":
+            // ".row.outer:not(.wide) .widget.skin12 .row.wide .widgetItem".
+            // Only meaningful for widget skin boxes.
+            const DEFAULT_INNER_ROWS = ['.row.wide', '.row:not(.wide)'];
+            const SELECTED_INNER_ROW_KEY = 'cp-toolkit-selected-inner-row';
+            const SKIN_SELECTOR_START = /^(\.widget\.skin\d+\S*)([\s\S]*)$/;
+
+            // The base snippet is "}\n\n<selectors, one per line> {". Put the
+            // prefix in front of every selector line.
+            const applyPrefix = function(baseSnippet, prefix) {
+                if (!prefix) return baseSnippet;
+                const match = /^\}\n\n([\s\S]*) \{$/.exec(baseSnippet);
+                if (!match) return baseSnippet;
+                const selectors = match[1].split(',\n').map(function(selector) {
+                    return prefix + ' ' + selector;
+                }).join(',\n');
+                return '}\n\n' + selectors + ' {';
+            };
+
+            // Put the widget's inner row after ".widget.skinN" on every selector
+            // line that starts with it; other lines are left alone.
+            const applyInnerRow = function(baseSnippet, innerRow) {
+                if (!innerRow) return baseSnippet;
+                const match = /^\}\n\n([\s\S]*) \{$/.exec(baseSnippet);
+                if (!match) return baseSnippet;
+                const selectors = match[1].split(',\n').map(function(selector) {
+                    const parts = SKIN_SELECTOR_START.exec(selector);
+                    return parts ? parts[1] + ' ' + innerRow + parts[2] : selector;
+                }).join(',\n');
+                return '}\n\n' + selectors + ' {';
+            };
+
+            const toMediaSnippet = function(baseSnippet, condition) {
+                const match = /^\}\n\n([\s\S]*) \{$/.exec(baseSnippet);
+                if (!match) return null;
+                return '}\n\n@media ' + condition + ' {\n' + match[1] + ' {\n\n}';
+            };
+
+            // First selector of a snippet, for the "Result" line in the menu.
+            const previewSelector = function(snippet) {
+                const match = /^\}\n\n([\s\S]*) \{$/.exec(snippet);
+                if (!match) return '';
+                const lines = match[1].split(',\n');
+                return lines[0] + (lines.length > 1 ? ' (+' + (lines.length - 1) + ' more)' : '');
+            };
+
+            // Turn what the user typed into a media condition, or null if it
+            // isn't a valid one. "50em" becomes "(min-width: 50em)"; a full
+            // condition such as "(max-width: 30em)" is used as written.
+            const normalizeMediaCondition = function(input) {
+                let value = String(input || '').replace(/\s+/g, ' ').trim()
+                    .replace(/^@media\s+/i, '').replace(/\s*\{$/, '');
+                if (!value || value.length > 80 || /[{};<>]/.test(value)) return null;
+                if (/^\d+(\.\d+)?(em|rem|px)$/i.test(value)) {
+                    value = '(min-width: ' + value.toLowerCase() + ')';
+                } else if (/^[a-z-]+\s*:/i.test(value)) {
+                    value = '(' + value + ')';
+                }
+                // The browser reports "not all" for a query it cannot parse.
+                if (typeof window.matchMedia !== 'function' || window.matchMedia(value).media === 'not all') return null;
+                return value;
+            };
+
+            // A prefix must be a single valid selector (no list, no braces).
+            const normalizePrefix = function(input) {
+                const value = String(input || '').replace(/\s+/g, ' ').trim();
+                if (!value || value.length > 80 || /[{};<>,]/.test(value)) return null;
+                try {
+                    document.createDocumentFragment().querySelector(value);
+                } catch (err) {
+                    return null;
+                }
+                return value;
+            };
+
+            const readStored = function(keys) {
+                return new Promise(function(resolve) {
+                    try {
+                        if (!chrome.runtime || !chrome.runtime.id) { resolve({}); return; }
+                        chrome.storage.local.get(keys, function(settings) {
+                            resolve(chrome.runtime.lastError ? {} : (settings || {}));
+                        });
+                    } catch (err) {
+                        resolve({});
+                    }
+                });
+            };
+
+            const writeStored = function(values) {
+                return new Promise(function(resolve) {
+                    try {
+                        if (!chrome.runtime || !chrome.runtime.id) { resolve(false); return; }
+                        chrome.storage.local.set(values, function() {
+                            resolve(!chrome.runtime.lastError);
+                        });
+                    } catch (err) {
+                        resolve(false);
+                    }
+                });
+            };
+
+            const cleanList = function(value) {
+                return Array.isArray(value)
+                    ? value.filter(function(item) { return typeof item === 'string' && item; })
+                    : [];
+            };
+
+            const loadMenuState = function() {
+                return readStored([CUSTOM_MEDIA_KEY, CUSTOM_PREFIX_KEY, SELECTED_PREFIX_KEY, SELECTED_INNER_ROW_KEY]).then(function(settings) {
+                    const customPrefixes = cleanList(settings[CUSTOM_PREFIX_KEY]);
+                    let selectedPrefix = typeof settings[SELECTED_PREFIX_KEY] === 'string' ? settings[SELECTED_PREFIX_KEY] : '';
+                    // A prefix that was removed can no longer be the chosen one.
+                    if (selectedPrefix && DEFAULT_PREFIXES.concat(customPrefixes).indexOf(selectedPrefix) === -1) {
+                        selectedPrefix = '';
+                    }
+                    const storedInner = settings[SELECTED_INNER_ROW_KEY];
+                    return {
+                        customMedia: cleanList(settings[CUSTOM_MEDIA_KEY]),
+                        customPrefixes: customPrefixes,
+                        selectedPrefix: selectedPrefix,
+                        selectedInnerRow: DEFAULT_INNER_ROWS.indexOf(storedInner) !== -1 ? storedInner : ''
+                    };
+                });
+            };
+
+            let menuEl = null;
+            let menuBase = null;
+            let addFormOpen = false;
+            let prefixFormOpen = false;
+
+            const closeMenu = function(restoreFocus) {
+                if (!menuEl) return;
+                menuEl.remove();
+                menuEl = null;
+                addFormOpen = false;
+                prefixFormOpen = false;
+                document.removeEventListener('mousedown', onOutsideMouseDown, true);
+                document.removeEventListener('keydown', onMenuKeyDown, true);
+                if (restoreFocus) copySelectorBtn.focus();
+            };
+            const onOutsideMouseDown = function(e) {
+                if (!menuEl) return;
+                if (menuEl.contains(e.target) || copySelectorBtn.contains(e.target)) return;
+                closeMenu(false);
+            };
+            const onMenuKeyDown = function(e) {
+                if (!menuEl) return;
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // First Escape backs out of an open add form, the next closes the menu.
+                    if (addFormOpen || prefixFormOpen) {
+                        addFormOpen = false;
+                        prefixFormOpen = false;
+                        refreshMenu();
+                    } else {
+                        closeMenu(true);
+                    }
+                    return;
+                }
+                if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && e.target.tagName !== 'INPUT') {
+                    e.preventDefault();
+                    const items = Array.prototype.slice.call(menuEl.querySelectorAll('button'));
+                    const index = items.indexOf(document.activeElement);
+                    const next = e.key === 'ArrowDown'
+                        ? items[(index + 1) % items.length]
+                        : items[(index - 1 + items.length) % items.length];
+                    if (next) next.focus();
+                }
+            };
+
+            // Keep the menu fully on screen on small laptops: above the button if
+            // it fits, else below, else shrink it to the larger side and let the
+            // media query list scroll.
+            const positionMenu = function() {
+                const margin = 8;
+                const gap = 6;
+                const buttonRect = copySelectorBtn.getBoundingClientRect();
+                menuEl.style.maxHeight = (window.innerHeight - margin * 2) + 'px';
+                const menuRect = menuEl.getBoundingClientRect();
+                const roomAbove = buttonRect.top - margin - gap;
+                const roomBelow = window.innerHeight - buttonRect.bottom - margin - gap;
+
+                let top;
+                if (menuRect.height <= roomAbove) {
+                    top = buttonRect.top - menuRect.height - gap;
+                } else if (menuRect.height <= roomBelow) {
+                    top = buttonRect.bottom + gap;
+                } else if (roomAbove >= roomBelow) {
+                    menuEl.style.maxHeight = Math.max(160, roomAbove) + 'px';
+                    top = margin;
+                } else {
+                    menuEl.style.maxHeight = Math.max(160, roomBelow) + 'px';
+                    top = buttonRect.bottom + gap;
+                }
+                const left = Math.min(buttonRect.left, window.innerWidth - menuRect.width - margin);
+                menuEl.style.top = Math.max(margin, top) + 'px';
+                menuEl.style.left = Math.max(margin, left) + 'px';
+            };
+
+            const copyChoice = function(text) {
+                closeMenu(true);
+                copyText(text).then(
+                    function() { flash(true, 'Copied!'); },
+                    function() { flash(false, 'Could not copy to the clipboard'); }
+                );
+            };
+
+            // One small inline form used for adding a media query or a prefix.
+            const buildAddForm = function(options) {
+                const form = document.createElement('div');
+                form.className = 'cp-menu-form';
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = options.placeholder;
+                input.setAttribute('aria-label', options.label);
+                input.maxLength = 80;
+                const confirmButton = document.createElement('button');
+                confirmButton.type = 'button';
+                confirmButton.className = 'cp-menu-confirm';
+                confirmButton.textContent = 'Add';
+                const error = document.createElement('div');
+                error.className = 'cp-menu-error';
+
+                const submit = function() {
+                    const result = options.validate(input.value);
+                    if (result.error) {
+                        error.textContent = result.error;
+                        return;
+                    }
+                    options.save(result.value).then(function(saved) {
+                        if (!saved) {
+                            error.textContent = 'Could not save. Reload the page and try again.';
+                            return;
+                        }
+                        options.done();
+                    });
+                };
+
+                confirmButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    submit();
+                });
+                input.addEventListener('keydown', function(e) {
+                    // Keep typing away from the page's own keyboard shortcuts.
+                    e.stopPropagation();
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        submit();
+                    }
+                });
+                input.addEventListener('keyup', function(e) { e.stopPropagation(); });
+                input.addEventListener('keypress', function(e) { e.stopPropagation(); });
+
+                const row = document.createElement('div');
+                row.className = 'cp-menu-form-row';
+                row.appendChild(input);
+                row.appendChild(confirmButton);
+                form.appendChild(row);
+                form.appendChild(error);
+                setTimeout(function() { input.focus(); }, 0);
+                return form;
+            };
+
+            // One labelled row of choice chips. Each option is
+            // { label, value, title, onDelete }; the chosen one is highlighted.
+            const buildChipGroup = function(headingText, options, selectedValue, onSelect) {
+                const group = document.createElement('div');
+                group.className = 'cp-menu-group';
+
+                const heading = document.createElement('div');
+                heading.className = 'cp-menu-heading';
+                heading.textContent = headingText;
+                group.appendChild(heading);
+
+                const chips = document.createElement('div');
+                chips.className = 'cp-menu-chips';
+
+                options.forEach(function(option) {
+                    const selected = selectedValue === option.value;
+                    const wrap = document.createElement('span');
+                    wrap.className = 'cp-menu-chip-wrap';
+
+                    const chip = document.createElement('button');
+                    chip.type = 'button';
+                    chip.className = 'cp-menu-chip' + (selected ? ' cp-selected' : '');
+                    chip.setAttribute('role', 'menuitemradio');
+                    chip.setAttribute('aria-checked', selected ? 'true' : 'false');
+                    chip.textContent = option.label;
+                    chip.title = option.title || option.value || 'No ' + headingText.toLowerCase();
+                    chip.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onSelect(option.value);
+                    });
+                    wrap.appendChild(chip);
+
+                    if (option.onDelete) {
+                        const del = document.createElement('button');
+                        del.type = 'button';
+                        del.className = 'cp-menu-chip-del';
+                        del.title = 'Remove this prefix';
+                        del.setAttribute('aria-label', 'Remove prefix ' + option.label);
+                        del.textContent = '×';
+                        del.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            option.onDelete();
+                        });
+                        wrap.appendChild(del);
+                    }
+                    chips.appendChild(wrap);
+                });
+
+                group.appendChild(chips);
+                return { group: group, chips: chips };
+            };
+
+            const chipLabelFor = function(selector) {
+                return selector.indexOf(':not(') !== -1 ? 'not wide' : 'wide';
+            };
+
+            // Outer prefix (in front of everything) and, for widget skin boxes,
+            // the widget's own row, plus the resulting selector.
+            const buildPrefixSection = function(state, effectiveBase, showInnerRow) {
+                const section = document.createElement('div');
+                section.className = 'cp-menu-prefix';
+
+                const outerOptions = [{ label: 'None', value: '' }];
+                DEFAULT_PREFIXES.forEach(function(prefix) {
+                    outerOptions.push({ label: chipLabelFor(prefix), value: prefix, title: prefix });
+                });
+                state.customPrefixes.forEach(function(prefix) {
+                    outerOptions.push({
+                        label: prefix,
+                        value: prefix,
+                        title: prefix,
+                        onDelete: function() {
+                            const update = { [CUSTOM_PREFIX_KEY]: state.customPrefixes.filter(function(item) { return item !== prefix; }) };
+                            // Removing the chosen prefix falls back to None.
+                            if (state.selectedPrefix === prefix) update[SELECTED_PREFIX_KEY] = '';
+                            writeStored(update).then(refreshMenu);
+                        }
+                    });
+                });
+
+                const outer = buildChipGroup('Outer prefix', outerOptions, state.selectedPrefix, function(value) {
+                    writeStored({ [SELECTED_PREFIX_KEY]: value }).then(refreshMenu);
+                });
+
+                if (state.customPrefixes.length < MAX_CUSTOM_PREFIXES && !prefixFormOpen) {
+                    const plus = document.createElement('button');
+                    plus.type = 'button';
+                    plus.className = 'cp-menu-chip cp-menu-chip-add';
+                    plus.textContent = '+ Add';
+                    plus.title = 'Add your own prefix';
+                    plus.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        prefixFormOpen = true;
+                        addFormOpen = false;
+                        refreshMenu();
+                    });
+                    outer.chips.appendChild(plus);
+                }
+
+                if (prefixFormOpen) {
+                    outer.group.appendChild(buildAddForm({
+                        placeholder: 'e.g. .row.outer.wide',
+                        label: 'New selector prefix',
+                        validate: function(text) {
+                            const value = normalizePrefix(text);
+                            if (!value) return { error: 'Enter a single valid selector, like .row.outer.wide (no commas or braces).' };
+                            if (DEFAULT_PREFIXES.concat(state.customPrefixes).indexOf(value) !== -1) {
+                                return { error: 'That prefix is already in the list.' };
+                            }
+                            return { value: value };
+                        },
+                        save: function(value) {
+                            return writeStored({
+                                [CUSTOM_PREFIX_KEY]: state.customPrefixes.concat(value),
+                                [SELECTED_PREFIX_KEY]: value
+                            });
+                        },
+                        done: function() {
+                            prefixFormOpen = false;
+                            refreshMenu();
+                        }
+                    }));
+                } else if (state.customPrefixes.length >= MAX_CUSTOM_PREFIXES) {
+                    const note = document.createElement('div');
+                    note.className = 'cp-menu-note';
+                    note.textContent = 'Limit of ' + MAX_CUSTOM_PREFIXES + ' of your own reached. Remove one to add another.';
+                    outer.group.appendChild(note);
+                }
+                section.appendChild(outer.group);
+
+                if (showInnerRow) {
+                    const innerOptions = [{ label: 'None', value: '' }];
+                    DEFAULT_INNER_ROWS.forEach(function(row) {
+                        innerOptions.push({ label: chipLabelFor(row), value: row, title: row });
+                    });
+                    const inner = buildChipGroup('Widget row', innerOptions, state.selectedInnerRow, function(value) {
+                        writeStored({ [SELECTED_INNER_ROW_KEY]: value }).then(refreshMenu);
+                    });
+                    section.appendChild(inner.group);
+                }
+
+                const preview = document.createElement('div');
+                preview.className = 'cp-menu-preview';
+                const previewText = previewSelector(effectiveBase);
+                preview.textContent = previewText;
+                preview.title = previewText;
+                section.appendChild(preview);
+                return section;
+            };
+            const buildAddMediaFooter = function(state) {
+                const footer = document.createElement('div');
+                footer.className = 'cp-menu-footer';
+
+                if (state.customMedia.length >= MAX_CUSTOM_MEDIA) {
+                    const full = document.createElement('div');
+                    full.className = 'cp-menu-note';
+                    full.textContent = 'Limit of ' + MAX_CUSTOM_MEDIA + ' of your own reached. Remove one to add another.';
+                    footer.appendChild(full);
+                    return footer;
+                }
+
+                if (!addFormOpen) {
+                    const addButton = document.createElement('button');
+                    addButton.type = 'button';
+                    addButton.className = 'cp-menu-add';
+                    addButton.textContent = '+ Add media query';
+                    addButton.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        addFormOpen = true;
+                        prefixFormOpen = false;
+                        refreshMenu();
+                    });
+                    footer.appendChild(addButton);
+                    return footer;
+                }
+
+                footer.appendChild(buildAddForm({
+                    placeholder: 'e.g. 50em or (max-width: 30em)',
+                    label: 'New media query',
+                    validate: function(text) {
+                        const condition = normalizeMediaCondition(text);
+                        if (!condition) return { error: 'Enter a width like 50em, or a full condition like (max-width: 30em).' };
+                        const taken = DEFAULT_MEDIA_CONDITIONS.concat(state.customMedia).some(function(existing) {
+                            return existing.toLowerCase() === condition.toLowerCase();
+                        });
+                        if (taken) return { error: 'That media query is already in the list.' };
+                        return { value: condition };
+                    },
+                    save: function(value) {
+                        return writeStored({ [CUSTOM_MEDIA_KEY]: state.customMedia.concat(value) });
+                    },
+                    done: function() {
+                        addFormOpen = false;
+                        refreshMenu();
+                    }
+                }));
+                return footer;
+            };
+
+            const renderMenu = function(state) {
+                if (!menuEl) return;
+                menuEl.textContent = '';
+
+                // Everything copied from here on carries the chosen rows: the
+                // widget's inner row goes after .widget.skinN first, then the
+                // outer prefix goes in front of the whole selector.
+                const showInnerRow = /(^|\n)\.widget\.skin\d+/.test(menuBase);
+                const effectiveBase = applyPrefix(
+                    showInnerRow ? applyInnerRow(menuBase, state.selectedInnerRow) : menuBase,
+                    state.selectedPrefix
+                );
+                menuEl.appendChild(buildPrefixSection(state, effectiveBase, showInnerRow));
+
+                const list = document.createElement('div');
+                list.className = 'cp-menu-list';
+
+                const addRow = function(label, hint, text, onDelete) {
+                    const row = document.createElement('div');
+                    row.className = 'cp-menu-row';
+
+                    const item = document.createElement('button');
+                    item.type = 'button';
+                    item.className = 'cp-menu-item';
+                    item.setAttribute('role', 'menuitem');
+                    item.textContent = label;
+                    item.title = hint;
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        copyChoice(text);
+                    });
+                    row.appendChild(item);
+
+                    if (onDelete) {
+                        const del = document.createElement('button');
+                        del.type = 'button';
+                        del.className = 'cp-menu-del';
+                        del.title = 'Remove this media query';
+                        del.setAttribute('aria-label', 'Remove ' + label);
+                        del.textContent = '×';
+                        del.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onDelete();
+                        });
+                        row.appendChild(del);
+                    }
+                    list.appendChild(row);
+                };
+
+                addRow('Copy selector', 'Closes this rule and starts a new one', effectiveBase);
+                DEFAULT_MEDIA_CONDITIONS.forEach(function(condition) {
+                    addRow('@media ' + condition, 'Closed and ready for your styles', toMediaSnippet(effectiveBase, condition));
+                });
+                state.customMedia.forEach(function(condition) {
+                    addRow('@media ' + condition, 'Your media query', toMediaSnippet(effectiveBase, condition), function() {
+                        writeStored({
+                            [CUSTOM_MEDIA_KEY]: state.customMedia.filter(function(item) { return item !== condition; })
+                        }).then(refreshMenu);
+                    });
+                });
+
+                menuEl.appendChild(list);
+                menuEl.appendChild(buildAddMediaFooter(state));
+                positionMenu();
+            };
+            const refreshMenu = function() {
+                if (!menuEl) return;
+                loadMenuState().then(renderMenu);
+            };
+
+            const openMenu = function() {
+                closeMenu(false);
+                const base = getBaseSnippet();
+                if (!base) {
+                    flash(false, 'Could not work out the selector for this box');
+                    return;
+                }
+
+                menuBase = base;
+                menuEl = document.createElement('div');
+                menuEl.className = 'cp-copy-selector-menu';
+                menuEl.setAttribute('role', 'menu');
+                document.body.appendChild(menuEl);
+
+                document.addEventListener('mousedown', onOutsideMouseDown, true);
+                document.addEventListener('keydown', onMenuKeyDown, true);
+
+                loadMenuState().then(function(state) {
+                    renderMenu(state);
+                    const first = menuEl && menuEl.querySelector('.cp-menu-item');
+                    if (first) first.focus();
+                });
+            };
+
+            const handleCopySelector = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (menuEl) {
+                    closeMenu(false);
+                } else {
+                    openMenu();
+                }
+            };            // A button turns Enter and Space into a click on its own, so a
+            // separate keydown handler would open and immediately close the menu.
+            copySelectorBtn.addEventListener('click', handleCopySelector);
         }
 
         // Initialize CSS Snippets (handled by css-snippets.js)
@@ -5360,9 +6203,7 @@
             // Check if wrapper exists AND is properly initialized (has theme toggle button)
             const wrapper = textarea.closest('.css-editor-wrapper');
             const hasThemeToggle = !!(wrapper && wrapper.querySelector('.css-theme-toggle'));
-            const hasPseudoToggle = !!(wrapper && wrapper.querySelector('.css-pseudo-toggle'));
-            const requiresPseudoToggle = isThemeManagerPage();
-            const isProperlyEnhanced = isWrapped && hasThemeToggle && (!requiresPseudoToggle || hasPseudoToggle);
+            const isProperlyEnhanced = isWrapped && hasThemeToggle;
 
             // Phase 3: Commented out verbose debug logging
             // if (textarea.id && textarea.id.includes('fancyButton')) {
@@ -5419,10 +6260,8 @@
                             textareas.forEach(textarea => {
                                 const wrapper = textarea.closest('.css-editor-wrapper');
                                 const hasThemeToggle = !!(wrapper?.querySelector('.css-theme-toggle'));
-                                const hasPseudoToggle = !!(wrapper?.querySelector('.css-pseudo-toggle'));
-                                const requiresPseudoToggle = isThemeManagerPage();
-                                
-                                if (wrapper && hasThemeToggle && (!requiresPseudoToggle || hasPseudoToggle)) {
+
+                                if (wrapper && hasThemeToggle) {
                                     // Test if event listeners are actually working
                                     let listenerWorks = false;
                                     const testHandler = () => { listenerWorks = true; };

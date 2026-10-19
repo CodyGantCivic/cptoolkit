@@ -34,6 +34,11 @@
         try {
           // CSP FIX: Use external helper file instead of inline script
           // The helper runs in MAIN world to access page's DesignCenter object
+          // Shared full-page overlay used while copied skins are saved and fixed
+          var overlayScript = document.createElement('script');
+          overlayScript.src = chrome.runtime.getURL('js/tools/on-load/helpers/skin-operation-overlay-helper.js');
+          (document.head || document.documentElement).appendChild(overlayScript);
+
           var script = document.createElement('script');
           script.src = chrome.runtime.getURL('js/tools/on-load/helpers/fix-copied-skin-references-helper.js');
           (document.head || document.documentElement).appendChild(script);

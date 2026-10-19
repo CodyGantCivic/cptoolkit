@@ -86,6 +86,75 @@ maintaining the extension, not end-user help text (that lives in
   scopes every lookup (`#selectedTab`, the Misc panels, the modal title) to
   the modal whose `offsetParent !== null`.
 
+## Toolbar copy button and "Update selectors" button (2026-10-14)
+
+3. **Copy selector toolbar button** — a button in the Mini IDE toolbar
+   (`.css-copy-selector`, `mini-ide.js`) for Fancy Button style boxes and for
+   widget-skin `MiscellaneousStyles` boxes. It asks whichever helper owns the
+   textarea for a snippet via `getSelectorCopySnippetForTextarea(textarea)`:
+   - `graphicLinkHelper` reuses the base and hover state already stored on the
+     per-panel copy icon beside the box, so both buttons always agree.
+   - `widgetSkinHelper` finds the CMS label above the box (either `.x {` in one
+     node, or the selector and a lone `{` in separate nodes), takes the nearest
+     one and never crosses another textarea, then prefixes `.widget.skinN`.
+     `.widget` itself becomes `.widget.skinN`; anything else becomes a
+     descendant. State (`:hover`, `:active`) comes from the label text.
+   - Containers (`.containerStyle`), navigation menus (`.menu`) and site-wide
+     styles (`#MiscStyles`, `.sitestyleupdate`) use a generic path inside
+     `mini-ide.js` (`getGenericSelectorCopySnippet`): the CMS label above the
+     box is already the selector, so the snippet is `}` plus that label,
+     with no skin or button ID added.
+   - The button opens a small menu (appended to `<body>`, so no editor clips
+     it): "Copy selector" plus `@media (min-width: 40em | 63em | 2200px)`
+     variants. A media variant is the same selector wrapped in the query,
+     e.g. `}` / `@media (min-width: 40em) {` / `#footerTS {` / (empty line) /
+     `}`, with no indentation and no trailing spaces because the box is a plain
+     text editor. The snippet closes the selector itself, and the CMS adds one
+     closing `}` after the box, which closes the media block, so the pasted
+     text is balanced and the user types their styles on the empty line.
+     After pasting, the caret is at the end of the snippet, so press Up once
+     to reach the empty line.
+   - Widget skin boxes also get a "Widget row" choice (`.row.wide` or
+     `.row:not(.wide)`), inserted right after `.widget.skinN` (and any state
+     attached to it) on every selector line that starts with it, before the
+     outer prefix is applied, e.g.
+     `.row.outer:not(.wide) .widget.skin12 .row.wide .widgetItem`. It is hidden
+     on non-skin boxes and ignored there. The menu is a fixed 320px wide,
+     lays out as a flex column and re-measures on every render: it opens above
+     the button if it fits, else below, else shrinks to the larger side and
+     only the media query list scrolls (`positionMenu` in `mini-ide.js`).
+   - A Prefix row (chips) at the top of the menu puts a parent selector in
+     front of every selector line of whatever is copied, plain or inside a
+     media query, e.g. `.row.outer:not(.wide) #footerTS`. Built-in:
+     `.row.outer.wide`, `.row.outer:not(.wide)`; users can add up to 8 of their
+     own (single selector, validated with `querySelector`; no commas or
+     braces) and remove them with the x. The chosen prefix is remembered in
+     `chrome.storage.local` (`cp-toolkit-selected-selector-prefix`, custom
+     list in `cp-toolkit-custom-selector-prefixes`) and falls back to None if
+     it is removed. The prefix is applied as a descendant (a space), so it is
+     wrong for a box that is itself the `.row.outer` element. A "Result:" line
+     shows the first resulting selector.
+   - Users can add their own media queries from the menu ("+ Add media query",
+     max 8) and remove them with the x on each row. They are stored as a list
+     of condition strings in `chrome.storage.local` under
+     `cp-toolkit-custom-media-queries`. Input is cleaned by
+     `normalizeMediaCondition` in `mini-ide.js` (`50em` becomes
+     `(min-width: 50em)`; a leading `@media` and trailing `{` are dropped;
+     `{ } ; < >` are rejected) and then must parse as a real media query
+     (`matchMedia(...).media !== "not all"`). The three built-in widths are
+     fixed and cannot be removed. Entries are only ever placed on the
+     clipboard, never written into the page as markup.
+4. **Update selectors button** (`.cpFancyButtonConvertBtn`) — beside the ID
+   badge. Green outline when every rule has both `.fancyButton1` and the real
+   ID, red when a rule is missing one half, neutral when it cannot check
+   (unsaved button, or Mini IDE off). It uses
+   `CPToolkit.portable.cssNeedsPortableConversion`, which counts a rule as
+   needing conversion only if one twin is missing, and
+   `transformCssPortable(css, id, true)` to add just the missing half. The
+   plain Make Portable transform would re-emit already-dual rules in a
+   different order, so it is not used to decide state. Nothing is saved until
+   the user saves the button.
+
 ## Maintenance notes
 
 - If you add another per-button interactive affordance to these panels,

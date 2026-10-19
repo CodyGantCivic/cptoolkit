@@ -17,7 +17,8 @@
   var PENDING_TRUST_RECORDS_KEY = 'cp-toolkit-pending-trusted-origins';
   var TRUSTED_SCRIPT_ID_PREFIX = 'cp-toolkit-vanity-';
   var PENDING_INJECTION_TIMEOUT_MS = 15000;
-  var PENDING_TRUST_TTL_MS = 120000;
+  // How long a Trust click stays valid while Chrome's permission prompt is open.
+  var PENDING_TRUST_TTL_MS = 300000;
   var ACTIVATION_KINDS = Object.freeze({
     FULL_TOOLKIT: 'full-toolkit',
     CSS: 'all-pages-cp-host-css',
@@ -724,6 +725,19 @@
     });
   }
 
+  function getAutoOpenedTabUrl(tabId) {
+    var key = 'cp-toolkit-vanity-popup-context';
+    var storage = chrome.storage && chrome.storage.session ? chrome.storage.session : chrome.storage.local;
+    return storage.get(key).then(function(settings) {
+      // One entry per tab, kept while the tab is open (see
+      // vanity-approval-popup.js); not time-limited, so a slow click on
+      // Trust still finds the URL.
+      var map = settings && settings[key];
+      var context = map && map[String(tabId)];
+      return context && typeof context.url === 'string' ? context.url : '';
+    }).catch(function() { return ''; });
+  }
+
   function handlePrepareTrustedOrigin(message) {
     var originPattern = typeof message.originPattern === 'string' ? message.originPattern : '';
     var tabId = typeof message.tabId === 'number' ? message.tabId : null;
@@ -741,8 +755,13 @@
       return Promise.resolve({ skipped: 'missing-activating-lane' });
     }
 
-    return chrome.tabs.get(tabId).then(function(tab) {
-      if (getHttpsOriginPattern(tab && tab.url) !== originPattern) {
+    return Promise.all([chrome.tabs.get(tabId), getAutoOpenedTabUrl(tabId)]).then(function(values) {
+      // An automatically opened popup has no activeTab grant, so Chrome hides
+      // the tab URL until access is granted; use the URL recorded when the
+      // popup was opened for this same tab.
+      var tab = values[0];
+      var tabUrl = (tab && tab.url) || values[1];
+      if (getHttpsOriginPattern(tabUrl) !== originPattern) {
         return { skipped: 'tab-origin-mismatch' };
       }
 
