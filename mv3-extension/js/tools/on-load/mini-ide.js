@@ -1164,10 +1164,14 @@
                 return `\x00PH${idx}\x00`;
             });
 
-            // 9. Restore all placeholders
-            placeholders.forEach((content, idx) => {
-                result = result.replace(`\x00PH${idx}\x00`, content);
-            });
+            // 9. Restore all placeholders. A placeholder's content can contain an
+            // earlier placeholder (":has(.widget.skin61)" wraps the .skin class), and a
+            // single in-order pass left that inner marker behind, so the editor showed
+            // ".widgetPH0". Keep restoring until none are left.
+            let restorePasses = 0;
+            while (/\x00PH\d+\x00/.test(result) && restorePasses++ < 10) {
+                result = result.replace(/\x00PH(\d+)\x00/g, (match, idx) => placeholders[Number(idx)]);
+            }
 
             return result;
         }
