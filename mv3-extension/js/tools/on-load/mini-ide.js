@@ -3483,9 +3483,23 @@
         return skinIdInput ? skinIdInput.value : null;
     }
 
+    // An unsaved skin has a temporary ID: -1 for the first new skin, then -2, -3 and
+    // so on. Only a positive whole number is a real skin ID that is safe to write
+    // into CSS.
+    function isRealSkinId(id) {
+        return /^[1-9]\d*$/.test(String(id == null ? '' : id).trim());
+    }
+
+    function isUnsavedSkinId(id) {
+        if (id == null || String(id).trim() === '') return false;
+        const n = Number(id);
+        return Number.isFinite(n) && n <= 0;
+    }
+
     function replaceSkinNumbers(text, skinId) {
-        if (!skinId || skinId === '-1') return text;
-        return text.replace(/\.skin\d+/g, '.skin' + skinId);
+        if (!isRealSkinId(skinId)) return text;
+        // Also repairs ".skin-2" placeholders written while the skin was still unsaved.
+        return text.replace(/\.skin(?:-\d+(?![\w-])|\d+)/g, '.skin' + skinId);
     }
 
     // ==================== PORTABLE CSS TRANSFORM ====================
@@ -4582,7 +4596,7 @@
         let wasModified = false;
 
         // Handle .skin replacement
-        if (skinId && skinId !== '-1') {
+        if (isRealSkinId(skinId)) {
             const replacedText = replaceSkinNumbers(initialText, skinId);
             if (initialText !== replacedText) {
                 initialText = replacedText;
@@ -5529,7 +5543,7 @@
         }
 
         function doSkinReplacement() {
-            if (!skinId || skinId === '-1') return;
+            if (!isRealSkinId(skinId)) return;
             let code = textarea.value;
             const beforeReplace = code;
             code = replaceSkinNumbers(code, skinId);
@@ -5572,7 +5586,7 @@
 
             // Handle .skin number replacement
             // Instant on paste/Ctrl+Enter/normal typing; skipped during backspace/delete
-            if (skinId && skinId !== '-1' && !lastInputWasDelete) {
+            if (isRealSkinId(skinId) && !lastInputWasDelete) {
                 if (replaceSkinsOnNextSync) {
                     replaceSkinsOnNextSync = false;
                     clearTimeout(skinReplaceTimer);
@@ -5620,7 +5634,7 @@
             lastInputWasDelete = false;
 
             // After backspace/delete, debounce replacement so it catches up once you stop deleting
-            if (skinId && skinId !== '-1' && (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward')) {
+            if (isRealSkinId(skinId) && (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward')) {
                 clearTimeout(skinReplaceTimer);
                 skinReplaceTimer = setTimeout(doSkinReplacement, 1500);
             }
@@ -5641,7 +5655,7 @@
         // Also sync on change events (for programmatic changes that trigger change)
         textarea.addEventListener('change', () => {
             syncEditor({ immediateValidation: true });
-            if (skinId === '-1' && /\.skin\d+/.test(textarea.value)) {
+            if (isUnsavedSkinId(skinId) && /\.skin\d+/.test(textarea.value)) {
                 alert('You used a skin number. Save the skin first to get a number.');
             }
         });

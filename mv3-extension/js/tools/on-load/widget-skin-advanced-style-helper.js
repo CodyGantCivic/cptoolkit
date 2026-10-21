@@ -62,9 +62,17 @@
       return skinIdInput ? skinIdInput.value : null;
     }
 
+    // An unsaved skin has a temporary ID: -1 for the first new skin, then -2, -3 and
+    // so on. Only a positive whole number is a real skin ID that is safe to write
+    // into CSS (or to copy in a selector).
+    function isRealSkinId(id) {
+      return /^[1-9]\d*$/.test(String(id == null ? '' : id).trim());
+    }
+
     function replaceSkinNumbers(text, skinId) {
-      if (!skinId || skinId === '-1') return text;
-      return text.replace(/\.skin\d+/g, '.skin' + skinId);
+      if (!isRealSkinId(skinId)) return text;
+      // Also repairs ".skin-2" placeholders written while the skin was still unsaved.
+      return text.replace(/\.skin(?:-\d+(?![\w-])|\d+)/g, '.skin' + skinId);
     }
 
     function firePageChangeHandlers(elem) {
@@ -101,7 +109,7 @@
 
       function doReplaceAndNotify() {
         const sid = getSkinId();
-        if (!sid || sid === '-1') return;
+        if (!isRealSkinId(sid)) return;
 
         const original = textarea.value || '';
         const newVal = replaceSkinNumbers(original, sid);
@@ -143,7 +151,7 @@
         if (DEBUG) console.log(TOOLKIT_NAME, 'skinId changed; cleared processed markers');
       }
 
-      if (!skinId || skinId === '-1') return;
+      if (!isRealSkinId(skinId)) return;
 
       const nodes = document.querySelectorAll(
         'textarea[id*="MiscellaneousStyles"], textarea[id*="MiscStyles"], textarea#txtHeader, textarea#txtFooter, textarea.autoUpdate'
@@ -260,7 +268,7 @@
 
     function getSelectorCopySnippetForTextarea(textarea) {
       const skinId = getSkinId();
-      if (!textarea || !skinId || skinId === '-1') return null;
+      if (!textarea || !isRealSkinId(skinId)) return null;
       const label = findSelectorLabel(textarea);
       if (!label) return null;
       const selector = buildSkinSelector(label, skinId);

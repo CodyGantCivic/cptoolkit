@@ -46,9 +46,12 @@
         var el = document.getElementById("hdnSkinID");
         return el ? el.value : null;
       }
+      function isRealSkinId(id) {
+        return /^[1-9]\d*$/.test(String(id == null ? "" : id).trim());
+      }
       function replaceSkinNumbers(text, skinId) {
-        if (!skinId || skinId === "-1") return text;
-        return text.replace(/\.skin\d+/g, ".skin" + skinId);
+        if (!isRealSkinId(skinId)) return text;
+        return text.replace(/\.skin(?:-\d+(?![\w-])|\d+)/g, ".skin" + skinId);
       }
       function serverLengthOf(text) {
         return replaceSkinNumbers(text, getSkinId()).length;
