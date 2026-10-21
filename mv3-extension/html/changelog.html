@@ -36,12 +36,14 @@
     <div id="version-list">
       <div class="version v1.2.1">
         <h4>Version 1.2.1</h4>
-        <h5>View All Button &amp; Category Upload Fixes</h5>
+        <h5>View All, Category Upload &amp; CSS Editor Fixes</h5>
 
         <div class="tool-category">Bug Fixes</div>
         <ul class="tool-list">
           <li><strong>View All Button Color:</strong> On the Calendar and News Flash default skins, the View All button no longer turns red after it has been visited. It now keeps the same gray as its normal state.</li>
           <li><strong>Multiple Category Upload:</strong> The Submit button now locks after the first click and shows "Submitting...", so clicking it again while categories are saving can no longer create each category twice. A name repeated within the same batch is also created only once.</li>
+          <li><strong>CSS Editor Showing "PH0":</strong> Typing a skin class inside brackets, such as <code>:has(.widget.skin61)</code>, no longer makes the CSS editor display <code>PH0</code> in place of the skin class.</li>
+          <li><strong>Unsaved Skin Numbers:</strong> While a skin is still unsaved, the editor, snippets and the Copy selector button no longer write its temporary number (like <code>.skin-2</code>) into your CSS. If a saved skin still has one, it is changed to the real skin number when you open it; save the skin to keep the change.</li>
         </ul>
       </div>
 

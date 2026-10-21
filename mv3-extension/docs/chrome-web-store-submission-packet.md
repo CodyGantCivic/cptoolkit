@@ -12,9 +12,9 @@ Purpose: keep the upload/review notes for the MV3 Web Store readiness submission
 - Local unpacked test folder: the same `mv3-extension` source folder
 - Production build folder: none; the Store package is assembled directly from the tested source tree
 - Upload artifact: `mv3-extension/dist/civicplus-internal-toolkit-1.2.1.zip`
-- Verified size: 2,240,894 bytes
+- Verified size: 2,241,850 bytes
 - Verified runtime file count: 191
-- SHA-256: `AEC7DF5A485609B30C5D40E2DDC100B92D129A78B57BEB5A5759EA41886C6687`
+- SHA-256: `A6D2964040C79A69133E8B2AC28D5C361F19F5643FBFF5A89EE8D97A6E66DF4D`
 - Privacy policy URL: `https://cp-vlasak.github.io/cptoolkit/privacy.html`
 - Submission type: update to the existing Chrome Web Store item. If the 1.2.0 submission is still pending review, cancel it in the dashboard and upload this 1.2.1 package in its place (the version must be higher than 1.2.0); if 1.2.0 has already published, submit 1.2.1 as a normal update. This update adds one new permission, `declarativeContent` (green toolbar dot on CivicPlus-looking pages); its justification is in the permissions section below.
 
@@ -74,7 +74,7 @@ If the dashboard asks for data categories, review carefully with the final priva
 
 The artifact above was assembled and byte-compared against the source tree on 2026-10-19. If any runtime source file changes during acceptance testing, rebuild the ZIP and replace the size, file count, and SHA-256 recorded here.
 
-Version 1.2.1 is a bugfix patch on top of 1.2.0: (1) the View All visited-state background on the Calendar and News Flash skin defaults was red and is now gray (`#757575`); (2) Multiple Category Upload no longer lets Submit be clicked twice while categories are saving. The 1.2.0 package that was submitted first had SHA-256 `AB101DA3D279FB6E0DA79782FDFE15D51E8F5044BAE92A1F25FACD548A75C0BA`. Local unpacked acceptance testing for 1.2.1 is pending with the release owner; do not upload until it passes. Rollback checkpoint for the 1.1.6 release: `pre-v1.1.6-2026-07-27`.
+Version 1.2.1 is a bugfix patch on top of 1.2.0: (1) the View All visited-state background on the Calendar and News Flash skin defaults was red and is now gray (`#757575`); (2) Multiple Category Upload no longer lets Submit be clicked twice while categories are saving; (3) the CSS editor no longer shows `PH0` for a skin class inside `:has()`/`:not()`; (4) an unsaved skin's temporary ID (`-1`, `-2`, ...) is no longer written into CSS, snippets or copied selectors, and leftover `.skin-N` text is repaired to the real ID when a saved skin is opened. The 1.2.0 package that was submitted first had SHA-256 `AB101DA3D279FB6E0DA79782FDFE15D51E8F5044BAE92A1F25FACD548A75C0BA`. Local unpacked acceptance testing for 1.2.1 is pending with the release owner; do not upload until it passes. Rollback checkpoint for the 1.1.6 release: `pre-v1.1.6-2026-07-27`.
 
 ## Manual QA Still Worth Doing Before Clicking Submit
 
@@ -85,4 +85,4 @@ Version 1.2.1 is a bugfix patch on top of 1.2.0: (1) the View All visited-state 
 - Theme Manager, Widget Manager, Graphic Links, snippet library, and Fancy Button library load without console regressions.
 - Context-menu on-demand tools still appear and run on matching pages.
 - Prevent-timeout has no extension errors after a two-minute alarm cycle with several CP tabs open.
-- New in 1.2.0: the green dot appears on CivicPlus-looking pages; the Copy selector menu (media queries, row prefixes) works; the Skin Manager lists the new News Flash, Footer and Utilities defaults first; a View All button on a Calendar or News Flash default skin stays gray after it has been visited (1.2.1); the Rectangular arrow snippet shows in the flyout for a news skin's Footer.
+- New in 1.2.0: the green dot appears on CivicPlus-looking pages; the Copy selector menu (media queries, row prefixes) works; the Skin Manager lists the new News Flash, Footer and Utilities defaults first; a View All button on a Calendar or News Flash default skin stays gray after it has been visited (1.2.1); in a skin's Advanced Styles, typing `:has(.widget.skin1)` shows the skin class (not `PH0`) and an unsaved skin never gets `.skin-2` written in (1.2.1); the Rectangular arrow snippet shows in the flyout for a news skin's Footer.
