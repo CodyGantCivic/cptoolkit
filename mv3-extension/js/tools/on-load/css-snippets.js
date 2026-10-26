@@ -488,7 +488,9 @@
 
             const skinId = textarea.getAttribute('data-cp-skin-handler-attached') ||
                            textarea.getAttribute('data-cp-skin-processed');
-            if (skinId) return skinId;
+            // Only a real (positive) skin ID is usable; an unsaved skin's temporary
+            // negative ID must never be written into a selector.
+            if (skinId && /^[1-9]\d*$/.test(skinId.trim())) return skinId;
 
             const id = textarea.id;
             if (id && id.includes('skin')) {
